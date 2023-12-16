@@ -1,0 +1,8 @@
+tetromino -
+Tetrominos, occasionally known alternately as Tetrads, Blocks, Tetriminos (official name), or tetriminoes, are the blocks used in every known Tetris game.
+They come in seven shapes, all of which can be rotated and then dropped. Tetrominoes all have an area of four squares. In certain Tetris games, the colors of them vary.
+
+playfield -
+The playfield is the grid into which tetrominoes fall, also called the "well" (common in older games) or the "matrix" (especially in more recent Tetris brand games).
+The playfield is surrounded by a frame called the tetrion, which controls the overall behavior of tetrominoes.
+
