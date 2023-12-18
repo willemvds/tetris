@@ -5,7 +5,7 @@ pub enum Kind {
     Hook,
     Square,
     Snake,
-    T,
+    Pyramid,
     Zig,
 }
 
@@ -173,8 +173,8 @@ const SNAKE: Tetromino = Tetromino{
 };
 
 #[rustfmt::skip]
-const T: Tetromino = Tetromino{
-    kind: Kind::T,
+const PYRAMID: Tetromino = Tetromino{
+    kind: Kind::Pyramid,
     forms: [
         [
             [0,1,0,0],
@@ -241,7 +241,7 @@ pub fn from_kind(k: Kind) -> &'static Tetromino {
         Kind::Hook => &HOOK,
         Kind::Square => &SQUARE,
         Kind::Snake => &SNAKE,
-        Kind::T => &T,
+        Kind::Pyramid => &PYRAMID,
         Kind::Zig => &ZIG,
     }
 }
