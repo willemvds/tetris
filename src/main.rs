@@ -1,11 +1,13 @@
-use std::thread;
 use std::cmp::min;
+use std::thread;
 
 mod types;
 use types::*;
 
 mod pieces;
-use pieces::{J_PIECE};
+use pieces::J_PIECE;
+
+mod tetrominos;
 
 use std::collections::hash_map::HashMap;
 use std::collections::HashSet;
@@ -21,11 +23,11 @@ use rand::Rng;
 use sdl2::event::Event;
 use sdl2::keyboard::Keycode;
 use sdl2::pixels;
-use sdl2::render::Canvas;
 use sdl2::pixels::Color;
 use sdl2::rect::Rect;
-use sdl2::video::Window;
+use sdl2::render::Canvas;
 use sdl2::ttf::Font;
+use sdl2::video::Window;
 
 const SCREEN_WIDTH: u32 = 1800;
 const SCREEN_HEIGHT: u32 = 1200;
@@ -107,13 +109,12 @@ struct PlayField {
 
 impl PlayField {
     fn new(rows: usize, cols: usize) -> PlayField {
-            PlayField {
-                cols: cols,
-                rows: rows,
-                matrix: vec![vec![Location::Empty; cols]; rows],
-            }
+        PlayField {
+            cols: cols,
+            rows: rows,
+            matrix: vec![vec![Location::Empty; cols]; rows],
+        }
     }
-
 
     fn collission_matrix(&self, x: usize, y: usize, shape: &Shape) -> bool {
         let col_count = min(4, self.cols as usize - x);
@@ -133,7 +134,7 @@ impl PlayField {
                     return true;
                 }
 
-                if self.matrix[r+y][c+x] != Location::Empty {
+                if self.matrix[r + y][c + x] != Location::Empty {
                     return true;
                 }
             }
@@ -147,10 +148,8 @@ fn new_map(cols: usize, rows: usize) -> Map {
     vec![vec![Location::Empty; cols]; rows]
 }
 
-
-
 struct Game<'g> {
-    speed:f64,
+    speed: f64,
     paused: bool,
     map: Map,
     play_field: PlayField,
@@ -203,7 +202,6 @@ impl<'g> Game<'g> {
     }
 
     fn speed_up(&mut self) {
-
         self.speed -= 4.0;
         println!("NEW SPEED is {}", self.speed);
     }
@@ -217,8 +215,6 @@ impl<'g> Game<'g> {
         if self.piece_bag.len() == 0 {
             self.piece_bag = new_piece_bag();
         }
-
-
 
         let mut rng = rand::thread_rng();
         let n1: usize = rng.gen_range(0..self.piece_bag.len());
@@ -297,7 +293,7 @@ fn piece_rotations(p: &Piece) -> usize {
 
 fn draw_piece(canvas: &mut Canvas<Window>, piece: &Piece, pos: &Position, rot: usize) {
     let size = CELL_SIZE as i32;
-    let start_x: i32 = (SCREEN_WIDTH as i32 - (CELL_SIZE * 10))/ 2;
+    let start_x: i32 = (SCREEN_WIDTH as i32 - (CELL_SIZE * 10)) / 2;
     let start_y: i32 = 1;
 
     draw_shape(
@@ -313,7 +309,7 @@ fn draw_piece(canvas: &mut Canvas<Window>, piece: &Piece, pos: &Position, rot: u
 fn draw_map(canvas: &mut Canvas<Window>, map: &Map) {
     let size: i32 = CELL_SIZE;
 
-    let start_x: i32 = (SCREEN_WIDTH as i32 - (CELL_SIZE * 10))/ 2;
+    let start_x: i32 = (SCREEN_WIDTH as i32 - (CELL_SIZE * 10)) / 2;
     let start_y: i32 = 1;
 
     let width: u32 = (size * map[0].len() as i32) as u32 + 2;
@@ -452,16 +448,17 @@ fn rotate(game: &mut Game) {
         &game.map,
         game.piece_pos.y as u32,
         game.piece_pos.x as u32,
-        next_tetro) {
-            game.piece_rotation = next_rotation;
-        }
+        next_tetro,
+    ) {
+        game.piece_rotation = next_rotation;
+    }
 }
 
 fn game_sim(game: &mut Game, t: f64, dt: f64, acc: f64) {
     // println!("SIMULATING GAME ENGINE... {:?} {:?} {:?}", t, dt, acc);
 
     game.piece_creep += dt;
-    if game.piece_creep > dt*game.speed {
+    if game.piece_creep > dt * game.speed {
         // move the piece
         game.piece_creep = 0.0;
 
@@ -545,10 +542,12 @@ fn render_fps(canvas: &mut Canvas<Window>, font: &Font, fps: f64, lc: usize) {
     let surface = font
         .render(format!("{:.2} fps", fps).as_str())
         .blended(Color::RGBA(0, 255, 0, 255))
-        .map_err(|e| e.to_string()).unwrap();
+        .map_err(|e| e.to_string())
+        .unwrap();
     let fps_tex = texture_creator
         .create_texture_from_surface(&surface)
-        .map_err(|e| e.to_string()).unwrap();
+        .map_err(|e| e.to_string())
+        .unwrap();
 
     let fps_target = Rect::new(0, 0, 180, 80);
 
@@ -557,27 +556,39 @@ fn render_fps(canvas: &mut Canvas<Window>, font: &Font, fps: f64, lc: usize) {
     let surface2 = font
         .render(format!("lines cleared: {}", lc).as_str())
         .blended(Color::RGBA(122, 255, 122, 255))
-        .map_err(|e| e.to_string()).unwrap();
+        .map_err(|e| e.to_string())
+        .unwrap();
     let fps_tex2 = texture_creator
         .create_texture_from_surface(&surface2)
-        .map_err(|e| e.to_string()).unwrap();
+        .map_err(|e| e.to_string())
+        .unwrap();
 
     let fps_target2 = Rect::new(0, 80, 280, 80);
 
     canvas.copy(&fps_tex2, None, Some(fps_target2));
-
-
 }
 
 fn main() -> Result<(), String> {
+    println!(
+        "HEY BABY {:?}",
+        tetrominos::from_kind(tetrominos::Kind::Stick)
+    );
+
     let sdl_context = sdl2::init()?;
     let video_subsys = sdl_context.video()?;
     let ttf_context = sdl2::ttf::init().map_err(|e| e.to_string())?;
 
-    let mut font = ttf_context.load_font("/usr/share/fonts/adobe-source-code-pro/SourceCodePro-Regular.otf", 128)?;
+    let mut font = ttf_context.load_font(
+        "/usr/share/fonts/adobe-source-code-pro/SourceCodePro-Regular.otf",
+        128,
+    )?;
     font.set_style(sdl2::ttf::FontStyle::BOLD);
 
-    println!("video driver = {:?}, display name = {:?}", video_subsys.current_video_driver(), video_subsys.display_name(0));
+    println!(
+        "video driver = {:?}, display name = {:?}",
+        video_subsys.current_video_driver(),
+        video_subsys.display_name(0)
+    );
     let window = video_subsys
         .window("Panda Tetris", SCREEN_WIDTH, SCREEN_HEIGHT)
         .position_centered()
@@ -590,7 +601,6 @@ fn main() -> Result<(), String> {
     canvas.set_draw_color(pixels::Color::RGB(0, 0, 0));
 
     canvas.present();
-
 
     let mut lastx = 0;
     let mut lasty = 0;
@@ -675,7 +685,6 @@ fn main() -> Result<(), String> {
         }
 
         acc_runs = 0;
-
 
         canvas.set_draw_color(pixels::Color::RGB(0, 0, 0));
         canvas.clear();

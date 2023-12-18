@@ -32,7 +32,7 @@ impl Piece {
     pub fn rotations(&self) -> usize {
         match self {
             Piece::Straight(_) => 2, // I
-            Piece::Square(_) => 1, // O
+            Piece::Square(_) => 1,   // O
             Piece::L(_) => 4,
             Piece::Skew(_) => 2, // S
             Piece::T(_) => 4,
@@ -62,7 +62,6 @@ impl Piece {
             Piece::Z(zp) => &(zp.tetros[rot]),
             // _ => panic!("piece_tetro BAD - this is getting hairy"),
         }
-
     }
 }
 
@@ -221,7 +220,6 @@ pub const Z_PIECE: Piece = Piece::Z(TwoPiece{
         },
     ]
 });
-
 
 #[rustfmt::skip]
 pub const T_PIECE: Piece = Piece::T(FourPiece{

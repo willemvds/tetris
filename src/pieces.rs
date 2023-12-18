@@ -1,7 +1,7 @@
 use crate::types::*;
 
 // mod pieces {
-    #[rustfmt::skip]
+#[rustfmt::skip]
     pub const J_PIECE: Piece = Piece::J(FourPiece{
         // kind: PieceKind::Skew,
         tetros: [
