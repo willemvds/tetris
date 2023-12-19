@@ -1,8 +1,13 @@
+type Map = Vec<Vec<Location>>;
+
 use std::cmp::min;
 use std::thread;
 
 mod types;
 use types::*;
+
+mod playfield;
+use playfield::PlayField;
 
 mod pieces;
 use pieces::J_PIECE;
@@ -54,6 +59,18 @@ enum Location {
     Z,
 }
 
+fn tetromino_colour(kind: tetrominos::Kind) -> pixels::Color {
+    match kind {
+        tetrominos::Kind::Hook => Color::RGB(92, 101, 168),
+        tetrominos::Kind::Pyramid => Color::RGB(161, 82, 153),
+        tetrominos::Kind::Seven => Color::RGB(224, 127, 58),
+        tetrominos::Kind::Snake => Color::RGB(100, 180, 82),
+        tetrominos::Kind::Square => Color::RGB(241, 212, 72),
+        tetrominos::Kind::Stick => Color::RGB(99, 196, 234),
+        tetrominos::Kind::Zig => Color::RGB(220, 58, 53),
+    }
+}
+
 // Color::RGB(99, 196, 234) - straight
 // Color::RGB(92, 101, 168) - j
 // Color::RGB(224, 127, 58) - l
@@ -81,7 +98,6 @@ const NUM_PIECES: u8 = 7;
 fn rand_piece() -> &'static Piece {
     let mut rng = rand::thread_rng();
     let n1: u8 = rng.gen_range(0..NUM_PIECES);
-    // println!("@@@ {:?}", n1);
 
     let p = match n1 {
         0 => &STRAIGHT_PIECE,
@@ -95,53 +111,6 @@ fn rand_piece() -> &'static Piece {
     };
 
     p
-}
-
-// #[derive(Debug, Clone)]
-type Map = Vec<Vec<Location>>;
-
-// #[derive(Debug, Clone)]
-struct PlayField {
-    cols: usize,
-    rows: usize,
-    matrix: Map,
-}
-
-impl PlayField {
-    fn new(rows: usize, cols: usize) -> PlayField {
-        PlayField {
-            cols: cols,
-            rows: rows,
-            matrix: vec![vec![Location::Empty; cols]; rows],
-        }
-    }
-
-    fn collission_matrix(&self, x: usize, y: usize, shape: &Shape) -> bool {
-        let col_count = min(4, self.cols as usize - x);
-        let row_count = min(4, self.rows as usize - y);
-
-        for r in 0..4 {
-            for c in 0..4 {
-                if shape[r][c] == 0 {
-                    continue;
-                }
-
-                if r >= row_count {
-                    return true;
-                }
-
-                if c >= col_count {
-                    return true;
-                }
-
-                if self.matrix[r + y][c + x] != Location::Empty {
-                    return true;
-                }
-            }
-        }
-
-        false
-    }
 }
 
 fn new_map(cols: usize, rows: usize) -> Map {
@@ -569,11 +538,6 @@ fn render_fps(canvas: &mut Canvas<Window>, font: &Font, fps: f64, lc: usize) {
 }
 
 fn main() -> Result<(), String> {
-    println!(
-        "HEY BABY {:?}",
-        tetrominos::from_kind(tetrominos::Kind::Stick)
-    );
-
     let sdl_context = sdl2::init()?;
     let video_subsys = sdl_context.video()?;
     let ttf_context = sdl2::ttf::init().map_err(|e| e.to_string())?;
