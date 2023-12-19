@@ -1,6 +1,6 @@
 type Map = Vec<Vec<Location>>;
 
-use std::cmp::min;
+
 use std::thread;
 
 mod types;
@@ -14,8 +14,8 @@ use pieces::J_PIECE;
 
 mod tetrominos;
 
-use std::collections::hash_map::HashMap;
-use std::collections::HashSet;
+
+
 
 extern crate sdl2;
 
@@ -423,7 +423,7 @@ fn rotate(game: &mut Game) {
     }
 }
 
-fn game_sim(game: &mut Game, t: f64, dt: f64, acc: f64) {
+fn game_sim(game: &mut Game, _t: f64, dt: f64, _acc: f64) {
     // println!("SIMULATING GAME ENGINE... {:?} {:?} {:?}", t, dt, acc);
 
     game.piece_creep += dt;
@@ -566,8 +566,8 @@ fn main() -> Result<(), String> {
 
     canvas.present();
 
-    let mut lastx = 0;
-    let mut lasty = 0;
+    let _lastx = 0;
+    let _lasty = 0;
 
     canvas.present();
 
@@ -575,11 +575,11 @@ fn main() -> Result<(), String> {
 
     // println!("{:?} {:?}", L, T);
 
-    let mut total = 0;
+    let _total = 0;
     let mut frames = 0;
 
     let mut t: f64 = 0.0;
-    let mut dt: f64 = 1.0 / 120.0;
+    let dt: f64 = 1.0 / 120.0;
 
     let mut startTime = Instant::now();
     let mut accumulator: f64 = 0.0;
@@ -635,7 +635,7 @@ fn main() -> Result<(), String> {
                         }
                     }
 
-                    Event::MouseButtonDown { x, y, .. } => {
+                    Event::MouseButtonDown {   .. } => {
                         next_piece(&mut game);
                     }
 
