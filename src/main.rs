@@ -45,8 +45,6 @@ struct Position {
 
 const CELL_SIZE: i32 = 44;
 
-type Arena = [[u8; 20]; 40];
-
 #[derive(Debug, Copy, Clone, PartialEq)]
 enum Location {
     Empty,
@@ -256,10 +254,6 @@ fn piece_tetro(p: &Piece, rot: usize) -> &Tetromino {
     }
 }
 
-fn piece_rotations(p: &Piece) -> usize {
-    return p.rotations();
-}
-
 fn draw_piece(canvas: &mut Canvas<Window>, piece: &Piece, pos: &Position, rot: usize) {
     let size = CELL_SIZE as i32;
     let start_x: i32 = (SCREEN_WIDTH as i32 - (CELL_SIZE * 10)) / 2;
@@ -343,20 +337,6 @@ fn clear_full_rows(game: &mut Game) {
             game.score_lines_cleared += 1;
         }
     }
-}
-
-fn bottom_row(shape: Shape) -> (usize, [u8; 4]) {
-    for r in (0..4).rev() {
-        for c in 0..4 {
-            if shape[r][c] != 0 {
-                return (r, shape[r]);
-            }
-        }
-    }
-
-    println!("{:?} BULL", shape);
-
-    panic!("BAD CODER")
 }
 
 fn drop_one(game: &mut Game) {
