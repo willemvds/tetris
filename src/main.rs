@@ -561,7 +561,7 @@ fn main() -> Result<(), String> {
     let mut t: f64 = 0.0;
     let dt: f64 = 1.0 / 120.0;
 
-    let mut startTime = Instant::now();
+    let mut start_time = Instant::now();
     let mut accumulator: f64 = 0.0;
 
     let mut game = Game::new();
@@ -571,7 +571,7 @@ fn main() -> Result<(), String> {
         // let start = Instant::now();
 
         let now = Instant::now();
-        let mut frame_time = now - startTime;
+        let mut frame_time = now - start_time;
         let frame_rate = 1000000.0 / frame_time.as_micros() as f64;
         // println!("frames = {:?}, frame time = {:?}, frame rate = {:?}", frames, frame_time, frame_rate);
         if frame_time.as_secs_f64() > 0.25 {
@@ -579,7 +579,7 @@ fn main() -> Result<(), String> {
             frame_time = Duration::from_millis(250);
             // 0.25;
         }
-        startTime = now;
+        start_time = now;
         accumulator = accumulator + frame_time.as_secs_f64();
 
         let mut acc_runs = 0;
