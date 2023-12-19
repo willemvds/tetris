@@ -45,6 +45,7 @@ impl PlayField {
 mod tests {
     use super::*;
 
+    #[test]
     fn test_collission_matrix_empty() {
         let pf = PlayField::new(10, 10);
         let shape:Shape  = [[1,1,1,1],[1,1,1,1],[1,1,1,1],[1,1,1,1]];
@@ -52,11 +53,12 @@ mod tests {
         assert_eq!(false, pf.collission_matrix(0, 0, &shape));
     }
 
+    #[test]
     fn test_collission_matrix_hit() {
         let mut pf = PlayField::new(10, 10);
         pf.matrix[0][0] = Location::Filled(tetrominos::Kind::Hook);
         let shape:Shape  = [[1,1,1,1],[1,1,1,1],[1,1,1,1],[1,1,1,1]];
 
-        assert_eq!(false, pf.collission_matrix(0, 0, &shape));
+        assert_eq!(true, pf.collission_matrix(0, 0, &shape));
     }
 }
