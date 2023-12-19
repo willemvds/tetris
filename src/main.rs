@@ -634,7 +634,7 @@ fn main() -> Result<(), String> {
         canvas.clear();
         draw_game(&mut canvas, &game);
 
-        thread::sleep_ms(1);
+        thread::sleep(Duration::from_millis(1));
 
         draw_piece(
             &mut canvas,
