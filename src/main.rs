@@ -1,6 +1,5 @@
 type Map = Vec<Vec<Location>>;
 
-
 use std::thread;
 
 mod types;
@@ -13,9 +12,6 @@ mod pieces;
 use pieces::J_PIECE;
 
 mod tetrominos;
-
-
-
 
 extern crate sdl2;
 
@@ -615,7 +611,7 @@ fn main() -> Result<(), String> {
                         }
                     }
 
-                    Event::MouseButtonDown {   .. } => {
+                    Event::MouseButtonDown { .. } => {
                         next_piece(&mut game);
                     }
 
