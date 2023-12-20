@@ -1,19 +1,19 @@
 use crate::tetrominos;
 
 #[derive(Debug, Copy, Clone, PartialEq)]
-enum Location {
+pub enum Location {
     Empty,
     Filled(tetrominos::Kind),
 }
 
-type Shape = [[u8; 4]; 4];
+pub type Shape = [[u8; 4]; 4];
 type Matrix = Vec<Vec<Location>>;
 
 // #[derive(Debug, Clone)]
 pub struct PlayField {
-    cols: usize,
-    rows: usize,
-    matrix: Matrix,
+    pub cols: usize,
+    pub rows: usize,
+    pub matrix: Matrix,
 }
 
 impl PlayField {
@@ -30,6 +30,14 @@ impl PlayField {
 
         for row in 0..4 {
             for col in 0..4 {
+                if row + y >= self.matrix.len() {
+                    continue;
+                }
+
+                if col + x >= self.matrix[row + y].len() {
+                    continue;
+                }
+
                 total += shape[row][col]
                     & match self.matrix[y + row][x + col] {
                         Location::Empty => 0,

@@ -6,7 +6,9 @@ mod types;
 use types::*;
 
 mod playfield;
+use playfield::Location;
 use playfield::PlayField;
+use playfield::Shape;
 
 mod pieces;
 use pieces::J_PIECE;
@@ -41,17 +43,17 @@ struct Position {
 
 const CELL_SIZE: i32 = 44;
 
-#[derive(Debug, Copy, Clone, PartialEq)]
-enum Location {
-    Empty,
-    Straight,
-    Square,
-    T,
-    L,
-    Skew,
-    J,
-    Z,
-}
+//#[derive(Debug, Copy, Clone, PartialEq)]
+//enum Location {
+//    Empty,
+//    Straight,
+//    Square,
+//    T,
+//    L,
+//    Skew,
+//    J,
+//    Z,
+//}
 
 fn tetromino_colour(kind: tetrominos::Kind) -> pixels::Color {
     match kind {
@@ -76,13 +78,14 @@ impl Location {
     fn color(self) -> Color {
         match self {
             Location::Empty => Color::RGB(0, 0, 0),
-            Location::Straight => Color::RGB(99, 196, 234),
-            Location::Square => Color::RGB(241, 212, 72),
-            Location::T => Color::RGB(161, 82, 153),
-            Location::L => Color::RGB(224, 127, 58),
-            Location::Skew => Color::RGB(100, 180, 82),
-            Location::J => Color::RGB(92, 101, 168),
-            Location::Z => Color::RGB(220, 58, 53),
+            default => Color::RGB(3, 3, 3),
+            //            Location::Straight => Color::RGB(99, 196, 234),
+            //            Location::Square => Color::RGB(241, 212, 72),
+            //            Location::T => Color::RGB(161, 82, 153),
+            //            Location::L => Color::RGB(224, 127, 58),
+            //            Location::Skew => Color::RGB(100, 180, 82),
+            //            Location::J => Color::RGB(92, 101, 168),
+            //            Location::Z => Color::RGB(220, 58, 53),
         }
     }
 }
@@ -114,7 +117,7 @@ fn new_map(cols: usize, rows: usize) -> Map {
 struct Game<'g> {
     speed: f64,
     paused: bool,
-    map: Map,
+    //    map: Map,
     play_field: PlayField,
     next_piece: &'g Piece,
     piece_bag: Vec<&'static Piece>,
@@ -145,7 +148,7 @@ impl<'g> Game<'g> {
         Game {
             speed: 30.0,
             paused: false,
-            map: new_map(10, 24),
+            //            map: new_map(10, 24),
             play_field: PlayField::new(24, 10),
 
             piece: rand_piece(),
@@ -227,13 +230,25 @@ fn piece_colour(p: &Piece) -> Color {
 
 fn piece_location(p: &Piece) -> Location {
     match p {
-        Piece::Straight(_) => Location::Straight,
-        Piece::Square(_) => Location::Square,
-        Piece::L(_) => Location::L,
-        Piece::Skew(_) => Location::Skew,
-        Piece::T(_) => Location::T,
-        Piece::J(_) => Location::J,
-        Piece::Z(_) => Location::Z,
+        Piece::Straight(_) => Location::Filled(tetrominos::Kind::Stick),
+        Piece::Square(_) => Location::Filled(tetrominos::Kind::Square),
+        Piece::L(_) => Location::Filled(tetrominos::Kind::Seven),
+        Piece::Skew(_) => Location::Filled(tetrominos::Kind::Snake),
+        Piece::T(_) => Location::Filled(tetrominos::Kind::Pyramid),
+        Piece::J(_) => Location::Filled(tetrominos::Kind::Hook),
+        Piece::Z(_) => Location::Filled(tetrominos::Kind::Zig),
+    }
+}
+
+fn piece_shape(p: &Piece, rot: usize) -> &Shape {
+    match p {
+        Piece::Straight(sp) => &tetrominos::from_kind(tetrominos::Kind::Stick).forms[rot],
+        Piece::Square(sp) => &tetrominos::from_kind(tetrominos::Kind::Square).forms[rot],
+        Piece::L(lp) => &tetrominos::from_kind(tetrominos::Kind::Seven).forms[rot],
+        Piece::Skew(sp) => &tetrominos::from_kind(tetrominos::Kind::Stick).forms[rot],
+        Piece::T(tp) => &tetrominos::from_kind(tetrominos::Kind::Pyramid).forms[rot],
+        Piece::J(jp) => &tetrominos::from_kind(tetrominos::Kind::Hook).forms[rot],
+        Piece::Z(zp) => &tetrominos::from_kind(tetrominos::Kind::Zig).forms[rot],
     }
 }
 
@@ -246,7 +261,6 @@ fn piece_tetro(p: &Piece, rot: usize) -> &Tetromino {
         Piece::T(tp) => &(tp.tetros[rot]),
         Piece::J(jp) => &(jp.tetros[rot]),
         Piece::Z(zp) => &(zp.tetros[rot]),
-        // _ => panic!("piece_tetro BAD - this is getting hairy"),
     }
 }
 
@@ -257,7 +271,7 @@ fn draw_piece(canvas: &mut Canvas<Window>, piece: &Piece, pos: &Position, rot: u
 
     draw_shape(
         canvas,
-        piece_tetro(piece, rot).shape,
+        *piece_shape(piece, rot),
         piece_colour(piece),
         size,
         start_x + (pos.x * size),
@@ -265,17 +279,17 @@ fn draw_piece(canvas: &mut Canvas<Window>, piece: &Piece, pos: &Position, rot: u
     )
 }
 
-fn draw_map(canvas: &mut Canvas<Window>, map: &Map) {
+fn draw_playfield(canvas: &mut Canvas<Window>, pf: &PlayField) {
     let size: i32 = CELL_SIZE;
 
     let start_x: i32 = (SCREEN_WIDTH as i32 - (CELL_SIZE * 10)) / 2;
     let start_y: i32 = 1;
 
-    let width: u32 = (size * map[0].len() as i32) as u32 + 2;
-    let height: u32 = (size * map.len() as i32) as u32 + 2;
+    let width: u32 = (size * pf.matrix[0].len() as i32) as u32 + 2;
+    let height: u32 = (size * pf.matrix.len() as i32) as u32 + 2;
 
-    for row in 0..map.len() {
-        for col in 0..map[row].len() {
+    for row in 0..(pf.matrix.len()) {
+        for col in 0..(pf.matrix[row].len()) {
             canvas.set_draw_color(Color::RGB(20, 20, 20));
             let _ = canvas.draw_rect(Rect::new(
                 start_x + (col as i32 * size),
@@ -284,10 +298,10 @@ fn draw_map(canvas: &mut Canvas<Window>, map: &Map) {
                 size as u32,
             ));
 
-            if map[row][col] == Location::Empty {
+            if pf.matrix[row][col] == Location::Empty {
                 continue;
             }
-            canvas.set_draw_color((&map[row][col]).color());
+            canvas.set_draw_color((&pf.matrix[row][col]).color());
             let _ = canvas.fill_rect(Rect::new(
                 start_x + (col as i32 * size),
                 start_y + (row as i32 * size),
@@ -302,7 +316,7 @@ fn draw_map(canvas: &mut Canvas<Window>, map: &Map) {
 }
 
 fn draw_game(canvas: &mut Canvas<Window>, game: &Game) {
-    draw_map(canvas, &game.map);
+    draw_playfield(canvas, &game.play_field);
 }
 
 fn imprint_piece(game: &mut Game) {
@@ -311,24 +325,24 @@ fn imprint_piece(game: &mut Game) {
 
     for r in 0..4 {
         for c in 0..4 {
-            if piece_tetro(game.piece, game.piece_rotation).shape[r][c] == 1 {
-                game.map[r + r_offset][c + c_offset] = piece_location(&game.piece);
+            if piece_shape(game.piece, game.piece_rotation)[r][c] == 1 {
+                game.play_field.matrix[r + r_offset][c + c_offset] = piece_location(&game.piece);
             }
         }
     }
 }
 
 fn clear_full_rows(game: &mut Game) {
-    for r in 0..game.map.len() {
+    for r in 0..game.play_field.matrix.len() {
         let mut col_count = 0;
-        for c in 0..game.map[r].len() {
-            if game.map[r][c] != Location::Empty {
+        for c in 0..game.play_field.matrix[r].len() {
+            if game.play_field.matrix[r][c] != Location::Empty {
                 col_count += 1;
             }
         }
-        if col_count == game.map[r].len() {
-            for x in 0..game.map[r].len() {
-                game.map[r][x] = Location::Empty;
+        if col_count == game.play_field.matrix[r].len() {
+            for x in 0..game.play_field.matrix[r].len() {
+                game.play_field.matrix[r][x] = Location::Empty;
             }
             game.score_lines_cleared += 1;
         }
@@ -349,18 +363,18 @@ fn drop_fast(game: &mut Game) {
 
 fn can_fall(game: &mut Game) -> bool {
     return !has_collission(
-        &game.map,
-        game.piece_pos.y as u32 + 1,
-        game.piece_pos.x as u32,
-        piece_tetro(game.piece, game.piece_rotation),
+        &game.play_field,
+        (game.piece_pos.y).try_into().unwrap(),
+        (game.piece_pos.x).try_into().unwrap(),
+        piece_shape(game.piece, game.piece_rotation),
     );
 }
 
 fn collapse(game: &mut Game) {
-    for r in (0..game.map.len()).rev() {
+    for r in (0..game.play_field.matrix.len()).rev() {
         let mut has_block = false;
-        for c in 0..game.map[r].len() {
-            if game.map[r][c] != Location::Empty {
+        for c in 0..game.play_field.matrix[r].len() {
+            if game.play_field.matrix[r][c] != Location::Empty {
                 has_block = true;
                 break;
             }
@@ -368,8 +382,8 @@ fn collapse(game: &mut Game) {
 
         if !has_block {
             for ir in (1..=r).rev() {
-                for c in 0..game.map[0].len() {
-                    game.map[ir][c] = game.map[ir - 1][c];
+                for c in 0..game.play_field.matrix[0].len() {
+                    game.play_field.matrix[ir][c] = game.play_field.matrix[ir - 1][c];
                 }
             }
         }
@@ -387,13 +401,14 @@ fn next_piece(game: &mut Game) {
 
 fn rotate(game: &mut Game) {
     let next_rotation = game.piece.rotation_after(game.piece_rotation);
-    let next_tetro = game.piece.tetro(next_rotation);
+    //    let next_tetro = game.piece.tetro(next_rotation);
+    let next_shape = piece_shape(&game.piece, next_rotation);
 
     if !has_collission(
-        &game.map,
-        game.piece_pos.y as u32,
-        game.piece_pos.x as u32,
-        next_tetro,
+        &game.play_field,
+        game.piece_pos.y.try_into().unwrap(),
+        game.piece_pos.x.try_into().unwrap(),
+        next_shape,
     ) {
         game.piece_rotation = next_rotation;
     }
@@ -409,7 +424,7 @@ fn game_sim(game: &mut Game, _t: f64, dt: f64, _acc: f64) {
 
         let t = piece_tetro(game.piece, game.piece_rotation);
         let bottom = game.piece_pos.y + t.height as i32;
-        if bottom as usize == game.map.len() {
+        if bottom as usize == game.play_field.matrix.len() {
             // we are already on the floor so leave us and create a new piece
 
             // overlay the shape + position onto the map
@@ -457,8 +472,9 @@ fn collission_matrix(map: &Map, y: u32, x: u32, tetro: &Tetromino) -> bool {
     false
 }
 
-fn has_collission(map: &Map, y: u32, x: u32, tetro: &Tetromino) -> bool {
-    return collission_matrix(map, y, x, tetro);
+fn has_collission(pf: &PlayField, y: usize, x: usize, shape: &playfield::Shape) -> bool {
+    return pf.collission_matrix(x, y, shape);
+    // return collission_matrix(map, y, x, tetro);
 }
 
 fn left(game: &mut Game) {
@@ -468,7 +484,7 @@ fn left(game: &mut Game) {
 }
 
 fn right(game: &mut Game) {
-    if game.piece_pos.x < game.map[0].len() as i32 - (game.tetromino().width as i32) {
+    if game.piece_pos.x < game.play_field.matrix[0].len() as i32 - (game.tetromino().width as i32) {
         game.piece_pos.x += 1;
     }
 }
@@ -478,7 +494,7 @@ fn down(game: &mut Game) {
         game.piece_pos.y += 1;
     }
     let bottom = game.piece_pos.y + game.tetromino().height as i32;
-    if bottom < game.map.len() as i32 {}
+    if bottom < game.play_field.matrix.len() as i32 {}
 }
 
 fn render_fps(canvas: &mut Canvas<Window>, font: &Font, fps: f64, lc: usize) {

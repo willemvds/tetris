@@ -14,7 +14,7 @@ type Form = [[u8; 4]; 4];
 #[derive(Debug)]
 pub struct Tetromino {
     pub kind: Kind,
-    forms: [Form; 4],
+    pub forms: [Form; 4],
 }
 
 #[rustfmt::skip]
