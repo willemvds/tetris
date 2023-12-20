@@ -199,7 +199,7 @@ fn draw_shape(canvas: &mut Canvas<Window>, s: Shape, colour: Color, size: i32, x
             if s[row][col] == 0 {
                 continue;
             }
-            canvas.fill_rect(Rect::new(
+            let _ = canvas.fill_rect(Rect::new(
                 x + (col as i32 * size),
                 y + (row as i32 * size),
                 size as u32,
@@ -281,7 +281,7 @@ fn draw_map(canvas: &mut Canvas<Window>, map: &Map) {
     for row in 0..map.len() {
         for col in 0..map[row].len() {
             canvas.set_draw_color(Color::RGB(20, 20, 20));
-            canvas.draw_rect(Rect::new(
+            let _ = canvas.draw_rect(Rect::new(
                 start_x + (col as i32 * size),
                 start_y + (row as i32 * size),
                 size as u32,
@@ -292,7 +292,7 @@ fn draw_map(canvas: &mut Canvas<Window>, map: &Map) {
                 continue;
             }
             canvas.set_draw_color((&map[row][col]).color());
-            canvas.fill_rect(Rect::new(
+            let _ = canvas.fill_rect(Rect::new(
                 start_x + (col as i32 * size),
                 start_y + (row as i32 * size),
                 size as u32,
@@ -302,7 +302,7 @@ fn draw_map(canvas: &mut Canvas<Window>, map: &Map) {
     }
 
     canvas.set_draw_color(Color::RGB(72, 72, 72));
-    canvas.draw_rect(Rect::new(start_x, start_y, width, height));
+    let _ = canvas.draw_rect(Rect::new(start_x, start_y, width, height));
 }
 
 fn draw_game(canvas: &mut Canvas<Window>, game: &Game) {
@@ -500,7 +500,7 @@ fn render_fps(canvas: &mut Canvas<Window>, font: &Font, fps: f64, lc: usize) {
 
     let fps_target = Rect::new(0, 0, 180, 80);
 
-    canvas.copy(&fps_tex, None, Some(fps_target));
+    let _ = canvas.copy(&fps_tex, None, Some(fps_target));
 
     let surface2 = font
         .render(format!("lines cleared: {}", lc).as_str())
@@ -514,7 +514,7 @@ fn render_fps(canvas: &mut Canvas<Window>, font: &Font, fps: f64, lc: usize) {
 
     let fps_target2 = Rect::new(0, 80, 280, 80);
 
-    canvas.copy(&fps_tex2, None, Some(fps_target2));
+    let _ = canvas.copy(&fps_tex2, None, Some(fps_target2));
 }
 
 fn main() -> Result<(), String> {
