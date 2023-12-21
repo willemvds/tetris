@@ -3,6 +3,7 @@ type Map = Vec<Vec<Location>>;
 use std::thread;
 
 mod types;
+use tetrominos::Kind;
 use types::*;
 
 mod playfield;
@@ -78,14 +79,17 @@ impl Location {
     fn color(self) -> Color {
         match self {
             Location::Empty => Color::RGB(0, 0, 0),
-            default => Color::RGB(3, 3, 3),
-            //            Location::Straight => Color::RGB(99, 196, 234),
-            //            Location::Square => Color::RGB(241, 212, 72),
-            //            Location::T => Color::RGB(161, 82, 153),
-            //            Location::L => Color::RGB(224, 127, 58),
-            //            Location::Skew => Color::RGB(100, 180, 82),
-            //            Location::J => Color::RGB(92, 101, 168),
-            //            Location::Z => Color::RGB(220, 58, 53),
+            Location::Edge => Color::RGB(200, 200, 200),
+            Location::Filled(k) => match k {
+                //                Color::RGB(3, 3, 3),
+                Kind::Stick => Color::RGB(99, 196, 234),
+                Kind::Square => Color::RGB(241, 212, 72),
+                Kind::Pyramid => Color::RGB(161, 82, 153),
+                Kind::Seven => Color::RGB(224, 127, 58),
+                Kind::Snake => Color::RGB(100, 180, 82),
+                Kind::Hook => Color::RGB(92, 101, 168),
+                Kind::Zig => Color::RGB(220, 58, 53),
+            },
         }
     }
 }

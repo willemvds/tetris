@@ -3,6 +3,7 @@ use crate::tetrominos;
 #[derive(Debug, Copy, Clone, PartialEq)]
 pub enum Location {
     Empty,
+    Edge,
     Filled(tetrominos::Kind),
 }
 
@@ -18,11 +19,19 @@ pub struct PlayField {
 
 impl PlayField {
     pub fn new(rows: usize, cols: usize) -> PlayField {
-        PlayField {
+        let mut pf = PlayField {
             cols: cols + 4, // We have 1 extra column to the left and 3 extra columns to the right
-            rows: rows,
-            matrix: vec![vec![Location::Empty; cols]; rows],
+            rows: rows + 1, // We have 1 extra row at the bottom
+            matrix: vec![vec![Location::Edge; cols + 4]; rows + 1],
+        };
+
+        for row in 0..rows {
+            for col in 1..cols + 1 {
+                pf.matrix[row][col] = Location::Empty;
+            }
         }
+
+        pf
     }
 
     pub fn collission_matrix(&self, x: usize, y: usize, shape: &Shape) -> bool {
@@ -41,7 +50,7 @@ impl PlayField {
                 total += shape[row][col]
                     & match self.matrix[y + row][x + col] {
                         Location::Empty => 0,
-                        Location::Filled(_) => 1,
+                        _default => 1,
                     }
             }
         }
