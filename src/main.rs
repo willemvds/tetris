@@ -44,18 +44,6 @@ struct Position {
 
 const CELL_SIZE: i32 = 44;
 
-//#[derive(Debug, Copy, Clone, PartialEq)]
-//enum Location {
-//    Empty,
-//    Straight,
-//    Square,
-//    T,
-//    L,
-//    Skew,
-//    J,
-//    Z,
-//}
-
 fn tetromino_colour(kind: tetrominos::Kind) -> pixels::Color {
     match kind {
         tetrominos::Kind::Hook => Color::RGB(92, 101, 168),
@@ -68,20 +56,12 @@ fn tetromino_colour(kind: tetrominos::Kind) -> pixels::Color {
     }
 }
 
-// Color::RGB(99, 196, 234) - straight
-// Color::RGB(92, 101, 168) - j
-// Color::RGB(224, 127, 58) - l
-// Color::RGB(241, 212, 72) - square
-// Color::RGB(100, 180, 82) - skew
-// Color::RGB(161, 82, 153) - t/pyramid
-// Color::RGB(220, 58, 53) - z
 impl Location {
     fn color(self) -> Color {
         match self {
             Location::Empty => Color::RGB(0, 0, 0),
             Location::Edge => Color::RGB(200, 200, 200),
             Location::Filled(k) => match k {
-                //                Color::RGB(3, 3, 3),
                 Kind::Stick => Color::RGB(99, 196, 234),
                 Kind::Square => Color::RGB(241, 212, 72),
                 Kind::Pyramid => Color::RGB(161, 82, 153),
