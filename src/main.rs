@@ -2,17 +2,18 @@ type Map = Vec<Vec<Location>>;
 
 use std::thread;
 
-mod types;
+//mod types;
 use tetrominos::Kind;
-use types::*;
+//use types::*;
 
 mod playfield;
 use playfield::Location;
 use playfield::PlayField;
 use playfield::Shape;
 
-mod pieces;
-use pieces::J_PIECE;
+//mod pieces;
+//use pieces::J_PIECE;
+use tetrominos::Tetromino;
 
 mod tetrominos;
 
@@ -76,22 +77,22 @@ impl Location {
 
 const NUM_PIECES: u8 = 7;
 
-fn rand_piece() -> &'static Piece {
+fn rand_tetromino() -> &'static tetrominos::Tetromino {
     let mut rng = rand::thread_rng();
     let n1: u8 = rng.gen_range(0..NUM_PIECES);
 
-    let p = match n1 {
-        0 => &STRAIGHT_PIECE,
-        1 => &SQUARE_PIECE,
-        2 => &L_PIECE,
-        3 => &SKEW_PIECE,
-        4 => &T_PIECE,
-        5 => &J_PIECE,
-        6 => &Z_PIECE,
-        _ => panic!("rand_piece BAD"),
+    let t = match n1 {
+        0 => tetrominos::from_kind(tetrominos::Kind::Stick),
+        1 => tetrominos::from_kind(tetrominos::Kind::Square),
+        2 => tetrominos::from_kind(tetrominos::Kind::Pyramid),
+        3 => tetrominos::from_kind(tetrominos::Kind::Seven),
+        4 => tetrominos::from_kind(tetrominos::Kind::Snake),
+        5 => tetrominos::from_kind(tetrominos::Kind::Hook),
+        6 => tetrominos::from_kind(tetrominos::Kind::Zig),
+        _ => panic!("BAD ROBIT"),
     };
 
-    p
+    t
 }
 
 fn new_map(cols: usize, rows: usize) -> Map {
@@ -103,9 +104,9 @@ struct Game<'g> {
     paused: bool,
     //    map: Map,
     play_field: PlayField,
-    next_piece: &'g Piece,
-    piece_bag: Vec<&'static Piece>,
-    piece: &'g Piece,
+    next_piece: &'g Tetromino,
+    piece_bag: Vec<&'static Tetromino>,
+    piece: &'g Tetromino,
     piece_pos: Position,
     piece_creep: f64,
     piece_rotation: usize,
@@ -113,18 +114,16 @@ struct Game<'g> {
     score_lines_cleared: usize,
 }
 
-fn new_piece_bag() -> Vec<&'static Piece> {
-    let piece_bag = vec![
-        &STRAIGHT_PIECE,
-        &SQUARE_PIECE,
-        &L_PIECE,
-        &SKEW_PIECE,
-        &T_PIECE,
-        &J_PIECE,
-        &Z_PIECE,
+fn new_tetromino_bag() -> Vec<&'static Tetromino> {
+    return vec![
+        tetrominos::from_kind(Kind::Stick),
+        tetrominos::from_kind(Kind::Square),
+        tetrominos::from_kind(Kind::Pyramid),
+        tetrominos::from_kind(Kind::Seven),
+        tetrominos::from_kind(Kind::Snake),
+        tetrominos::from_kind(Kind::Hook),
+        tetrominos::from_kind(Kind::Zig),
     ];
-
-    return piece_bag;
 }
 
 impl<'g> Game<'g> {
@@ -135,9 +134,9 @@ impl<'g> Game<'g> {
             //            map: new_map(10, 24),
             play_field: PlayField::new(24, 10),
 
-            piece: rand_piece(),
-            next_piece: rand_piece(),
-            piece_bag: new_piece_bag(),
+            piece: rand_tetromino(),
+            next_piece: rand_tetromino(),
+            piece_bag: new_tetromino_bag(),
 
             piece_pos: Position { x: 4, y: 0 },
             piece_creep: 0.0,
@@ -145,10 +144,6 @@ impl<'g> Game<'g> {
 
             score_lines_cleared: 0,
         }
-    }
-
-    fn tetromino(&self) -> &Tetromino {
-        piece_tetro(self.piece, self.piece_rotation)
     }
 
     fn speed_up(&mut self) {
@@ -161,9 +156,9 @@ impl<'g> Game<'g> {
         println!("NEW SPEED is {}", self.speed);
     }
 
-    fn grab_piece(&mut self) -> &'static Piece {
+    fn grab_piece(&mut self) -> &'static Tetromino {
         if self.piece_bag.len() == 0 {
-            self.piece_bag = new_piece_bag();
+            self.piece_bag = new_tetromino_bag();
         }
 
         let mut rng = rand::thread_rng();
@@ -200,63 +195,45 @@ fn draw_shape(canvas: &mut Canvas<Window>, s: Shape, colour: Color, size: i32, x
 // Color::RGB(161, 82, 153) - t/pyramid
 // Color::RGB(220, 58, 53) - z
 
-fn piece_colour(p: &Piece) -> Color {
-    match p {
-        Piece::Straight(_) => Color::RGB(99, 196, 234),
-        Piece::Square(_) => Color::RGB(241, 212, 72),
-        Piece::L(_) => Color::RGB(224, 127, 58),
-        Piece::Skew(_) => Color::RGB(100, 180, 82),
-        Piece::T(_) => Color::RGB(161, 82, 153),
-        Piece::J(_) => Color::RGB(92, 101, 168),
-        Piece::Z(_) => Color::RGB(220, 58, 53),
+fn piece_location(k: Kind) -> Location {
+    match k {
+        Kind::Stick => Location::Filled(tetrominos::Kind::Stick),
+        Kind::Square => Location::Filled(tetrominos::Kind::Square),
+        Kind::Seven => Location::Filled(tetrominos::Kind::Seven),
+        Kind::Snake => Location::Filled(tetrominos::Kind::Snake),
+        Kind::Pyramid => Location::Filled(tetrominos::Kind::Pyramid),
+        Kind::Hook => Location::Filled(tetrominos::Kind::Hook),
+        Kind::Zig => Location::Filled(tetrominos::Kind::Zig),
     }
 }
 
-fn piece_location(p: &Piece) -> Location {
-    match p {
-        Piece::Straight(_) => Location::Filled(tetrominos::Kind::Stick),
-        Piece::Square(_) => Location::Filled(tetrominos::Kind::Square),
-        Piece::L(_) => Location::Filled(tetrominos::Kind::Seven),
-        Piece::Skew(_) => Location::Filled(tetrominos::Kind::Snake),
-        Piece::T(_) => Location::Filled(tetrominos::Kind::Pyramid),
-        Piece::J(_) => Location::Filled(tetrominos::Kind::Hook),
-        Piece::Z(_) => Location::Filled(tetrominos::Kind::Zig),
-    }
+fn piece_shape(k: Kind, rot: usize) -> &'static Shape {
+    let t = tetrominos::from_kind(k);
+
+    return &t.forms[rot];
 }
 
-fn piece_shape(p: &Piece, rot: usize) -> &Shape {
-    match p {
-        Piece::Straight(sp) => &tetrominos::from_kind(tetrominos::Kind::Stick).forms[rot],
-        Piece::Square(sp) => &tetrominos::from_kind(tetrominos::Kind::Square).forms[rot],
-        Piece::L(lp) => &tetrominos::from_kind(tetrominos::Kind::Seven).forms[rot],
-        Piece::Skew(sp) => &tetrominos::from_kind(tetrominos::Kind::Stick).forms[rot],
-        Piece::T(tp) => &tetrominos::from_kind(tetrominos::Kind::Pyramid).forms[rot],
-        Piece::J(jp) => &tetrominos::from_kind(tetrominos::Kind::Hook).forms[rot],
-        Piece::Z(zp) => &tetrominos::from_kind(tetrominos::Kind::Zig).forms[rot],
-    }
-}
+//fn piece_tetro(p: &Piece, rot: usize) -> &Tetromino {
+//    match p {
+//        Piece::Straight(sp) => &(sp.tetros[rot]),
+//        Piece::Square(sp) => &(sp.tetros[rot]),
+//        Piece::L(lp) => &(lp.tetros[rot]),
+//        Piece::Skew(sp) => &(sp.tetros[rot]),
+//        Piece::T(tp) => &(tp.tetros[rot]),
+//        Piece::J(jp) => &(jp.tetros[rot]),
+//        Piece::Z(zp) => &(zp.tetros[rot]),
+//    }
+//}
 
-fn piece_tetro(p: &Piece, rot: usize) -> &Tetromino {
-    match p {
-        Piece::Straight(sp) => &(sp.tetros[rot]),
-        Piece::Square(sp) => &(sp.tetros[rot]),
-        Piece::L(lp) => &(lp.tetros[rot]),
-        Piece::Skew(sp) => &(sp.tetros[rot]),
-        Piece::T(tp) => &(tp.tetros[rot]),
-        Piece::J(jp) => &(jp.tetros[rot]),
-        Piece::Z(zp) => &(zp.tetros[rot]),
-    }
-}
-
-fn draw_piece(canvas: &mut Canvas<Window>, piece: &Piece, pos: &Position, rot: usize) {
+fn draw_piece(canvas: &mut Canvas<Window>, t: &Tetromino, pos: &Position, rot: usize) {
     let size = CELL_SIZE as i32;
     let start_x: i32 = (SCREEN_WIDTH as i32 - (CELL_SIZE * 10)) / 2;
     let start_y: i32 = 1;
 
     draw_shape(
         canvas,
-        *piece_shape(piece, rot),
-        piece_colour(piece),
+        *piece_shape(t.kind, rot),
+        tetromino_colour(t.kind),
         size,
         start_x + (pos.x * size),
         start_y + (pos.y * size),
@@ -309,8 +286,9 @@ fn imprint_piece(game: &mut Game) {
 
     for r in 0..4 {
         for c in 0..4 {
-            if piece_shape(game.piece, game.piece_rotation)[r][c] == 1 {
-                game.play_field.matrix[r + r_offset][c + c_offset] = piece_location(&game.piece);
+            if piece_shape(game.piece.kind, game.piece_rotation)[r][c] == 1 {
+                game.play_field.matrix[r + r_offset][c + c_offset] =
+                    piece_location(game.piece.kind);
             }
         }
     }
@@ -348,9 +326,9 @@ fn drop_fast(game: &mut Game) {
 fn can_fall(game: &mut Game) -> bool {
     return !has_collission(
         &game.play_field,
-        (game.piece_pos.y).try_into().unwrap(),
+        (game.piece_pos.y + 1).try_into().unwrap(),
         (game.piece_pos.x).try_into().unwrap(),
-        piece_shape(game.piece, game.piece_rotation),
+        piece_shape(game.piece.kind, game.piece_rotation),
     );
 }
 
@@ -384,9 +362,12 @@ fn next_piece(game: &mut Game) {
 }
 
 fn rotate(game: &mut Game) {
-    let next_rotation = game.piece.rotation_after(game.piece_rotation);
+    let mut next_rotation = game.piece_rotation + 1;
+    if next_rotation >= 4 {
+        next_rotation = 0;
+    }
     //    let next_tetro = game.piece.tetro(next_rotation);
-    let next_shape = piece_shape(&game.piece, next_rotation);
+    let next_shape = piece_shape(game.piece.kind, next_rotation);
 
     if !has_collission(
         &game.play_field,
@@ -406,8 +387,8 @@ fn game_sim(game: &mut Game, _t: f64, dt: f64, _acc: f64) {
         // move the piece
         game.piece_creep = 0.0;
 
-        let t = piece_tetro(game.piece, game.piece_rotation);
-        let bottom = game.piece_pos.y + t.height as i32;
+        //        let t = piece_tetro(game.piece, game.piece_rotation);
+        let bottom = game.piece_pos.y + 4;
         if bottom as usize == game.play_field.matrix.len() {
             // we are already on the floor so leave us and create a new piece
 
@@ -431,8 +412,8 @@ fn game_sim(game: &mut Game, _t: f64, dt: f64, _acc: f64) {
 }
 
 fn collission_matrix(map: &Map, y: u32, x: u32, tetro: &Tetromino) -> bool {
-    let width = tetro.width as u32;
-    let height = tetro.height as u32;
+    let width = 4; //tetro.width as u32;
+    let height = 4; //tetro.height as u32;
 
     if y + height > map.len() as u32 {
         return true;
@@ -444,7 +425,7 @@ fn collission_matrix(map: &Map, y: u32, x: u32, tetro: &Tetromino) -> bool {
 
     for r in 0..height {
         for c in 0..width {
-            if tetro.shape[r as usize][c as usize] == 0 {
+            if tetro.forms[0][r as usize][c as usize] == 0 {
                 continue;
             }
             if map[(y + r) as usize][(x + c) as usize] != Location::Empty {
@@ -462,22 +443,22 @@ fn has_collission(pf: &PlayField, y: usize, x: usize, shape: &playfield::Shape) 
 }
 
 fn left(game: &mut Game) {
-    if game.piece_pos.x > 0 {
-        game.piece_pos.x -= 1;
-    }
+    //    if game.piece_pos.x > 1 {
+    game.piece_pos.x -= 1;
+    //    }
 }
 
 fn right(game: &mut Game) {
-    if game.piece_pos.x < game.play_field.matrix[0].len() as i32 - (game.tetromino().width as i32) {
-        game.piece_pos.x += 1;
-    }
+    //    if game.piece_pos.x < game.play_field.matrix[0].len() as i32 - (game.tetromino().width as i32) {
+    game.piece_pos.x += 1;
+    //    }
 }
 
 fn down(game: &mut Game) {
     if can_fall(game) {
         game.piece_pos.y += 1;
     }
-    let bottom = game.piece_pos.y + game.tetromino().height as i32;
+    let bottom = game.piece_pos.y + 4;
     if bottom < game.play_field.matrix.len() as i32 {}
 }
 
@@ -641,8 +622,8 @@ fn main() -> Result<(), String> {
 
         draw_shape(
             &mut canvas,
-            piece_tetro(&game.next_piece, 0).shape,
-            piece_colour(&game.next_piece),
+            *piece_shape(game.next_piece.kind, 0),
+            tetromino_colour(game.next_piece.kind),
             CELL_SIZE,
             1200,
             100,
