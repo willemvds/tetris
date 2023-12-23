@@ -417,14 +417,6 @@ fn right(game: &mut Game) {
     //    }
 }
 
-fn down(game: &mut Game) {
-    if can_fall(game) {
-        game.piece_pos.y += 1;
-    }
-    let bottom = game.piece_pos.y + 4;
-    if bottom < game.play_field.matrix.len() as i32 {}
-}
-
 fn render_fps(canvas: &mut Canvas<Window>, font: &Font, fps: f64, lc: usize) {
     let texture_creator = canvas.texture_creator();
 
