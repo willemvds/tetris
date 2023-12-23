@@ -1,18 +1,12 @@
-type Map = Vec<Vec<Location>>;
-
 use std::thread;
 
-//mod types;
 use tetrominos::Kind;
-//use types::*;
 
 mod playfield;
 use playfield::Location;
 use playfield::PlayField;
 use playfield::Shape;
 
-//mod pieces;
-//use pieces::J_PIECE;
 use tetrominos::Tetromino;
 
 mod tetrominos;
@@ -95,14 +89,9 @@ fn rand_tetromino() -> &'static tetrominos::Tetromino {
     t
 }
 
-fn new_map(cols: usize, rows: usize) -> Map {
-    vec![vec![Location::Empty; cols]; rows]
-}
-
 struct Game<'g> {
     speed: f64,
     paused: bool,
-    //    map: Map,
     play_field: PlayField,
     next_piece: &'g Tetromino,
     piece_bag: Vec<&'static Tetromino>,
@@ -409,32 +398,6 @@ fn game_sim(game: &mut Game, _t: f64, dt: f64, _acc: f64) {
     }
 
     // if game.piece_pos.y < 30 {}
-}
-
-fn collission_matrix(map: &Map, y: u32, x: u32, tetro: &Tetromino) -> bool {
-    let width = 4; //tetro.width as u32;
-    let height = 4; //tetro.height as u32;
-
-    if y + height > map.len() as u32 {
-        return true;
-    }
-
-    if x + width > map[0].len() as u32 {
-        return true;
-    }
-
-    for r in 0..height {
-        for c in 0..width {
-            if tetro.forms[0][r as usize][c as usize] == 0 {
-                continue;
-            }
-            if map[(y + r) as usize][(x + c) as usize] != Location::Empty {
-                return true;
-            }
-        }
-    }
-
-    false
 }
 
 fn has_collission(pf: &PlayField, y: usize, x: usize, shape: &playfield::Shape) -> bool {
