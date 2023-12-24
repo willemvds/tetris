@@ -11,6 +11,9 @@ use tetrominos::Tetromino;
 
 mod tetrominos;
 
+mod game;
+use game::Game;
+
 extern crate sdl2;
 
 // use std::mem;
@@ -30,12 +33,6 @@ use sdl2::video::Window;
 
 const SCREEN_WIDTH: u32 = 1800;
 const SCREEN_HEIGHT: u32 = 1200;
-
-#[derive(Debug)]
-struct Position {
-    x: i32,
-    y: i32,
-}
 
 const CELL_SIZE: i32 = 44;
 
@@ -70,94 +67,6 @@ impl Location {
 }
 
 const NUM_PIECES: u8 = 7;
-
-fn rand_tetromino() -> &'static tetrominos::Tetromino {
-    let mut rng = rand::thread_rng();
-    let n1: u8 = rng.gen_range(0..NUM_PIECES);
-
-    let t = match n1 {
-        0 => tetrominos::from_kind(tetrominos::Kind::Stick),
-        1 => tetrominos::from_kind(tetrominos::Kind::Square),
-        2 => tetrominos::from_kind(tetrominos::Kind::Pyramid),
-        3 => tetrominos::from_kind(tetrominos::Kind::Seven),
-        4 => tetrominos::from_kind(tetrominos::Kind::Snake),
-        5 => tetrominos::from_kind(tetrominos::Kind::Hook),
-        6 => tetrominos::from_kind(tetrominos::Kind::Zig),
-        _ => panic!("BAD ROBIT"),
-    };
-
-    t
-}
-
-struct Game<'g> {
-    speed: f64,
-    paused: bool,
-    play_field: PlayField,
-    next_piece: &'g Tetromino,
-    piece_bag: Vec<&'static Tetromino>,
-    piece: &'g Tetromino,
-    piece_pos: Position,
-    piece_creep: f64,
-    piece_rotation: usize,
-
-    score_lines_cleared: usize,
-}
-
-fn new_tetromino_bag() -> Vec<&'static Tetromino> {
-    return vec![
-        tetrominos::from_kind(Kind::Stick),
-        tetrominos::from_kind(Kind::Square),
-        tetrominos::from_kind(Kind::Pyramid),
-        tetrominos::from_kind(Kind::Seven),
-        tetrominos::from_kind(Kind::Snake),
-        tetrominos::from_kind(Kind::Hook),
-        tetrominos::from_kind(Kind::Zig),
-    ];
-}
-
-impl<'g> Game<'g> {
-    fn new() -> Game<'g> {
-        Game {
-            speed: 30.0,
-            paused: false,
-            //            map: new_map(10, 24),
-            play_field: PlayField::new(24, 10),
-
-            piece: rand_tetromino(),
-            next_piece: rand_tetromino(),
-            piece_bag: new_tetromino_bag(),
-
-            piece_pos: Position { x: 4, y: 0 },
-            piece_creep: 0.0,
-            piece_rotation: 0,
-
-            score_lines_cleared: 0,
-        }
-    }
-
-    fn speed_up(&mut self) {
-        self.speed -= 4.0;
-        println!("NEW SPEED is {}", self.speed);
-    }
-
-    fn speed_down(&mut self) {
-        self.speed += 4.0;
-        println!("NEW SPEED is {}", self.speed);
-    }
-
-    fn grab_piece(&mut self) -> &'static Tetromino {
-        if self.piece_bag.len() == 0 {
-            self.piece_bag = new_tetromino_bag();
-        }
-
-        let mut rng = rand::thread_rng();
-        let n1: usize = rng.gen_range(0..self.piece_bag.len());
-
-        let p = self.piece_bag.swap_remove(n1);
-
-        p
-    }
-}
 
 fn draw_shape(canvas: &mut Canvas<Window>, s: Shape, colour: Color, size: i32, x: i32, y: i32) {
     canvas.set_draw_color(colour);
@@ -214,7 +123,7 @@ fn piece_shape(k: Kind, rot: usize) -> &'static Shape {
 //    }
 //}
 
-fn draw_piece(canvas: &mut Canvas<Window>, t: &Tetromino, pos: &Position, rot: usize) {
+fn draw_piece(canvas: &mut Canvas<Window>, t: &Tetromino, pos: &game::Position, rot: usize) {
     let size = CELL_SIZE as i32;
     let start_x: i32 = (SCREEN_WIDTH as i32 - (CELL_SIZE * 10)) / 2;
     let start_y: i32 = 1;
