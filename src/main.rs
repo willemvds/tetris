@@ -20,8 +20,6 @@ extern crate sdl2;
 use std::time::Duration;
 use std::time::Instant;
 
-use rand::Rng;
-
 use sdl2::event::Event;
 use sdl2::keyboard::Keycode;
 use sdl2::pixels;
@@ -66,8 +64,6 @@ impl Location {
     }
 }
 
-const NUM_PIECES: u8 = 7;
-
 fn draw_shape(canvas: &mut Canvas<Window>, s: Shape, colour: Color, size: i32, x: i32, y: i32) {
     canvas.set_draw_color(colour);
     for row in 0..4 {
@@ -110,18 +106,6 @@ fn piece_shape(k: Kind, rot: usize) -> &'static Shape {
 
     return &t.forms[rot];
 }
-
-//fn piece_tetro(p: &Piece, rot: usize) -> &Tetromino {
-//    match p {
-//        Piece::Straight(sp) => &(sp.tetros[rot]),
-//        Piece::Square(sp) => &(sp.tetros[rot]),
-//        Piece::L(lp) => &(lp.tetros[rot]),
-//        Piece::Skew(sp) => &(sp.tetros[rot]),
-//        Piece::T(tp) => &(tp.tetros[rot]),
-//        Piece::J(jp) => &(jp.tetros[rot]),
-//        Piece::Z(zp) => &(zp.tetros[rot]),
-//    }
-//}
 
 fn draw_piece(canvas: &mut Canvas<Window>, t: &Tetromino, pos: &game::Position, rot: usize) {
     let size = CELL_SIZE as i32;
@@ -469,7 +453,9 @@ fn main() -> Result<(), String> {
             }
         }
 
-        acc_runs = 0;
+        if acc_runs > 1 {
+            println!("Multiple({acc_runs}) simulations during single frame.");
+        }
 
         canvas.set_draw_color(pixels::Color::RGB(0, 0, 0));
         canvas.clear();
