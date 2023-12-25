@@ -79,29 +79,6 @@ fn draw_shape(canvas: &mut Canvas<Window>, s: Shape, colour: Color, size: i32, x
     }
 }
 
-// Color::RGB(99, 196, 234) - straight
-// Color::RGB(92, 101, 168) - j
-// Color::RGB(224, 127, 58) - l
-// Color::RGB(241, 212, 72) - square
-// Color::RGB(100, 180, 82) - skew
-// Color::RGB(161, 82, 153) - t/pyramid
-// Color::RGB(220, 58, 53) - z
-
-//fn draw_piece(canvas: &mut Canvas<Window>, t: &Tetromino, pos: &game::Position, rot: usize) {
-//    let size = CELL_SIZE as i32;
-//    let start_x: i32 = (SCREEN_WIDTH as i32 - (CELL_SIZE * 10)) / 2;
-//    let start_y: i32 = 1;
-//
-//    draw_shape(
-//        canvas,
-//        game.piece.form(),
-//        tetromino_colour(t.kind),
-//        size,
-//        start_x + (pos.x as i32 * size),
-//        start_y + (pos.y as i32 * size),
-//    )
-//}
-
 fn draw_playfield(canvas: &mut Canvas<Window>, pf: &PlayField) {
     let size: i32 = CELL_SIZE;
 
