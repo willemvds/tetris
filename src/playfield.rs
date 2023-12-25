@@ -10,7 +10,7 @@ pub enum Location {
 pub type Shape = [[u8; 4]; 4];
 type Matrix = Vec<Vec<Location>>;
 
-// #[derive(Debug, Clone)]
+#[derive(Debug)]
 pub struct PlayField {
     pub cols: usize,
     pub rows: usize,
@@ -25,7 +25,7 @@ impl PlayField {
             matrix: vec![vec![Location::Edge; cols + 4]; rows + 1],
         };
 
-        for row in 0..rows {
+        for row in 0..rows - 1 {
             for col in 1..cols + 1 {
                 pf.matrix[row][col] = Location::Empty;
             }
@@ -34,21 +34,21 @@ impl PlayField {
         pf
     }
 
-    pub fn collission_matrix(&self, x: usize, y: usize, shape: &Shape) -> bool {
+    pub fn has_collission(&self, shape_y: usize, shape_x: usize, shape: &Shape) -> bool {
         let mut total: u8 = 0;
 
         for row in 0..4 {
             for col in 0..4 {
-                if row + y >= self.matrix.len() {
+                if row + shape_y >= self.matrix.len() {
                     continue;
                 }
 
-                if col + x >= self.matrix[row + y].len() {
+                if col + shape_x >= self.matrix[row + shape_y].len() {
                     continue;
                 }
 
                 total += shape[row][col]
-                    & match self.matrix[y + row][x + col] {
+                    & match self.matrix[shape_y + row][shape_x + col] {
                         Location::Empty => 0,
                         _default => 1,
                     }

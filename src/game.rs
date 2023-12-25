@@ -5,8 +5,8 @@ use rand::Rng;
 
 #[derive(Debug)]
 pub struct Position {
-    pub x: i32,
-    pub y: i32,
+    pub x: usize,
+    pub y: usize,
 }
 
 pub struct Game<'g> {

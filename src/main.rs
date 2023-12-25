@@ -117,8 +117,8 @@ fn draw_piece(canvas: &mut Canvas<Window>, t: &Tetromino, pos: &game::Position, 
         *piece_shape(t.kind, rot),
         tetromino_colour(t.kind),
         size,
-        start_x + (pos.x * size),
-        start_y + (pos.y * size),
+        start_x + (pos.x as i32 * size),
+        start_y + (pos.y as i32 * size),
     )
 }
 
@@ -177,15 +177,16 @@ fn imprint_piece(game: &mut Game) {
 }
 
 fn clear_full_rows(game: &mut Game) {
-    for r in 0..game.play_field.matrix.len() {
+//    return;
+    for r in 0..game.play_field.matrix.len()-1 {
         let mut col_count = 0;
-        for c in 0..game.play_field.matrix[r].len() {
+        for c in 1..game.play_field.matrix[r].len()-3 {
             if game.play_field.matrix[r][c] != Location::Empty {
                 col_count += 1;
             }
         }
-        if col_count == game.play_field.matrix[r].len() {
-            for x in 0..game.play_field.matrix[r].len() {
+        if col_count == game.play_field.matrix[r].len() - 4 {
+            for x in 1..game.play_field.matrix[r].len()-3 {
                 game.play_field.matrix[r][x] = Location::Empty;
             }
             game.score_lines_cleared += 1;
@@ -206,18 +207,17 @@ fn drop_fast(game: &mut Game) {
 }
 
 fn can_fall(game: &mut Game) -> bool {
-    return !has_collission(
-        &game.play_field,
-        (game.piece_pos.y + 1).try_into().unwrap(),
-        (game.piece_pos.x).try_into().unwrap(),
+    return !game.play_field.has_collission(
+        game.piece_pos.y + 1,
+        game.piece_pos.x,
         piece_shape(game.piece.kind, game.piece_rotation),
     );
 }
 
 fn collapse(game: &mut Game) {
-    for r in (0..game.play_field.matrix.len()).rev() {
+    for r in (0..game.play_field.matrix.len()-1).rev() {
         let mut has_block = false;
-        for c in 0..game.play_field.matrix[r].len() {
+        for c in 1..game.play_field.matrix[r].len()-3 {
             if game.play_field.matrix[r][c] != Location::Empty {
                 has_block = true;
                 break;
@@ -226,7 +226,7 @@ fn collapse(game: &mut Game) {
 
         if !has_block {
             for ir in (1..=r).rev() {
-                for c in 0..game.play_field.matrix[0].len() {
+                for c in 1..game.play_field.matrix[0].len()-3 {
                     game.play_field.matrix[ir][c] = game.play_field.matrix[ir - 1][c];
                 }
             }
@@ -251,12 +251,10 @@ fn rotate(game: &mut Game) {
     //    let next_tetro = game.piece.tetro(next_rotation);
     let next_shape = piece_shape(game.piece.kind, next_rotation);
 
-    if !has_collission(
-        &game.play_field,
-        game.piece_pos.y.try_into().unwrap(),
-        game.piece_pos.x.try_into().unwrap(),
-        next_shape,
-    ) {
+    if !game
+        .play_field
+        .has_collission(game.piece_pos.y, game.piece_pos.x, next_shape)
+    {
         game.piece_rotation = next_rotation;
     }
 }
@@ -293,21 +291,28 @@ fn game_sim(game: &mut Game, _t: f64, dt: f64, _acc: f64) {
     // if game.piece_pos.y < 30 {}
 }
 
-fn has_collission(pf: &PlayField, y: usize, x: usize, shape: &playfield::Shape) -> bool {
-    return pf.collission_matrix(x, y, shape);
-    // return collission_matrix(map, y, x, tetro);
-}
-
 fn left(game: &mut Game) {
-    //    if game.piece_pos.x > 1 {
-    game.piece_pos.x -= 1;
-    //    }
+    if game.piece_pos.x == 0 {
+        return;
+    }
+
+    if !game.play_field.has_collission(
+        game.piece_pos.y,
+        game.piece_pos.x - 1,
+        piece_shape(game.piece.kind, game.piece_rotation),
+    ) {
+        game.piece_pos.x -= 1;
+    }
 }
 
 fn right(game: &mut Game) {
-    //    if game.piece_pos.x < game.play_field.matrix[0].len() as i32 - (game.tetromino().width as i32) {
-    game.piece_pos.x += 1;
-    //    }
+    if !game.play_field.has_collission(
+        game.piece_pos.y,
+        game.piece_pos.x + 1,
+        piece_shape(game.piece.kind, game.piece_rotation),
+    ) {
+        game.piece_pos.x += 1;
+    }
 }
 
 fn render_fps(canvas: &mut Canvas<Window>, font: &Font, fps: f64, lc: usize) {
