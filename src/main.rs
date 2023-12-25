@@ -7,8 +7,6 @@ use playfield::Location;
 use playfield::PlayField;
 use playfield::Shape;
 
-use tetrominos::Tetromino;
-
 mod tetrominos;
 
 mod game;
@@ -89,38 +87,20 @@ fn draw_shape(canvas: &mut Canvas<Window>, s: Shape, colour: Color, size: i32, x
 // Color::RGB(161, 82, 153) - t/pyramid
 // Color::RGB(220, 58, 53) - z
 
-fn piece_location(k: Kind) -> Location {
-    match k {
-        Kind::Stick => Location::Filled(tetrominos::Kind::Stick),
-        Kind::Square => Location::Filled(tetrominos::Kind::Square),
-        Kind::Seven => Location::Filled(tetrominos::Kind::Seven),
-        Kind::Snake => Location::Filled(tetrominos::Kind::Snake),
-        Kind::Pyramid => Location::Filled(tetrominos::Kind::Pyramid),
-        Kind::Hook => Location::Filled(tetrominos::Kind::Hook),
-        Kind::Zig => Location::Filled(tetrominos::Kind::Zig),
-    }
-}
-
-fn piece_shape(k: Kind, rot: usize) -> &'static Shape {
-    let t = tetrominos::from_kind(k);
-
-    return &t.forms[rot];
-}
-
-fn draw_piece(canvas: &mut Canvas<Window>, t: &Tetromino, pos: &game::Position, rot: usize) {
-    let size = CELL_SIZE as i32;
-    let start_x: i32 = (SCREEN_WIDTH as i32 - (CELL_SIZE * 10)) / 2;
-    let start_y: i32 = 1;
-
-    draw_shape(
-        canvas,
-        *piece_shape(t.kind, rot),
-        tetromino_colour(t.kind),
-        size,
-        start_x + (pos.x as i32 * size),
-        start_y + (pos.y as i32 * size),
-    )
-}
+//fn draw_piece(canvas: &mut Canvas<Window>, t: &Tetromino, pos: &game::Position, rot: usize) {
+//    let size = CELL_SIZE as i32;
+//    let start_x: i32 = (SCREEN_WIDTH as i32 - (CELL_SIZE * 10)) / 2;
+//    let start_y: i32 = 1;
+//
+//    draw_shape(
+//        canvas,
+//        game.piece.form(),
+//        tetromino_colour(t.kind),
+//        size,
+//        start_x + (pos.x as i32 * size),
+//        start_y + (pos.y as i32 * size),
+//    )
+//}
 
 fn draw_playfield(canvas: &mut Canvas<Window>, pf: &PlayField) {
     let size: i32 = CELL_SIZE;
@@ -160,159 +140,6 @@ fn draw_playfield(canvas: &mut Canvas<Window>, pf: &PlayField) {
 
 fn draw_game(canvas: &mut Canvas<Window>, game: &Game) {
     draw_playfield(canvas, &game.play_field);
-}
-
-fn imprint_piece(game: &mut Game) {
-    let r_offset = game.piece_pos.y as usize;
-    let c_offset = game.piece_pos.x as usize;
-
-    for r in 0..4 {
-        for c in 0..4 {
-            if piece_shape(game.piece.kind, game.piece_rotation)[r][c] == 1 {
-                game.play_field.matrix[r + r_offset][c + c_offset] =
-                    piece_location(game.piece.kind);
-            }
-        }
-    }
-}
-
-fn clear_full_rows(game: &mut Game) {
-//    return;
-    for r in 0..game.play_field.matrix.len()-1 {
-        let mut col_count = 0;
-        for c in 1..game.play_field.matrix[r].len()-3 {
-            if game.play_field.matrix[r][c] != Location::Empty {
-                col_count += 1;
-            }
-        }
-        if col_count == game.play_field.matrix[r].len() - 4 {
-            for x in 1..game.play_field.matrix[r].len()-3 {
-                game.play_field.matrix[r][x] = Location::Empty;
-            }
-            game.score_lines_cleared += 1;
-        }
-    }
-}
-
-fn drop_one(game: &mut Game) {
-    if can_fall(game) {
-        game.piece_pos.y += 1;
-    }
-}
-
-fn drop_fast(game: &mut Game) {
-    while can_fall(game) {
-        game.piece_pos.y += 1;
-    }
-}
-
-fn can_fall(game: &mut Game) -> bool {
-    return !game.play_field.has_collission(
-        game.piece_pos.y + 1,
-        game.piece_pos.x,
-        piece_shape(game.piece.kind, game.piece_rotation),
-    );
-}
-
-fn collapse(game: &mut Game) {
-    for r in (0..game.play_field.matrix.len()-1).rev() {
-        let mut has_block = false;
-        for c in 1..game.play_field.matrix[r].len()-3 {
-            if game.play_field.matrix[r][c] != Location::Empty {
-                has_block = true;
-                break;
-            }
-        }
-
-        if !has_block {
-            for ir in (1..=r).rev() {
-                for c in 1..game.play_field.matrix[0].len()-3 {
-                    game.play_field.matrix[ir][c] = game.play_field.matrix[ir - 1][c];
-                }
-            }
-        }
-    }
-}
-
-fn next_piece(game: &mut Game) {
-    game.piece = game.next_piece;
-    game.next_piece = game.grab_piece();
-    game.piece_rotation = 0;
-    game.piece_pos.x = 4;
-    game.piece_pos.y = 0;
-    game.piece_creep = 0.0;
-}
-
-fn rotate(game: &mut Game) {
-    let mut next_rotation = game.piece_rotation + 1;
-    if next_rotation >= 4 {
-        next_rotation = 0;
-    }
-    //    let next_tetro = game.piece.tetro(next_rotation);
-    let next_shape = piece_shape(game.piece.kind, next_rotation);
-
-    if !game
-        .play_field
-        .has_collission(game.piece_pos.y, game.piece_pos.x, next_shape)
-    {
-        game.piece_rotation = next_rotation;
-    }
-}
-
-fn game_sim(game: &mut Game, _t: f64, dt: f64, _acc: f64) {
-    // println!("SIMULATING GAME ENGINE... {:?} {:?} {:?}", t, dt, acc);
-
-    game.piece_creep += dt;
-    if game.piece_creep > dt * game.speed {
-        // move the piece
-        game.piece_creep = 0.0;
-
-        //        let t = piece_tetro(game.piece, game.piece_rotation);
-        let bottom = game.piece_pos.y + 4;
-        if bottom as usize == game.play_field.matrix.len() {
-            // we are already on the floor so leave us and create a new piece
-
-            // overlay the shape + position onto the map
-            imprint_piece(game);
-
-            next_piece(game);
-        } else {
-            if can_fall(game) {
-                game.piece_pos.y += 1;
-            } else {
-                imprint_piece(game);
-                next_piece(game);
-            }
-        }
-        clear_full_rows(game);
-        collapse(game);
-    }
-
-    // if game.piece_pos.y < 30 {}
-}
-
-fn left(game: &mut Game) {
-    if game.piece_pos.x == 0 {
-        return;
-    }
-
-    if !game.play_field.has_collission(
-        game.piece_pos.y,
-        game.piece_pos.x - 1,
-        piece_shape(game.piece.kind, game.piece_rotation),
-    ) {
-        game.piece_pos.x -= 1;
-    }
-}
-
-fn right(game: &mut Game) {
-    if !game.play_field.has_collission(
-        game.piece_pos.y,
-        game.piece_pos.x + 1,
-        piece_shape(game.piece.kind, game.piece_rotation),
-    ) {
-        game.piece_pos.x += 1;
-    }
 }
 
 fn render_fps(canvas: &mut Canvas<Window>, font: &Font, fps: f64, lc: usize) {
@@ -432,12 +259,12 @@ fn main() -> Result<(), String> {
                             Keycode::Space => game.paused = !game.paused,
 
                             // these are game actions and need to be handled in the game sim eventually
-                            Keycode::Kp7 => left(&mut game),
-                            Keycode::Kp9 => right(&mut game), // left
-                            Keycode::Kp4 => drop_fast(&mut game),
-                            Keycode::Kp5 => drop_one(&mut game),
-                            Keycode::Kp6 => next_piece(&mut game),
-                            Keycode::Kp8 => rotate(&mut game),
+                            Keycode::Kp7 => game.move_left(),
+                            Keycode::Kp9 => game.move_right(), // left
+                            Keycode::Kp4 => game.drop_fast(),
+                            Keycode::Kp5 => game.drop_one(),
+                            Keycode::Kp6 => game.grab_next_piece(),
+                            Keycode::Kp8 => game.rotate(),
                             Keycode::KpPlus => game.speed_up(),
                             Keycode::KpMinus => game.speed_down(),
 
@@ -446,7 +273,7 @@ fn main() -> Result<(), String> {
                     }
 
                     Event::MouseButtonDown { .. } => {
-                        next_piece(&mut game);
+                        //                        next_piece(&mut game);
                     }
 
                     _ => {}
@@ -454,7 +281,7 @@ fn main() -> Result<(), String> {
             }
 
             if !game.paused {
-                game_sim(&mut game, t, dt, accumulator);
+                game.sim(t, dt, accumulator);
             }
         }
 
@@ -468,16 +295,22 @@ fn main() -> Result<(), String> {
 
         thread::sleep(Duration::from_millis(1));
 
-        draw_piece(
+        //    let size = CELL_SIZE as i32;
+        let start_x: i32 = (SCREEN_WIDTH as i32 - (CELL_SIZE * 10)) / 2;
+        let start_y: i32 = 1;
+
+        draw_shape(
             &mut canvas,
-            &game.piece,
-            &game.piece_pos,
-            game.piece_rotation,
+            *game.piece.form(),
+            tetromino_colour(game.piece.tetromino.kind),
+            CELL_SIZE,
+            start_x + (game.piece.x as i32 * CELL_SIZE),
+            start_y + (game.piece.y as i32 * CELL_SIZE),
         );
 
         draw_shape(
             &mut canvas,
-            *piece_shape(game.next_piece.kind, 0),
+            game.next_piece.forms[0],
             tetromino_colour(game.next_piece.kind),
             CELL_SIZE,
             1200,
