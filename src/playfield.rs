@@ -1,39 +1,56 @@
 use crate::tetrominos;
 
 #[derive(Debug, Copy, Clone, PartialEq)]
-enum Location {
+pub enum Location {
     Empty,
+    Edge,
     Filled(tetrominos::Kind),
 }
 
-type Shape = [[u8; 4]; 4];
+pub type Shape = [[u8; 4]; 4];
 type Matrix = Vec<Vec<Location>>;
 
-// #[derive(Debug, Clone)]
+#[derive(Debug)]
 pub struct PlayField {
-    cols: usize,
-    rows: usize,
-    matrix: Matrix,
+    pub cols: usize,
+    pub rows: usize,
+    pub matrix: Matrix,
 }
 
 impl PlayField {
     pub fn new(rows: usize, cols: usize) -> PlayField {
-        PlayField {
+        let mut pf = PlayField {
             cols: cols + 4, // We have 1 extra column to the left and 3 extra columns to the right
-            rows: rows,
-            matrix: vec![vec![Location::Empty; cols]; rows],
+            rows: rows + 1, // We have 1 extra row at the bottom
+            matrix: vec![vec![Location::Edge; cols + 4]; rows + 1],
+        };
+
+        for row in 0..rows - 1 {
+            for col in 1..cols + 1 {
+                pf.matrix[row][col] = Location::Empty;
+            }
         }
+
+        pf
     }
 
-    pub fn collission_matrix(&self, x: usize, y: usize, shape: &Shape) -> bool {
+    pub fn has_collission(&self, shape_y: usize, shape_x: usize, shape: &Shape) -> bool {
         let mut total: u8 = 0;
 
         for row in 0..4 {
             for col in 0..4 {
+                if row + shape_y >= self.matrix.len() {
+                    continue;
+                }
+
+                if col + shape_x >= self.matrix[row + shape_y].len() {
+                    continue;
+                }
+
                 total += shape[row][col]
-                    & match self.matrix[y + row][x + col] {
+                    & match self.matrix[shape_y + row][shape_x + col] {
                         Location::Empty => 0,
-                        Location::Filled(_) => 1,
+                        _default => 1,
                     }
             }
         }
