@@ -40,10 +40,7 @@ pub struct Game {
     pub play_field: PlayField,
     pub next_piece: &'static tetrominos::Tetromino,
     pub piece_bag: Vec<&'static tetrominos::Tetromino>,
-    pub piece: Piece, //&'g tetrominos::Tetromino,
-    //    pub piece_pos: Position,
-    //    pub piece_creep: f64,
-    //    pub piece_rotation: usize,
+    pub piece: Piece,
     pub score_lines_cleared: usize,
 }
 
@@ -70,7 +67,6 @@ impl Game {
             // move the piece
             self.piece.creep = 0.0;
 
-            //        let t = piece_tetro(game.piece, game.piece_rotation);
             let bottom = self.piece.y + 4;
             if bottom as usize == self.play_field.matrix.len() {
                 // we are already on the floor so leave us and create a new piece
@@ -98,7 +94,6 @@ impl Game {
             next_rotation = 0;
         }
         let next_shape = self.piece.tetromino.forms[next_rotation as usize];
-        //        piece_shape(game.piece.kind, next_rotation);
 
         if !self.play_field.has_collission(
             self.piece.y as usize,
@@ -280,9 +275,3 @@ fn piece_location(k: tetrominos::Kind) -> playfield::Location {
         tetrominos::Kind::Zig => playfield::Location::Filled(tetrominos::Kind::Zig),
     }
 }
-
-//fn piece_shape(k: tetrominos::Kind, rot: usize) -> &'static tetrominos::Form {
-//    let t = tetrominos::from_kind(k);
-//
-//    return &t.forms[rot];
-//}
