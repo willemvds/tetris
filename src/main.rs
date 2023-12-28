@@ -3,7 +3,7 @@ use std::time;
 
 mod playfield;
 mod tetrominos;
-use tetrominos::Kind;
+//use tetrominos::Kind;
 mod game;
 
 extern crate sdl2;
@@ -38,13 +38,13 @@ impl playfield::Location {
             playfield::Location::Empty => pixels::Color::RGB(0, 0, 0),
             playfield::Location::Edge => pixels::Color::RGB(200, 200, 200),
             playfield::Location::Filled(k) => match k {
-                Kind::Stick => pixels::Color::RGB(99, 196, 234),
-                Kind::Square => pixels::Color::RGB(241, 212, 72),
-                Kind::Pyramid => pixels::Color::RGB(161, 82, 153),
-                Kind::Seven => pixels::Color::RGB(224, 127, 58),
-                Kind::Snake => pixels::Color::RGB(100, 180, 82),
-                Kind::Hook => pixels::Color::RGB(92, 101, 168),
-                Kind::Zig => pixels::Color::RGB(220, 58, 53),
+                tetrominos::Kind::Stick => pixels::Color::RGB(99, 196, 234),
+                tetrominos::Kind::Square => pixels::Color::RGB(241, 212, 72),
+                tetrominos::Kind::Pyramid => pixels::Color::RGB(161, 82, 153),
+                tetrominos::Kind::Seven => pixels::Color::RGB(224, 127, 58),
+                tetrominos::Kind::Snake => pixels::Color::RGB(100, 180, 82),
+                tetrominos::Kind::Hook => pixels::Color::RGB(92, 101, 168),
+                tetrominos::Kind::Zig => pixels::Color::RGB(220, 58, 53),
             },
         }
     }
