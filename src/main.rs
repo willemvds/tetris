@@ -3,20 +3,21 @@ use std::thread;
 use tetrominos::Kind;
 
 mod playfield;
-use playfield::Location;
-use playfield::PlayField;
-use playfield::Shape;
+//use playfield::Location;
+//use playfield::PlayField;
+//use playfield::Shape;
 
 mod tetrominos;
 
 mod game;
-use game::Game;
+//use game::Game;
 
 extern crate sdl2;
 
 // use std::mem;
-use std::time::Duration;
-use std::time::Instant;
+use std::time;
+//use std::time::Duration;
+//use std::time::Instant;
 
 use sdl2::event::Event;
 use sdl2::keyboard::Keycode;
@@ -44,12 +45,12 @@ fn tetromino_colour(kind: tetrominos::Kind) -> pixels::Color {
     }
 }
 
-impl Location {
+impl playfield::Location {
     fn color(self) -> Color {
         match self {
-            Location::Empty => Color::RGB(0, 0, 0),
-            Location::Edge => Color::RGB(200, 200, 200),
-            Location::Filled(k) => match k {
+            playfield::Location::Empty => Color::RGB(0, 0, 0),
+            playfield::Location::Edge => Color::RGB(200, 200, 200),
+            playfield::Location::Filled(k) => match k {
                 Kind::Stick => Color::RGB(99, 196, 234),
                 Kind::Square => Color::RGB(241, 212, 72),
                 Kind::Pyramid => Color::RGB(161, 82, 153),
@@ -62,7 +63,14 @@ impl Location {
     }
 }
 
-fn draw_shape(canvas: &mut Canvas<Window>, s: Shape, colour: Color, size: i32, x: i32, y: i32) {
+fn draw_shape(
+    canvas: &mut Canvas<Window>,
+    s: playfield::Shape,
+    colour: Color,
+    size: i32,
+    x: i32,
+    y: i32,
+) {
     canvas.set_draw_color(colour);
     for row in 0..4 {
         for col in 0..4 {
@@ -79,7 +87,7 @@ fn draw_shape(canvas: &mut Canvas<Window>, s: Shape, colour: Color, size: i32, x
     }
 }
 
-fn draw_playfield(canvas: &mut Canvas<Window>, pf: &PlayField) {
+fn draw_playfield(canvas: &mut Canvas<Window>, pf: &playfield::PlayField) {
     let size: i32 = CELL_SIZE;
 
     let start_x: i32 = (SCREEN_WIDTH as i32 - (CELL_SIZE * 10)) / 2;
@@ -98,7 +106,7 @@ fn draw_playfield(canvas: &mut Canvas<Window>, pf: &PlayField) {
                 size as u32,
             ));
 
-            if pf.matrix[row][col] == Location::Empty {
+            if pf.matrix[row][col] == playfield::Location::Empty {
                 continue;
             }
             canvas.set_draw_color((&pf.matrix[row][col]).color());
@@ -115,7 +123,7 @@ fn draw_playfield(canvas: &mut Canvas<Window>, pf: &PlayField) {
     let _ = canvas.draw_rect(Rect::new(start_x, start_y, width, height));
 }
 
-fn draw_game(canvas: &mut Canvas<Window>, game: &Game) {
+fn draw_game(canvas: &mut Canvas<Window>, game: &game::Game) {
     draw_playfield(canvas, &game.play_field);
 }
 
@@ -195,22 +203,22 @@ fn main() -> Result<(), String> {
     let mut t: f64 = 0.0;
     let dt: f64 = 1.0 / 120.0;
 
-    let mut start_time = Instant::now();
+    let mut start_time = time::Instant::now();
     let mut accumulator: f64 = 0.0;
 
-    let mut game = Game::new();
+    let mut game = game::Game::new();
 
     'main: loop {
         frames = frames + 1;
         // let start = Instant::now();
 
-        let now = Instant::now();
+        let now = time::Instant::now();
         let mut frame_time = now - start_time;
         let frame_rate = 1000000.0 / frame_time.as_micros() as f64;
         // println!("frames = {:?}, frame time = {:?}, frame rate = {:?}", frames, frame_time, frame_rate);
         if frame_time.as_secs_f64() > 0.25 {
             println!("******************************************************* SLOW");
-            frame_time = Duration::from_millis(250);
+            frame_time = time::Duration::from_millis(250);
             // 0.25;
         }
         start_time = now;
@@ -270,7 +278,7 @@ fn main() -> Result<(), String> {
         canvas.clear();
         draw_game(&mut canvas, &game);
 
-        thread::sleep(Duration::from_millis(1));
+        thread::sleep(time::Duration::from_millis(1));
 
         //    let size = CELL_SIZE as i32;
         let start_x: i32 = (SCREEN_WIDTH as i32 - (CELL_SIZE * 10)) / 2;

@@ -1,7 +1,8 @@
 use crate::playfield;
-use crate::playfield::PlayField;
+//use crate::playfield::PlayField;
 use crate::tetrominos;
 
+use rand;
 use rand::Rng;
 
 #[derive(Debug)]
@@ -37,7 +38,7 @@ impl Piece {
 pub struct Game {
     pub speed: f64,
     pub paused: bool,
-    pub play_field: PlayField,
+    pub play_field: playfield::PlayField,
     pub next_piece: &'static tetrominos::Tetromino,
     pub piece_bag: Vec<&'static tetrominos::Tetromino>,
     pub piece: Piece,
@@ -49,7 +50,7 @@ impl Game {
         Game {
             speed: 30.0,
             paused: false,
-            play_field: PlayField::new(24, 10),
+            play_field: playfield::PlayField::new(24, 10),
 
             piece: Piece::new(rand_tetromino()),
             next_piece: rand_tetromino(),
