@@ -1,9 +1,9 @@
 use std::thread;
 use std::time;
 
+mod game;
 mod playfield;
 mod tetrominos;
-mod game;
 
 extern crate sdl2;
 use sdl2::event;

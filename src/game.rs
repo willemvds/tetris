@@ -228,7 +228,7 @@ impl Game {
             for col in 0..4 {
                 if shape[row][col] == 1 {
                     self.play_field.matrix[row + row_offset][col + col_offset] =
-                        piece_location(self.piece.tetromino.kind);
+                        playfield::Location::Filled(self.piece.tetromino.kind);
                 }
             }
         }
@@ -263,16 +263,4 @@ fn rand_tetromino() -> &'static tetrominos::Tetromino {
     };
 
     t
-}
-
-fn piece_location(k: tetrominos::Kind) -> playfield::Location {
-    match k {
-        tetrominos::Kind::Stick => playfield::Location::Filled(tetrominos::Kind::Stick),
-        tetrominos::Kind::Square => playfield::Location::Filled(tetrominos::Kind::Square),
-        tetrominos::Kind::Seven => playfield::Location::Filled(tetrominos::Kind::Seven),
-        tetrominos::Kind::Snake => playfield::Location::Filled(tetrominos::Kind::Snake),
-        tetrominos::Kind::Pyramid => playfield::Location::Filled(tetrominos::Kind::Pyramid),
-        tetrominos::Kind::Hook => playfield::Location::Filled(tetrominos::Kind::Hook),
-        tetrominos::Kind::Zig => playfield::Location::Filled(tetrominos::Kind::Zig),
-    }
 }
