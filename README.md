@@ -11,4 +11,4 @@ Mostly following rules as outlined by the [Tetris Guideline](https://tetris.fand
 - Sound.
 - Resume game aka keep playing after reboot.
 - Replay system (through input recording or action events).
-
+- Macro for defining shapes using a method like tetrominos.txt.
