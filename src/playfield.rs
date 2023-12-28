@@ -64,19 +64,19 @@ mod tests {
     use super::*;
 
     #[test]
-    fn test_collission_matrix_empty() {
+    fn test_has_collission_empty() {
         let pf = PlayField::new(10, 10);
         let shape: Shape = [[1, 1, 1, 1], [1, 1, 1, 1], [1, 1, 1, 1], [1, 1, 1, 1]];
 
-        assert_eq!(false, pf.collission_matrix(0, 0, &shape));
+        assert_eq!(false, pf.has_collission(5, 5, &shape));
     }
 
     #[test]
-    fn test_collission_matrix_hit() {
+    fn test_has_collission_hit() {
         let mut pf = PlayField::new(10, 10);
         pf.matrix[0][0] = Location::Filled(tetrominos::Kind::Hook);
         let shape: Shape = [[1, 1, 1, 1], [1, 1, 1, 1], [1, 1, 1, 1], [1, 1, 1, 1]];
 
-        assert_eq!(true, pf.collission_matrix(0, 0, &shape));
+        assert_eq!(true, pf.has_collission(0, 0, &shape));
     }
 }
