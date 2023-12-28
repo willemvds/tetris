@@ -1,37 +1,18 @@
 use std::thread;
-
-use tetrominos::Kind;
+use std::time;
 
 mod playfield;
-//use playfield::Location;
-//use playfield::PlayField;
-//use playfield::Shape;
-
 mod tetrominos;
-
+use tetrominos::Kind;
 mod game;
-//use game::Game;
 
 extern crate sdl2;
-
-// use std::mem;
-use std::time;
-//use std::time::Duration;
-//use std::time::Instant;
-
-//use sdl2::event::Event;
 use sdl2::event;
-//use sdl2::keyboard::Keycode;
 use sdl2::keyboard;
 use sdl2::pixels;
-//use sdl2::pixels::Color;
-//use sdl2::rect::Rect;
 use sdl2::rect;
-//use sdl2::render::Canvas;
 use sdl2::render;
-//use sdl2::ttf::Font;
 use sdl2::ttf;
-//use sdl2::video::Window;
 use sdl2::video;
 
 const SCREEN_WIDTH: u32 = 1800;
