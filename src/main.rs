@@ -3,7 +3,6 @@ use std::time;
 
 mod playfield;
 mod tetrominos;
-//use tetrominos::Kind;
 mod game;
 
 extern crate sdl2;
