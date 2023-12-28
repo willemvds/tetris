@@ -19,14 +19,20 @@ use std::time;
 //use std::time::Duration;
 //use std::time::Instant;
 
-use sdl2::event::Event;
-use sdl2::keyboard::Keycode;
+//use sdl2::event::Event;
+use sdl2::event;
+//use sdl2::keyboard::Keycode;
+use sdl2::keyboard;
 use sdl2::pixels;
-use sdl2::pixels::Color;
-use sdl2::rect::Rect;
-use sdl2::render::Canvas;
-use sdl2::ttf::Font;
-use sdl2::video::Window;
+//use sdl2::pixels::Color;
+//use sdl2::rect::Rect;
+use sdl2::rect;
+//use sdl2::render::Canvas;
+use sdl2::render;
+//use sdl2::ttf::Font;
+use sdl2::ttf;
+//use sdl2::video::Window;
+use sdl2::video;
 
 const SCREEN_WIDTH: u32 = 1800;
 const SCREEN_HEIGHT: u32 = 1200;
@@ -35,38 +41,38 @@ const CELL_SIZE: i32 = 44;
 
 fn tetromino_colour(kind: tetrominos::Kind) -> pixels::Color {
     match kind {
-        tetrominos::Kind::Hook => Color::RGB(92, 101, 168),
-        tetrominos::Kind::Pyramid => Color::RGB(161, 82, 153),
-        tetrominos::Kind::Seven => Color::RGB(224, 127, 58),
-        tetrominos::Kind::Snake => Color::RGB(100, 180, 82),
-        tetrominos::Kind::Square => Color::RGB(241, 212, 72),
-        tetrominos::Kind::Stick => Color::RGB(99, 196, 234),
-        tetrominos::Kind::Zig => Color::RGB(220, 58, 53),
+        tetrominos::Kind::Hook => pixels::Color::RGB(92, 101, 168),
+        tetrominos::Kind::Pyramid => pixels::Color::RGB(161, 82, 153),
+        tetrominos::Kind::Seven => pixels::Color::RGB(224, 127, 58),
+        tetrominos::Kind::Snake => pixels::Color::RGB(100, 180, 82),
+        tetrominos::Kind::Square => pixels::Color::RGB(241, 212, 72),
+        tetrominos::Kind::Stick => pixels::Color::RGB(99, 196, 234),
+        tetrominos::Kind::Zig => pixels::Color::RGB(220, 58, 53),
     }
 }
 
 impl playfield::Location {
-    fn color(self) -> Color {
+    fn color(self) -> pixels::Color {
         match self {
-            playfield::Location::Empty => Color::RGB(0, 0, 0),
-            playfield::Location::Edge => Color::RGB(200, 200, 200),
+            playfield::Location::Empty => pixels::Color::RGB(0, 0, 0),
+            playfield::Location::Edge => pixels::Color::RGB(200, 200, 200),
             playfield::Location::Filled(k) => match k {
-                Kind::Stick => Color::RGB(99, 196, 234),
-                Kind::Square => Color::RGB(241, 212, 72),
-                Kind::Pyramid => Color::RGB(161, 82, 153),
-                Kind::Seven => Color::RGB(224, 127, 58),
-                Kind::Snake => Color::RGB(100, 180, 82),
-                Kind::Hook => Color::RGB(92, 101, 168),
-                Kind::Zig => Color::RGB(220, 58, 53),
+                Kind::Stick => pixels::Color::RGB(99, 196, 234),
+                Kind::Square => pixels::Color::RGB(241, 212, 72),
+                Kind::Pyramid => pixels::Color::RGB(161, 82, 153),
+                Kind::Seven => pixels::Color::RGB(224, 127, 58),
+                Kind::Snake => pixels::Color::RGB(100, 180, 82),
+                Kind::Hook => pixels::Color::RGB(92, 101, 168),
+                Kind::Zig => pixels::Color::RGB(220, 58, 53),
             },
         }
     }
 }
 
 fn draw_shape(
-    canvas: &mut Canvas<Window>,
+    canvas: &mut render::Canvas<video::Window>,
     s: playfield::Shape,
-    colour: Color,
+    colour: pixels::Color,
     size: i32,
     x: i32,
     y: i32,
@@ -77,7 +83,7 @@ fn draw_shape(
             if s[row][col] == 0 {
                 continue;
             }
-            let _ = canvas.fill_rect(Rect::new(
+            let _ = canvas.fill_rect(rect::Rect::new(
                 x + (col as i32 * size),
                 y + (row as i32 * size),
                 size as u32,
@@ -87,7 +93,7 @@ fn draw_shape(
     }
 }
 
-fn draw_playfield(canvas: &mut Canvas<Window>, pf: &playfield::PlayField) {
+fn draw_playfield(canvas: &mut render::Canvas<video::Window>, pf: &playfield::PlayField) {
     let size: i32 = CELL_SIZE;
 
     let start_x: i32 = (SCREEN_WIDTH as i32 - (CELL_SIZE * 10)) / 2;
@@ -98,8 +104,8 @@ fn draw_playfield(canvas: &mut Canvas<Window>, pf: &playfield::PlayField) {
 
     for row in 0..(pf.matrix.len()) {
         for col in 0..(pf.matrix[row].len()) {
-            canvas.set_draw_color(Color::RGB(20, 20, 20));
-            let _ = canvas.draw_rect(Rect::new(
+            canvas.set_draw_color(pixels::Color::RGB(20, 20, 20));
+            let _ = canvas.draw_rect(rect::Rect::new(
                 start_x + (col as i32 * size),
                 start_y + (row as i32 * size),
                 size as u32,
@@ -110,7 +116,7 @@ fn draw_playfield(canvas: &mut Canvas<Window>, pf: &playfield::PlayField) {
                 continue;
             }
             canvas.set_draw_color((&pf.matrix[row][col]).color());
-            let _ = canvas.fill_rect(Rect::new(
+            let _ = canvas.fill_rect(rect::Rect::new(
                 start_x + (col as i32 * size),
                 start_y + (row as i32 * size),
                 size as u32,
@@ -119,20 +125,20 @@ fn draw_playfield(canvas: &mut Canvas<Window>, pf: &playfield::PlayField) {
         }
     }
 
-    canvas.set_draw_color(Color::RGB(72, 72, 72));
-    let _ = canvas.draw_rect(Rect::new(start_x, start_y, width, height));
+    canvas.set_draw_color(pixels::Color::RGB(72, 72, 72));
+    let _ = canvas.draw_rect(rect::Rect::new(start_x, start_y, width, height));
 }
 
-fn draw_game(canvas: &mut Canvas<Window>, game: &game::Game) {
+fn draw_game(canvas: &mut render::Canvas<video::Window>, game: &game::Game) {
     draw_playfield(canvas, &game.play_field);
 }
 
-fn render_fps(canvas: &mut Canvas<Window>, font: &Font, fps: f64, lc: usize) {
+fn render_fps(canvas: &mut render::Canvas<video::Window>, font: &ttf::Font, fps: f64, lc: usize) {
     let texture_creator = canvas.texture_creator();
 
     let surface = font
         .render(format!("{:.2} fps", fps).as_str())
-        .blended(Color::RGBA(0, 255, 0, 255))
+        .blended(pixels::Color::RGBA(0, 255, 0, 255))
         .map_err(|e| e.to_string())
         .unwrap();
     let fps_tex = texture_creator
@@ -140,13 +146,13 @@ fn render_fps(canvas: &mut Canvas<Window>, font: &Font, fps: f64, lc: usize) {
         .map_err(|e| e.to_string())
         .unwrap();
 
-    let fps_target = Rect::new(0, 0, 180, 80);
+    let fps_target = rect::Rect::new(0, 0, 180, 80);
 
     let _ = canvas.copy(&fps_tex, None, Some(fps_target));
 
     let surface2 = font
         .render(format!("lines cleared: {}", lc).as_str())
-        .blended(Color::RGBA(122, 255, 122, 255))
+        .blended(pixels::Color::RGBA(122, 255, 122, 255))
         .map_err(|e| e.to_string())
         .unwrap();
     let fps_tex2 = texture_creator
@@ -154,7 +160,7 @@ fn render_fps(canvas: &mut Canvas<Window>, font: &Font, fps: f64, lc: usize) {
         .map_err(|e| e.to_string())
         .unwrap();
 
-    let fps_target2 = Rect::new(0, 80, 280, 80);
+    let fps_target2 = rect::Rect::new(0, 80, 280, 80);
 
     let _ = canvas.copy(&fps_tex2, None, Some(fps_target2));
 }
@@ -233,31 +239,31 @@ fn main() -> Result<(), String> {
 
             for event in events.poll_iter() {
                 match event {
-                    Event::Quit { .. } => break 'main,
+                    event::Event::Quit { .. } => break 'main,
 
-                    Event::KeyDown {
+                    event::Event::KeyDown {
                         keycode: Some(keycode),
                         ..
                     } => {
                         match keycode {
-                            Keycode::Escape => break 'main,
-                            Keycode::Space => game.paused = !game.paused,
+                            keyboard::Keycode::Escape => break 'main,
+                            keyboard::Keycode::Space => game.paused = !game.paused,
 
                             // these are game actions and need to be handled in the game sim eventually
-                            Keycode::Kp7 => game.move_left(),
-                            Keycode::Kp9 => game.move_right(), // left
-                            Keycode::Kp4 => game.drop_fast(),
-                            Keycode::Kp5 => game.drop_one(),
-                            Keycode::Kp6 => game.grab_next_piece(),
-                            Keycode::Kp8 => game.rotate(),
-                            Keycode::KpPlus => game.speed_up(),
-                            Keycode::KpMinus => game.speed_down(),
+                            keyboard::Keycode::Kp7 => game.move_left(),
+                            keyboard::Keycode::Kp9 => game.move_right(), // left
+                            keyboard::Keycode::Kp4 => game.drop_fast(),
+                            keyboard::Keycode::Kp5 => game.drop_one(),
+                            keyboard::Keycode::Kp6 => game.grab_next_piece(),
+                            keyboard::Keycode::Kp8 => game.rotate(),
+                            keyboard::Keycode::KpPlus => game.speed_up(),
+                            keyboard::Keycode::KpMinus => game.speed_down(),
 
                             _ => (),
                         }
                     }
 
-                    Event::MouseButtonDown { .. } => {
+                    event::Event::MouseButtonDown { .. } => {
                         //                        next_piece(&mut game);
                     }
 
