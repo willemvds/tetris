@@ -17,16 +17,41 @@ pub struct PlayField {
     pub matrix: Matrix,
 }
 
+const ROWS_PADDING: usize = 6; // 2 bottom, 4 top
+const COLS_PADDING: usize = 4; // 2 left, 2 right
+
 impl PlayField {
+    // The rows and cols specified here is for the size of the well (the inner part where the
+    // tetrominos(blocks) are placed). The total size of the playfield matrix will be larger
+    // to add required padding and space required for gameplay mechanics.
+    //
+    // Details of the padding are as follows:
+    // - TOP: 4 empty rows
+    // - LEFT: 2 edge columns
+    // - RIGHT: 2 edge columns
+    // - BOTTOM: 2 edge rows
     pub fn new(rows: usize, cols: usize) -> PlayField {
+        let matrix_rows = rows + ROWS_PADDING;
+        let matrix_cols = cols + COLS_PADDING;
+
         let mut pf = PlayField {
-            cols: cols + 4, // We have 1 extra column to the left and 3 extra columns to the right
-            rows: rows + 1, // We have 1 extra row at the bottom
-            matrix: vec![vec![Location::Edge; cols + 4]; rows + 1],
+            cols,
+            rows,
+            matrix: vec![vec![Location::Edge; matrix_cols]; matrix_rows],
         };
 
-        for row in 0..rows - 1 {
-            for col in 1..cols + 1 {
+        // clear the top 4 rows
+        for row in 0..4 {
+            for col in 0..cols + COLS_PADDING {
+                pf.matrix[row][col] = Location::Empty;
+            }
+        }
+
+        // cut out the well
+        let row_offset = 4;
+        let col_offset = 2;
+        for row in row_offset..rows + row_offset {
+            for col in col_offset..cols + col_offset {
                 pf.matrix[row][col] = Location::Empty;
             }
         }
@@ -34,19 +59,31 @@ impl PlayField {
         pf
     }
 
+    pub fn well_x(&self) -> usize {
+        return 2;
+    }
+
+    pub fn well_y(&self) -> usize {
+        return 4;
+    }
+
     pub fn has_collission(&self, shape_y: usize, shape_x: usize, shape: &Shape) -> bool {
         let mut total: u8 = 0;
 
-        for row in 0..4 {
-            for col in 0..4 {
-                if row + shape_y >= self.matrix.len() {
-                    continue;
-                }
+        let mut shape_rows = 4;
+        let shape_height = 4;
+        if shape_y + shape_height >= self.rows + ROWS_PADDING {
+            shape_rows = self.rows + ROWS_PADDING - shape_y;
+        }
 
-                if col + shape_x >= self.matrix[row + shape_y].len() {
-                    continue;
-                }
+        let mut shape_cols = 4;
+        let shape_width = 4;
+        if shape_x + shape_width >= self.cols + COLS_PADDING {
+            shape_cols = self.cols + COLS_PADDING - shape_x;
+        }
 
+        for row in 0..shape_rows {
+            for col in 0..shape_cols {
                 total += shape[row][col]
                     & match self.matrix[shape_y + row][shape_x + col] {
                         Location::Empty => 0,

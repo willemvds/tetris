@@ -17,7 +17,7 @@ use sdl2::video;
 const SCREEN_WIDTH: u32 = 1800;
 const SCREEN_HEIGHT: u32 = 1200;
 
-const CELL_SIZE: i32 = 44;
+const CELL_SIZE: i32 = 32;
 
 fn tetromino_colour(kind: tetrominos::Kind) -> pixels::Color {
     match kind {

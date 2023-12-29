@@ -149,16 +149,19 @@ impl Game {
     }
 
     fn clear_full_rows(&mut self) {
-        for r in 0..self.play_field.matrix.len() - 1 {
+        let row_offset = self.play_field.well_y();
+        let col_offset = self.play_field.well_x();
+
+        for row in row_offset..self.play_field.rows + row_offset {
             let mut col_count = 0;
-            for c in 1..self.play_field.matrix[r].len() - 3 {
-                if self.play_field.matrix[r][c] != playfield::Location::Empty {
+            for col in col_offset..self.play_field.cols + col_offset {
+                if self.play_field.matrix[row][col] != playfield::Location::Empty {
                     col_count += 1;
                 }
             }
-            if col_count == self.play_field.matrix[r].len() - 4 {
-                for x in 1..self.play_field.matrix[r].len() - 3 {
-                    self.play_field.matrix[r][x] = playfield::Location::Empty;
+            if col_count == self.play_field.cols {
+                for clear_col in col_offset..self.play_field.cols + col_offset {
+                    self.play_field.matrix[row][clear_col] = playfield::Location::Empty;
                 }
                 self.score_lines_cleared += 1;
             }
@@ -166,18 +169,21 @@ impl Game {
     }
 
     fn collapse(&mut self) {
-        for r in (0..self.play_field.matrix.len() - 1).rev() {
+        let row_offset = self.play_field.well_y();
+        let col_offset = self.play_field.well_x();
+
+        for row in (row_offset..self.play_field.rows + row_offset).rev() {
             let mut has_block = false;
-            for c in 1..self.play_field.matrix[r].len() - 3 {
-                if self.play_field.matrix[r][c] != playfield::Location::Empty {
+            for col in col_offset..self.play_field.cols + col_offset {
+                if self.play_field.matrix[row][col] != playfield::Location::Empty {
                     has_block = true;
                     break;
                 }
             }
 
             if !has_block {
-                for ir in (1..=r).rev() {
-                    for c in 1..self.play_field.matrix[0].len() - 3 {
+                for ir in (1..=row).rev() {
+                    for c in col_offset..self.play_field.cols + col_offset {
                         self.play_field.matrix[ir][c] = self.play_field.matrix[ir - 1][c];
                     }
                 }
