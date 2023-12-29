@@ -83,8 +83,8 @@ impl Game {
                     self.grab_next_piece();
                 }
             }
-            self.clear_full_rows();
-            self.collapse();
+            self.score_lines_cleared += self.play_field.clear_full_rows();
+            self.play_field.collapse();
         }
     }
 
@@ -145,49 +145,6 @@ impl Game {
     pub fn drop_fast(&mut self) {
         while self.can_fall() {
             self.piece.y += 1;
-        }
-    }
-
-    fn clear_full_rows(&mut self) {
-        let row_offset = self.play_field.well_y();
-        let col_offset = self.play_field.well_x();
-
-        for row in row_offset..self.play_field.rows + row_offset {
-            let mut col_count = 0;
-            for col in col_offset..self.play_field.cols + col_offset {
-                if self.play_field.matrix[row][col] != playfield::Location::Empty {
-                    col_count += 1;
-                }
-            }
-            if col_count == self.play_field.cols {
-                for clear_col in col_offset..self.play_field.cols + col_offset {
-                    self.play_field.matrix[row][clear_col] = playfield::Location::Empty;
-                }
-                self.score_lines_cleared += 1;
-            }
-        }
-    }
-
-    fn collapse(&mut self) {
-        let row_offset = self.play_field.well_y();
-        let col_offset = self.play_field.well_x();
-
-        for row in (row_offset..self.play_field.rows + row_offset).rev() {
-            let mut has_block = false;
-            for col in col_offset..self.play_field.cols + col_offset {
-                if self.play_field.matrix[row][col] != playfield::Location::Empty {
-                    has_block = true;
-                    break;
-                }
-            }
-
-            if !has_block {
-                for ir in (1..=row).rev() {
-                    for c in col_offset..self.play_field.cols + col_offset {
-                        self.play_field.matrix[ir][c] = self.play_field.matrix[ir - 1][c];
-                    }
-                }
-            }
         }
     }
 

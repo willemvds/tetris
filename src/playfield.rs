@@ -59,11 +59,11 @@ impl PlayField {
         pf
     }
 
-    pub fn well_x(&self) -> usize {
+    fn well_x(&self) -> usize {
         return 2;
     }
 
-    pub fn well_y(&self) -> usize {
+    fn well_y(&self) -> usize {
         return 4;
     }
 
@@ -93,6 +93,53 @@ impl PlayField {
         }
 
         total > 0
+    }
+
+    pub fn clear_full_rows(&mut self) -> usize {
+        let row_offset = self.well_y();
+        let col_offset = self.well_x();
+
+        let mut lines_cleared = 0;
+
+        for row in row_offset..self.rows + row_offset {
+            let mut col_count = 0;
+            for col in col_offset..self.cols + col_offset {
+                if self.matrix[row][col] != Location::Empty {
+                    col_count += 1;
+                }
+            }
+            if col_count == self.cols {
+                for clear_col in col_offset..self.cols + col_offset {
+                    self.matrix[row][clear_col] = Location::Empty;
+                }
+                lines_cleared += 1;
+            }
+        }
+
+        lines_cleared
+    }
+
+    pub fn collapse(&mut self) {
+        let row_offset = self.well_y();
+        let col_offset = self.well_x();
+
+        for row in (row_offset..self.rows + row_offset).rev() {
+            let mut has_block = false;
+            for col in col_offset..self.cols + col_offset {
+                if self.matrix[row][col] != Location::Empty {
+                    has_block = true;
+                    break;
+                }
+            }
+
+            if !has_block {
+                for ir in (1..=row).rev() {
+                    for c in col_offset..self.cols + col_offset {
+                        self.matrix[ir][c] = self.matrix[ir - 1][c];
+                    }
+                }
+            }
+        }
     }
 }
 
