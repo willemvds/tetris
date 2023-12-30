@@ -18,7 +18,7 @@ pub struct PlayField {
 }
 
 const ROWS_PADDING: usize = 6; // 2 bottom, 4 top
-const COLS_PADDING: usize = 4; // 2 left, 2 right
+const COLS_PADDING: usize = 6; // 3 left, 3 right
 
 impl PlayField {
     // The rows and cols specified here is for the size of the well (the inner part where the
@@ -27,8 +27,8 @@ impl PlayField {
     //
     // Details of the padding are as follows:
     // - TOP: 4 empty rows
-    // - LEFT: 2 edge columns
-    // - RIGHT: 2 edge columns
+    // - LEFT: 3 edge columns
+    // - RIGHT: 3 edge columns
     // - BOTTOM: 2 edge rows
     pub fn new(rows: usize, cols: usize) -> PlayField {
         let matrix_rows = rows + ROWS_PADDING;
@@ -49,7 +49,7 @@ impl PlayField {
 
         // cut out the well
         let row_offset = 4;
-        let col_offset = 2;
+        let col_offset = COLS_PADDING / 2;
         for row in row_offset..rows + row_offset {
             for col in col_offset..cols + col_offset {
                 pf.matrix[row][col] = Location::Empty;
@@ -60,7 +60,7 @@ impl PlayField {
     }
 
     fn well_x(&self) -> usize {
-        return 2;
+        return COLS_PADDING / 2;
     }
 
     fn well_y(&self) -> usize {
