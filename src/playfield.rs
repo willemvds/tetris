@@ -59,7 +59,7 @@ impl PlayField {
         pf
     }
 
-    fn well_x(&self) -> usize {
+    pub fn well_x(&self) -> usize {
         return COLS_PADDING / 2;
     }
 

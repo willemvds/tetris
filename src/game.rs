@@ -46,17 +46,24 @@ pub struct Game {
 
 impl Game {
     pub fn new() -> Game {
-        Game {
+        let mut g = Game {
             speed: 30.0,
             paused: false,
             play_field: playfield::PlayField::new(24, 10),
 
-            piece: Piece::new(rand_tetromino()),
-            next_piece: rand_tetromino(),
+            piece: Piece::new(tetrominos::from_kind(tetrominos::Kind::Stick)),
+            next_piece: tetrominos::from_kind(tetrominos::Kind::Stick),
             piece_bag: new_tetromino_bag(),
 
             score_lines_cleared: 0,
-        }
+        };
+
+        // Grab the first two pieces from the first tetromino bag
+        // to replace the temp values set above.
+        g.grab_next_piece();
+        g.grab_next_piece();
+
+        g
     }
 
     pub fn sim(&mut self, _t: f64, dt: f64, _acc: f64) {
@@ -175,7 +182,7 @@ impl Game {
         self.piece.tetromino = self.next_piece;
         self.next_piece = self.grab_piece();
         self.piece.rotation = 0;
-        self.piece.x = 4;
+        self.piece.x = (self.play_field.well_x() + (self.play_field.cols / 2) - 2) as u16;
         self.piece.y = 0;
         self.piece.creep = 0.0;
     }
