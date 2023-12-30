@@ -45,11 +45,12 @@ pub struct Game {
 }
 
 impl Game {
-    pub fn new() -> Game {
+    pub fn new() -> Result<Game, String> {
+        let play_field = playfield::PlayField::new(24, 10)?;
         let mut g = Game {
             speed: 30.0,
             paused: false,
-            play_field: playfield::PlayField::new(24, 10),
+            play_field,
 
             piece: Piece::new(tetrominos::from_kind(tetrominos::Kind::Stick)),
             next_piece: tetrominos::from_kind(tetrominos::Kind::Stick),
@@ -63,7 +64,7 @@ impl Game {
         g.grab_next_piece();
         g.grab_next_piece();
 
-        g
+        Ok(g)
     }
 
     pub fn sim(&mut self, _t: f64, dt: f64, _acc: f64) {

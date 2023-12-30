@@ -20,6 +20,8 @@ pub struct PlayField {
 const ROWS_PADDING: usize = 6; // 2 bottom, 4 top
 const COLS_PADDING: usize = 6; // 3 left, 3 right
 
+pub const ERR_PLAYFIELD_MIN_SIZE: &str = "smallest possible playfield size is 4 rows x 4 cols";
+
 impl PlayField {
     // The rows and cols specified here is for the size of the well (the inner part where the
     // tetrominos(blocks) are placed). The total size of the playfield matrix will be larger
@@ -30,7 +32,11 @@ impl PlayField {
     // - LEFT: 3 edge columns
     // - RIGHT: 3 edge columns
     // - BOTTOM: 2 edge rows
-    pub fn new(rows: usize, cols: usize) -> PlayField {
+    pub fn new(rows: usize, cols: usize) -> Result<PlayField, &'static str> {
+        if rows < 4 || cols < 4 {
+            return Err(ERR_PLAYFIELD_MIN_SIZE);
+        }
+
         let matrix_rows = rows + ROWS_PADDING;
         let matrix_cols = cols + COLS_PADDING;
 
@@ -56,7 +62,7 @@ impl PlayField {
             }
         }
 
-        pf
+        Ok(pf)
     }
 
     pub fn well_x(&self) -> usize {

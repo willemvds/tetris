@@ -192,7 +192,7 @@ fn main() -> Result<(), String> {
     let mut start_time = time::Instant::now();
     let mut accumulator: f64 = 0.0;
 
-    let mut game = game::Game::new();
+    let mut game = game::Game::new()?;
 
     'main: loop {
         frames = frames + 1;
