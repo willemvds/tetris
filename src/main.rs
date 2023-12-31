@@ -1,6 +1,7 @@
 use std::thread;
 use std::time;
 
+mod actions;
 mod game;
 mod playfield;
 mod tetrominos;
@@ -145,6 +146,32 @@ fn render_fps(canvas: &mut render::Canvas<video::Window>, font: &ttf::Font, fps:
     let _ = canvas.copy(&fps_tex2, None, Some(fps_target2));
 }
 
+fn render_text(
+    canvas: &mut render::Canvas<video::Window>,
+    font: &ttf::Font,
+    text: String,
+    x: i32,
+    y: i32,
+) {
+    let texture_creator = canvas.texture_creator();
+
+    let surface = font
+        .render(&text)
+        .blended(pixels::Color::RGBA(0, 255, 0, 255))
+        .map_err(|e| e.to_string())
+        .unwrap();
+    let texture = texture_creator
+        .create_texture_from_surface(&surface)
+        .map_err(|e| e.to_string())
+        .unwrap();
+
+    let char_width = 16;
+    let char_height = 16;
+    let target = rect::Rect::new(x, y, (char_width * text.len()) as u32, char_height);
+
+    let _ = canvas.copy(&texture, None, Some(target));
+}
+
 fn main() -> Result<(), String> {
     let sdl_context = sdl2::init()?;
     let video_subsys = sdl_context.video()?;
@@ -155,6 +182,9 @@ fn main() -> Result<(), String> {
         128,
     )?;
     font.set_style(sdl2::ttf::FontStyle::BOLD);
+
+    let smaller_font =
+        ttf_context.load_font("/usr/share/fonts/TTF/PressStart2P-Regular.ttf", 64)?;
 
     println!(
         "video driver = {:?}, display name = {:?}",
@@ -187,7 +217,7 @@ fn main() -> Result<(), String> {
     let mut frames = 0;
 
     let mut t: f64 = 0.0;
-    let dt: f64 = 1.0 / 120.0;
+    let dt: f64 = 1.0 / 240.0;
 
     let mut start_time = time::Instant::now();
     let mut accumulator: f64 = 0.0;
@@ -230,12 +260,14 @@ fn main() -> Result<(), String> {
                             keyboard::Keycode::Space => game.paused = !game.paused,
 
                             // these are game actions and need to be handled in the game sim eventually
-                            keyboard::Keycode::Kp7 => game.move_left(),
-                            keyboard::Keycode::Kp9 => game.move_right(), // left
-                            keyboard::Keycode::Kp4 => game.drop_fast(),
-                            keyboard::Keycode::Kp5 => game.drop_one(),
-                            keyboard::Keycode::Kp6 => game.grab_next_piece(),
-                            keyboard::Keycode::Kp8 => game.rotate(),
+                            keyboard::Keycode::Kp7 => game.queue_action(actions::Action::MoveLeft),
+                            keyboard::Keycode::Kp9 => game.queue_action(actions::Action::MoveRight),
+                            keyboard::Keycode::Kp4 => game.queue_action(actions::Action::Drop),
+                            keyboard::Keycode::Kp5 => game.queue_action(actions::Action::MoveDown),
+                            keyboard::Keycode::Kp6 => {
+                                let _ = game.grab_next_piece();
+                            }
+                            keyboard::Keycode::Kp8 => game.queue_action(actions::Action::Rotate),
                             keyboard::Keycode::KpPlus => game.speed_up(),
                             keyboard::Keycode::KpMinus => game.speed_down(),
 
@@ -284,11 +316,18 @@ fn main() -> Result<(), String> {
             game.next_piece.forms[0],
             tetromino_colour(game.next_piece.kind),
             CELL_SIZE,
-            1200,
-            100,
+            1300,
+            160,
         );
 
         render_fps(&mut canvas, &font, frame_rate, game.score_lines_cleared);
+        render_text(
+            &mut canvas,
+            &smaller_font,
+            "Next Piece:".to_string(),
+            1300,
+            100,
+        );
 
         canvas.present();
     }

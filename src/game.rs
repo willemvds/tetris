@@ -1,3 +1,4 @@
+use crate::actions;
 use crate::playfield;
 use crate::tetrominos;
 
@@ -42,13 +43,14 @@ pub struct Game {
     pub piece_bag: Vec<&'static tetrominos::Tetromino>,
     pub piece: Piece,
     pub score_lines_cleared: usize,
+    next_action: Option<actions::Action>,
 }
 
 impl Game {
     pub fn new() -> Result<Game, String> {
         let play_field = playfield::PlayField::new(24, 10)?;
         let mut g = Game {
-            speed: 30.0,
+            speed: 42.0,
             paused: false,
             play_field,
 
@@ -57,18 +59,33 @@ impl Game {
             piece_bag: new_tetromino_bag(),
 
             score_lines_cleared: 0,
+
+            next_action: None,
         };
 
         // Grab the first two pieces from the first tetromino bag
         // to replace the temp values set above.
-        g.grab_next_piece();
-        g.grab_next_piece();
+        let _ = g.grab_next_piece();
+        let _ = g.grab_next_piece();
 
         Ok(g)
     }
 
     pub fn sim(&mut self, _t: f64, dt: f64, _acc: f64) {
         // println!("SIMULATING GAME ENGINE... {:?} {:?} {:?}", t, dt, acc);
+        //
+        if self.next_action.is_some() {
+            match self.next_action {
+                Some(actions::Action::MoveDown) => self.drop_one(),
+                Some(actions::Action::MoveLeft) => self.move_left(),
+                Some(actions::Action::MoveRight) => self.move_right(),
+                Some(actions::Action::Rotate) => self.rotate(),
+                Some(actions::Action::Drop) => self.drop_fast(),
+                _ => (),
+            }
+
+            self.next_action = None;
+        }
 
         self.piece.creep += dt;
         if self.piece.creep > dt * self.speed {
@@ -82,17 +99,31 @@ impl Game {
                 // overlay the shape + position onto the map
                 self.imprint_piece();
 
-                self.grab_next_piece();
+                if self.grab_next_piece().is_err() {
+                    self.paused = true;
+                }
             } else {
                 if self.can_fall() {
                     self.piece.y += 1;
                 } else {
                     self.imprint_piece();
-                    self.grab_next_piece();
+                    if self.grab_next_piece().is_err() {
+                        self.paused = true;
+                    }
                 }
             }
             self.score_lines_cleared += self.play_field.clear_full_rows();
             self.play_field.collapse();
+        }
+    }
+
+    pub fn queue_action(&mut self, a: actions::Action) {
+        if self.paused {
+            return;
+        }
+
+        if self.next_action.is_none() {
+            self.next_action = Some(a)
         }
     }
 
@@ -179,13 +210,23 @@ impl Game {
         p
     }
 
-    pub fn grab_next_piece(&mut self) {
+    pub fn grab_next_piece(&mut self) -> Result<(), String> {
         self.piece.tetromino = self.next_piece;
         self.next_piece = self.grab_piece();
         self.piece.rotation = 0;
         self.piece.x = (self.play_field.well_x() + (self.play_field.cols / 2) - 2) as u16;
         self.piece.y = 0;
         self.piece.creep = 0.0;
+
+        if self.play_field.has_collission(
+            self.piece.y as usize,
+            self.piece.x as usize,
+            self.piece.form(),
+        ) {
+            return Err("GAME OVER - NOT ENOUGH SPACE IN WELL TO PLACE NEXT PIECE xD".to_string());
+        }
+
+        Ok(())
     }
 
     fn imprint_piece(&mut self) {
