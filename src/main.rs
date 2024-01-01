@@ -257,7 +257,13 @@ fn main() -> Result<(), String> {
                     } => {
                         match keycode {
                             keyboard::Keycode::Escape => break 'main,
-                            keyboard::Keycode::Space => game.paused = !game.paused,
+                            keyboard::Keycode::Space => {
+                                if game.is_playing() {
+                                    game.pause()
+                                } else {
+                                    game.unpause()
+                                }
+                            }
 
                             // these are game actions and need to be handled in the game sim eventually
                             keyboard::Keycode::Kp7 => game.queue_action(actions::Action::MoveLeft),
@@ -283,7 +289,7 @@ fn main() -> Result<(), String> {
                 }
             }
 
-            if !game.paused {
+            if game.is_playing() {
                 game.sim(t, dt, accumulator);
             }
         }

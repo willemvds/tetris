@@ -35,9 +35,17 @@ impl Piece {
     }
 }
 
+#[derive(PartialEq)]
+enum State {
+    Init,
+    Playing,
+    Paused,
+    GameOver,
+}
+
 pub struct Game {
+    state: State,
     pub speed: f64,
-    pub paused: bool,
     pub play_field: playfield::PlayField,
     pub next_piece: &'static tetrominos::Tetromino,
     pub piece_bag: Vec<&'static tetrominos::Tetromino>,
@@ -50,8 +58,8 @@ impl Game {
     pub fn new() -> Result<Game, String> {
         let play_field = playfield::PlayField::new(24, 10)?;
         let mut g = Game {
+            state: State::Init,
             speed: 42.0,
-            paused: false,
             play_field,
 
             piece: Piece::new(tetrominos::from_kind(tetrominos::Kind::Stick)),
@@ -67,6 +75,8 @@ impl Game {
         // to replace the temp values set above.
         let _ = g.grab_next_piece();
         let _ = g.grab_next_piece();
+
+        g.state = State::Playing;
 
         Ok(g)
     }
@@ -100,7 +110,7 @@ impl Game {
                 self.imprint_piece();
 
                 if self.grab_next_piece().is_err() {
-                    self.paused = true;
+                    self.state = State::GameOver;
                 }
             } else {
                 if self.can_fall() {
@@ -108,7 +118,7 @@ impl Game {
                 } else {
                     self.imprint_piece();
                     if self.grab_next_piece().is_err() {
-                        self.paused = true;
+                        self.state = State::GameOver;
                     }
                 }
             }
@@ -117,8 +127,24 @@ impl Game {
         }
     }
 
+    pub fn pause(&mut self) {
+        if self.state == State::Playing {
+            self.state = State::Paused
+        }
+    }
+
+    pub fn unpause(&mut self) {
+        if self.state == State::Paused {
+            self.state = State::Playing
+        }
+    }
+
+    pub fn is_playing(&self) -> bool {
+        return self.state == State::Playing;
+    }
+
     pub fn queue_action(&mut self, a: actions::Action) {
-        if self.paused {
+        if self.state != State::Playing {
             return;
         }
 
