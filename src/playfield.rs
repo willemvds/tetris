@@ -101,7 +101,7 @@ impl PlayField {
         total > 0
     }
 
-    pub fn clear_full_rows(&mut self) -> usize {
+    pub fn clear_full_rows(&mut self) -> u32 {
         let row_offset = self.well_y();
         let col_offset = self.well_x();
 

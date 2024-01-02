@@ -50,7 +50,8 @@ pub struct Game {
     pub next_piece: &'static tetrominos::Tetromino,
     pub piece_bag: Vec<&'static tetrominos::Tetromino>,
     pub piece: Piece,
-    pub score_lines_cleared: usize,
+    pub score_points: u32,
+    pub score_lines_cleared: u32,
     next_action: Option<actions::Action>,
 }
 
@@ -66,6 +67,7 @@ impl Game {
             next_piece: tetrominos::from_kind(tetrominos::Kind::Stick),
             piece_bag: new_tetromino_bag(),
 
+            score_points: 0,
             score_lines_cleared: 0,
 
             next_action: None,
@@ -122,7 +124,9 @@ impl Game {
                     }
                 }
             }
-            self.score_lines_cleared += self.play_field.clear_full_rows();
+            let lines_cleared = self.play_field.clear_full_rows();
+            self.score_lines_cleared += lines_cleared;
+            self.score_points += lines_cleared * 10;
             self.play_field.collapse();
         }
     }

@@ -114,38 +114,6 @@ fn draw_game(canvas: &mut render::Canvas<video::Window>, game: &game::Game) {
     draw_playfield(canvas, &game.play_field);
 }
 
-fn render_fps(canvas: &mut render::Canvas<video::Window>, font: &ttf::Font, fps: f64, lc: usize) {
-    let texture_creator = canvas.texture_creator();
-
-    let surface = font
-        .render(format!("{:.2} fps", fps).as_str())
-        .blended(pixels::Color::RGBA(0, 255, 0, 255))
-        .map_err(|e| e.to_string())
-        .unwrap();
-    let fps_tex = texture_creator
-        .create_texture_from_surface(&surface)
-        .map_err(|e| e.to_string())
-        .unwrap();
-
-    let fps_target = rect::Rect::new(0, 0, 180, 80);
-
-    let _ = canvas.copy(&fps_tex, None, Some(fps_target));
-
-    let surface2 = font
-        .render(format!("lines cleared: {}", lc).as_str())
-        .blended(pixels::Color::RGBA(122, 255, 122, 255))
-        .map_err(|e| e.to_string())
-        .unwrap();
-    let fps_tex2 = texture_creator
-        .create_texture_from_surface(&surface2)
-        .map_err(|e| e.to_string())
-        .unwrap();
-
-    let fps_target2 = rect::Rect::new(0, 80, 280, 80);
-
-    let _ = canvas.copy(&fps_tex2, None, Some(fps_target2));
-}
-
 fn render_text(
     canvas: &mut render::Canvas<video::Window>,
     font: &ttf::Font,
@@ -154,6 +122,8 @@ fn render_text(
     y: i32,
 ) {
     let texture_creator = canvas.texture_creator();
+
+    let (char_width, char_height) = font.size_of_char('C').unwrap();
 
     let surface = font
         .render(&text)
@@ -165,9 +135,7 @@ fn render_text(
         .map_err(|e| e.to_string())
         .unwrap();
 
-    let char_width = 16;
-    let char_height = 16;
-    let target = rect::Rect::new(x, y, (char_width * text.len()) as u32, char_height);
+    let target = rect::Rect::new(x, y, char_width * text.len() as u32, char_height);
 
     let _ = canvas.copy(&texture, None, Some(target));
 }
@@ -179,12 +147,12 @@ fn main() -> Result<(), String> {
 
     let mut font = ttf_context.load_font(
         "/usr/share/fonts/adobe-source-code-pro/SourceCodePro-Regular.otf",
-        128,
+        48,
     )?;
     font.set_style(sdl2::ttf::FontStyle::BOLD);
 
     let smaller_font =
-        ttf_context.load_font("/usr/share/fonts/TTF/PressStart2P-Regular.ttf", 64)?;
+        ttf_context.load_font("/usr/share/fonts/TTF/PressStart2P-Regular.ttf", 18)?;
 
     println!(
         "video driver = {:?}, display name = {:?}",
@@ -326,7 +294,24 @@ fn main() -> Result<(), String> {
             160,
         );
 
-        render_fps(&mut canvas, &font, frame_rate, game.score_lines_cleared);
+        render_text(&mut canvas, &font, format!("{:.2} fps", frame_rate), 20, 20);
+
+        render_text(
+            &mut canvas,
+            &font,
+            format!("Lines Cleared: {0}", game.score_lines_cleared),
+            20,
+            140,
+        );
+
+        render_text(
+            &mut canvas,
+            &font,
+            format!("Score: {0}", game.score_points),
+            20,
+            200,
+        );
+
         render_text(
             &mut canvas,
             &smaller_font,
