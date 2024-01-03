@@ -205,6 +205,20 @@ impl Game {
         );
     }
 
+    pub fn drop_distance(&mut self) -> usize {
+        let mut distance = 0;
+
+        while !self.play_field.has_collission(
+            self.piece.y as usize + distance,
+            self.piece.x as usize,
+            self.piece.form(),
+        ) {
+            distance += 1
+        }
+
+        distance
+    }
+
     pub fn drop_one(&mut self) {
         if self.can_fall() {
             self.piece.y += 1;

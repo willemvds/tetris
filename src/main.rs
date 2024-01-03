@@ -285,6 +285,18 @@ fn main() -> Result<(), String> {
             start_y + (game.piece.y as i32 * CELL_SIZE),
         );
 
+        if game.drop_distance() > 0 {
+            let mut drop_colour = pixels::Color::RGB(200, 200, 200);
+            draw_shape(
+                &mut canvas,
+                *game.piece.form(),
+                drop_colour,
+                CELL_SIZE,
+                start_x + (game.piece.x as i32 * CELL_SIZE),
+                start_y + (game.piece.y + game.drop_distance() as u16 - 1) as i32 * CELL_SIZE,
+            )
+        }
+
         draw_shape(
             &mut canvas,
             game.next_piece.forms[0],
