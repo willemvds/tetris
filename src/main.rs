@@ -129,11 +129,16 @@ fn draw_playfield(canvas: &mut render::Canvas<video::Window>, pf: &playfield::Pl
     let start_x: i32 = (SCREEN_WIDTH as i32 - (CELL_SIZE * 10)) / 2;
     let start_y: i32 = 1;
 
-    let width: u32 = (size * pf.matrix[0].len() as i32) as u32 + 2;
-    let height: u32 = (size * pf.matrix.len() as i32) as u32 + 2;
+    let well_rows_start = pf.well_y();
+    let well_rows_end = well_rows_start + pf.rows;
+    let well_cols_start = pf.well_x();
+    let well_cols_end = well_cols_start + pf.cols;
 
-    for row in 4..(pf.matrix.len()) {
-        for col in 0..(pf.matrix[row].len()) {
+    let width: u32 = (size * pf.cols as i32) as u32 + 2;
+    let height: u32 = (size * pf.rows as i32) as u32 + 2;
+
+    for row in well_rows_start..well_rows_end {
+        for col in well_cols_start..well_cols_end {
             canvas.set_draw_color(pixels::Color::RGB(20, 20, 20));
             let _ = canvas.draw_rect(rect::Rect::new(
                 start_x + (col as i32 * size),
@@ -156,7 +161,12 @@ fn draw_playfield(canvas: &mut render::Canvas<video::Window>, pf: &playfield::Pl
     }
 
     canvas.set_draw_color(pixels::Color::RGB(72, 72, 72));
-    let _ = canvas.draw_rect(rect::Rect::new(start_x, start_y, width, height));
+    let _ = canvas.draw_rect(rect::Rect::new(
+        start_x + (well_cols_start as i32 * size),
+        start_y + (well_rows_start as i32 * size),
+        width,
+        height,
+    ));
 }
 
 fn draw_game(canvas: &mut render::Canvas<video::Window>, game: &game::Game) {
