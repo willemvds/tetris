@@ -259,7 +259,7 @@ impl Game {
         self.next_piece = self.grab_piece();
         self.piece.rotation = 0;
         self.piece.x = (self.play_field.well_x() + (self.play_field.cols / 2) - 2) as u16;
-        self.piece.y = 0;
+        self.piece.y = 2;
         self.piece.creep = 0.0;
 
         if self.play_field.has_collission(
