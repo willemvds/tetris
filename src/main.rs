@@ -74,6 +74,30 @@ fn draw_shape(
     }
 }
 
+fn draw_shape_outline(
+    canvas: &mut render::Canvas<video::Window>,
+    s: playfield::Shape,
+    colour: pixels::Color,
+    size: i32,
+    x: i32,
+    y: i32,
+) {
+    canvas.set_draw_color(colour);
+    for row in 0..4 {
+        for col in 0..4 {
+            if s[row][col] == 0 {
+                continue;
+            }
+            let _ = canvas.draw_rect(rect::Rect::new(
+                x + (col as i32 * size),
+                y + (row as i32 * size),
+                size as u32,
+                size as u32,
+            ));
+        }
+    }
+}
+
 fn draw_partial_shape(
     canvas: &mut render::Canvas<video::Window>,
     s: playfield::Shape,
@@ -306,7 +330,6 @@ fn main() -> Result<(), String> {
 
         thread::sleep(time::Duration::from_millis(1));
 
-        //    let size = CELL_SIZE as i32;
         let start_x: i32 = (SCREEN_WIDTH as i32 - (CELL_SIZE * 10)) / 2;
         let start_y: i32 = 1;
 
@@ -332,11 +355,10 @@ fn main() -> Result<(), String> {
         }
 
         if game.drop_distance() > 0 {
-            let drop_colour = pixels::Color::RGB(200, 200, 200);
-            draw_shape(
+            draw_shape_outline(
                 &mut canvas,
                 *game.piece.form(),
-                drop_colour,
+                tetromino_colour(game.piece.tetromino.kind),
                 CELL_SIZE,
                 start_x + (game.piece.x as i32 * CELL_SIZE),
                 start_y + (game.piece.y + game.drop_distance() as u16 - 1) as i32 * CELL_SIZE,
