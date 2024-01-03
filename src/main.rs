@@ -187,6 +187,7 @@ fn main() -> Result<(), String> {
     let window = video_subsys
         .window("Panda Tetris", SCREEN_WIDTH, SCREEN_HEIGHT)
         .position_centered()
+        .resizable()
         .opengl()
         .build()
         .map_err(|e| e.to_string())?;
@@ -212,6 +213,7 @@ fn main() -> Result<(), String> {
     let mut t: f64 = 0.0;
     let dt: f64 = 1.0 / 240.0;
 
+    let mut game_loop_start_at = time::Instant::now();
     let mut start_time = time::Instant::now();
     let mut accumulator: f64 = 0.0;
 
@@ -243,6 +245,13 @@ fn main() -> Result<(), String> {
             for event in events.poll_iter() {
                 match event {
                     event::Event::Quit { .. } => break 'main,
+
+                    event::Event::Window { win_event: wev, .. } => match wev {
+                        event::WindowEvent::SizeChanged(new_width, new_height) => {
+                            println!("New window width={0} height={1}", new_width, new_height);
+                        }
+                        _ => (),
+                    },
 
                     event::Event::KeyDown {
                         keycode: Some(keycode),
@@ -371,6 +380,11 @@ fn main() -> Result<(), String> {
 
         canvas.present();
     }
+
+    let run_time = time::Instant::now().duration_since(game_loop_start_at);
+    println!("Total run time = {:?}", run_time.as_secs());
+    println!("Total frames rendered = {0}", frames);
+    println!("FPS = {0}", frames / run_time.as_secs());
 
     Ok(())
 }
