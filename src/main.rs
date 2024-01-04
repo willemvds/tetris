@@ -15,11 +15,6 @@ use sdl2::render;
 use sdl2::ttf;
 use sdl2::video;
 
-const SCREEN_WIDTH: u32 = 1800;
-const SCREEN_HEIGHT: u32 = 1200;
-
-const CELL_SIZE: i32 = 32;
-
 fn tetromino_colour(kind: tetrominos::Kind) -> pixels::Color {
     match kind {
         tetrominos::Kind::Hook => pixels::Color::RGB(92, 101, 168),
@@ -184,10 +179,14 @@ fn draw_partial_shape(
     }
 }
 
-fn draw_playfield(canvas: &mut render::Canvas<video::Window>, pf: &playfield::PlayField) {
-    let size: i32 = CELL_SIZE;
+fn draw_playfield(
+    canvas: &mut render::Canvas<video::Window>,
+    pf: &playfield::PlayField,
+    size: i32,
+) {
+    let (canvas_width, _) = canvas.window().size();
 
-    let start_x: i32 = (SCREEN_WIDTH as i32 - (CELL_SIZE * 10)) / 2;
+    let start_x: i32 = (canvas_width as i32 - (size * 10)) / 2;
     let start_y: i32 = 1;
 
     let well_rows_start = pf.well_y();
@@ -230,8 +229,8 @@ fn draw_playfield(canvas: &mut render::Canvas<video::Window>, pf: &playfield::Pl
     ));
 }
 
-fn draw_game(canvas: &mut render::Canvas<video::Window>, game: &game::Game) {
-    draw_playfield(canvas, &game.play_field);
+fn draw_game(canvas: &mut render::Canvas<video::Window>, game: &game::Game, size: i32) {
+    draw_playfield(canvas, &game.play_field, size);
 }
 
 fn render_text(
@@ -279,8 +278,12 @@ fn main() -> Result<(), String> {
         video_subsys.current_video_driver(),
         video_subsys.display_name(0)
     );
+
+    let initial_window_width = 1920;
+    let initial_window_height = 1080;
+
     let window = video_subsys
-        .window("Panda Tetris", SCREEN_WIDTH, SCREEN_HEIGHT)
+        .window("Panda Tetris", initial_window_width, initial_window_height)
         .position_centered()
         .resizable()
         .opengl()
@@ -288,14 +291,7 @@ fn main() -> Result<(), String> {
         .map_err(|e| e.to_string())?;
 
     let mut canvas = window.into_canvas().build().map_err(|e| e.to_string())?;
-
     canvas.set_draw_color(pixels::Color::RGB(0, 0, 0));
-
-    canvas.present();
-
-    let _lastx = 0;
-    let _lasty = 0;
-
     canvas.present();
 
     let mut events = sdl_context.event_pump()?;
@@ -316,7 +312,6 @@ fn main() -> Result<(), String> {
 
     'main: loop {
         frames = frames + 1;
-        // let start = Instant::now();
 
         let now = time::Instant::now();
         let mut frame_time = now - start_time;
@@ -325,7 +320,6 @@ fn main() -> Result<(), String> {
         if frame_time.as_secs_f64() > 0.25 {
             println!("******************************************************* SLOW");
             frame_time = time::Duration::from_millis(250);
-            // 0.25;
         }
         start_time = now;
         accumulator = accumulator + frame_time.as_secs_f64();
@@ -333,7 +327,6 @@ fn main() -> Result<(), String> {
         let mut acc_runs = 0;
         while accumulator >= dt {
             acc_runs += 1;
-            // simulation things
             t += dt;
             accumulator -= dt;
 
@@ -351,36 +344,30 @@ fn main() -> Result<(), String> {
                     event::Event::KeyDown {
                         keycode: Some(keycode),
                         ..
-                    } => {
-                        match keycode {
-                            keyboard::Keycode::Escape => break 'main,
-                            keyboard::Keycode::Space => {
-                                if game.is_playing() {
-                                    game.pause()
-                                } else {
-                                    game.unpause()
-                                }
+                    } => match keycode {
+                        keyboard::Keycode::Escape => break 'main,
+                        keyboard::Keycode::Space => {
+                            if game.is_playing() {
+                                game.pause()
+                            } else {
+                                game.unpause()
                             }
-
-                            // these are game actions and need to be handled in the game sim eventually
-                            keyboard::Keycode::Kp7 => game.queue_action(actions::Action::MoveLeft),
-                            keyboard::Keycode::Kp9 => game.queue_action(actions::Action::MoveRight),
-                            keyboard::Keycode::Kp4 => game.queue_action(actions::Action::Drop),
-                            keyboard::Keycode::Kp5 => game.queue_action(actions::Action::MoveDown),
-                            keyboard::Keycode::Kp6 => {
-                                let _ = game.grab_next_piece();
-                            }
-                            keyboard::Keycode::Kp8 => game.queue_action(actions::Action::Rotate),
-                            keyboard::Keycode::KpPlus => game.speed_up(),
-                            keyboard::Keycode::KpMinus => game.speed_down(),
-
-                            _ => (),
                         }
-                    }
 
-                    event::Event::MouseButtonDown { .. } => {
-                        //                        next_piece(&mut game);
-                    }
+                        keyboard::Keycode::Kp7 => game.queue_action(actions::Action::MoveLeft),
+                        keyboard::Keycode::Kp9 => game.queue_action(actions::Action::MoveRight),
+                        keyboard::Keycode::Kp4 => game.queue_action(actions::Action::Drop),
+                        keyboard::Keycode::Kp5 => game.queue_action(actions::Action::MoveDown),
+                        keyboard::Keycode::Kp6 => {
+                            let _ = game.grab_next_piece();
+                        }
+                        keyboard::Keycode::Kp8 => game.queue_action(actions::Action::Rotate),
+                        keyboard::Keycode::KpPlus => game.speed_up(),
+                        keyboard::Keycode::KpMinus => game.speed_down(),
+                        _ => (),
+                    },
+
+                    event::Event::MouseButtonDown { .. } => {}
 
                     _ => {}
                 }
@@ -397,11 +384,15 @@ fn main() -> Result<(), String> {
 
         canvas.set_draw_color(pixels::Color::RGB(0, 0, 0));
         canvas.clear();
-        draw_game(&mut canvas, &game);
+
+        let (window_width, window_height) = canvas.window().size();
+        let cell_size: i32 = (window_height / 30) as i32;
+
+        draw_game(&mut canvas, &game, cell_size);
 
         thread::sleep(time::Duration::from_millis(1));
 
-        let start_x: i32 = (SCREEN_WIDTH as i32 - (CELL_SIZE * 10)) / 2;
+        let start_x: i32 = (window_width as i32 - (cell_size * 10)) / 2;
         let start_y: i32 = 1;
 
         if game.piece.y < 4 {
@@ -410,18 +401,18 @@ fn main() -> Result<(), String> {
                 *game.piece.form(),
                 4 - game.piece.y as i16,
                 tetromino_colour(game.piece.tetromino.kind),
-                CELL_SIZE,
-                start_x + (game.piece.x as i32 * CELL_SIZE),
-                start_y + (game.piece.y as i32 * CELL_SIZE),
+                cell_size,
+                start_x + (game.piece.x as i32 * cell_size),
+                start_y + (game.piece.y as i32 * cell_size),
             );
         } else {
             draw_shape(
                 &mut canvas,
                 *game.piece.form(),
                 tetromino_colour(game.piece.tetromino.kind),
-                CELL_SIZE,
-                start_x + (game.piece.x as i32 * CELL_SIZE),
-                start_y + (game.piece.y as i32 * CELL_SIZE),
+                cell_size,
+                start_x + (game.piece.x as i32 * cell_size),
+                start_y + (game.piece.y as i32 * cell_size),
             );
         }
 
@@ -430,9 +421,9 @@ fn main() -> Result<(), String> {
                 &mut canvas,
                 *game.piece.form(),
                 tetromino_colour(game.piece.tetromino.kind),
-                CELL_SIZE,
-                start_x + (game.piece.x as i32 * CELL_SIZE),
-                start_y + (game.piece.y + game.drop_distance() as u16 - 1) as i32 * CELL_SIZE,
+                cell_size,
+                start_x + (game.piece.x as i32 * cell_size),
+                start_y + (game.piece.y + game.drop_distance() as u16 - 1) as i32 * cell_size,
             )
         }
 
@@ -440,7 +431,7 @@ fn main() -> Result<(), String> {
             &mut canvas,
             game.next_piece.forms[0],
             tetromino_colour(game.next_piece.kind),
-            CELL_SIZE,
+            cell_size,
             1300,
             160,
         );
