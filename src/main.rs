@@ -74,6 +74,38 @@ fn draw_shape(
     }
 }
 
+fn draw_shape_triangles(
+    canvas: &mut render::Canvas<video::Window>,
+    s: playfield::Shape,
+    colour: pixels::Color,
+    size: i32,
+    x: i32,
+    y: i32,
+) {
+    canvas.set_draw_color(colour);
+    for row in 0..4 {
+        for col in 0..4 {
+            if s[row][col] == 0 {
+                continue;
+            }
+            let start_x = x + (col as i32 * size);
+            let start_y = y + (row as i32 * size);
+            let end_x = start_x + size;
+            let end_y = start_y + size;
+            let _ = canvas.draw_line(
+                rect::Point::new(start_x, start_y),
+                rect::Point::new(end_x, end_y),
+            );
+            let _ = canvas.draw_rect(rect::Rect::new(
+                x + (col as i32 * size),
+                y + (row as i32 * size),
+                size as u32,
+                size as u32,
+            ));
+        }
+    }
+}
+
 fn draw_shape_outline(
     canvas: &mut render::Canvas<video::Window>,
     s: playfield::Shape,
@@ -88,12 +120,41 @@ fn draw_shape_outline(
             if s[row][col] == 0 {
                 continue;
             }
-            let _ = canvas.draw_rect(rect::Rect::new(
-                x + (col as i32 * size),
-                y + (row as i32 * size),
-                size as u32,
-                size as u32,
-            ));
+
+            let start_x = x + (col as i32 * size);
+            let start_y = y + (row as i32 * size);
+
+            // draw_top_line
+            if row == 0 || s[row - 1][col] == 0 {
+                let _ = canvas.draw_line(
+                    rect::Point::new(start_x, start_y),
+                    rect::Point::new(start_x + size, start_y),
+                );
+            }
+
+            // draw_right_line
+            if col == 3 || s[row][col + 1] == 0 {
+                let _ = canvas.draw_line(
+                    rect::Point::new(start_x + size, start_y),
+                    rect::Point::new(start_x + size, start_y + size),
+                );
+            }
+
+            // draw_bottom_line
+            if row == 3 || s[row + 1][col] == 0 {
+                let _ = canvas.draw_line(
+                    rect::Point::new(start_x, start_y + size),
+                    rect::Point::new(start_x + size, start_y + size),
+                );
+            }
+
+            // draw_left_line
+            if col == 0 || s[row][col - 1] == 0 {
+                let _ = canvas.draw_line(
+                    rect::Point::new(start_x, start_y),
+                    rect::Point::new(start_x, start_y + size),
+                );
+            }
         }
     }
 }
