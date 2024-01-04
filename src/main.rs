@@ -247,7 +247,7 @@ fn main() -> Result<(), String> {
     let mut t: f64 = 0.0;
     let dt: f64 = 1.0 / 240.0;
 
-    let mut game_loop_start_at = time::Instant::now();
+    let game_loop_start_at = time::Instant::now();
     let mut start_time = time::Instant::now();
     let mut accumulator: f64 = 0.0;
 
