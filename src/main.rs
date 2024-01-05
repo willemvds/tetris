@@ -236,9 +236,10 @@ fn draw_game(canvas: &mut render::Canvas<video::Window>, game: &game::Game, size
 fn render_text(
     canvas: &mut render::Canvas<video::Window>,
     font: &ttf::Font,
-    text: String,
+    colour: pixels::Color,
     x: i32,
     y: i32,
+    text: String,
 ) {
     let texture_creator = canvas.texture_creator();
 
@@ -246,7 +247,7 @@ fn render_text(
 
     let surface = font
         .render(&text)
-        .blended(pixels::Color::RGBA(0, 255, 0, 255))
+        .blended(colour)
         .map_err(|e| e.to_string())
         .unwrap();
     let texture = texture_creator
@@ -436,30 +437,42 @@ fn main() -> Result<(), String> {
             160,
         );
 
-        render_text(&mut canvas, &font, format!("{:.2} fps", frame_rate), 20, 20);
+        let bright_green = pixels::Color::RGBA(0, 255, 0, 255);
 
         render_text(
             &mut canvas,
             &font,
-            format!("Lines Cleared: {0}", game.score_lines_cleared),
+            bright_green,
             20,
-            140,
+            20,
+            format!("{:.2} fps", frame_rate),
         );
 
         render_text(
             &mut canvas,
             &font,
-            format!("Score: {0}", game.score_points),
+            bright_green,
+            20,
+            140,
+            format!("Lines Cleared: {0}", game.score_lines_cleared),
+        );
+
+        render_text(
+            &mut canvas,
+            &font,
+            bright_green,
             20,
             200,
+            format!("Score: {0}", game.score_points),
         );
 
         render_text(
             &mut canvas,
             &smaller_font,
-            "Next Piece:".to_string(),
+            bright_green,
             1300,
             100,
+            "Next Piece:".to_string(),
         );
 
         canvas.present();
