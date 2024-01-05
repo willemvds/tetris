@@ -1,3 +1,5 @@
+use crate::game::recordings;
+
 use crate::actions;
 use crate::playfield;
 use crate::tetrominos;
@@ -53,6 +55,8 @@ pub struct Game {
     pub score_points: u32,
     pub score_lines_cleared: u32,
     next_action: Option<actions::Action>,
+
+    pub recording: recordings::Recording,
 }
 
 impl Game {
@@ -71,6 +75,7 @@ impl Game {
             score_lines_cleared: 0,
 
             next_action: None,
+            recording: recordings::Recording::new(),
         };
 
         // Grab the first two pieces from the first tetromino bag
@@ -83,10 +88,13 @@ impl Game {
         Ok(g)
     }
 
-    pub fn sim(&mut self, _t: f64, dt: f64, _acc: f64) {
-        // println!("SIMULATING GAME ENGINE... {:?} {:?} {:?}", t, dt, acc);
+    pub fn sim(&mut self, t: f64, dt: f64, _acc: f64) {
+        //println!("SIMULATING GAME ENGINE... {:?} {:?} {:?}", t, dt, acc);
         //
         if self.next_action.is_some() {
+            let action = self.next_action.unwrap();
+            self.recording.push(t, action);
+
             match self.next_action {
                 Some(actions::Action::MoveDown) => self.drop_one(),
                 Some(actions::Action::MoveLeft) => self.move_left(),

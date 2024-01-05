@@ -529,5 +529,7 @@ fn main() -> Result<(), String> {
     println!("Total frames rendered = {0}", frames);
     println!("FPS = {0}", frames / run_time.as_secs());
 
+    println!("Game recording = {:?}", game.recording);
+
     Ok(())
 }
