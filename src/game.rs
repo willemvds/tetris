@@ -147,6 +147,14 @@ impl Game {
         return self.state == State::Playing;
     }
 
+    pub fn is_paused(&self) -> bool {
+        return self.state == State::Paused;
+    }
+
+    pub fn is_gameover(&self) -> bool {
+        return self.state == State::GameOver;
+    }
+
     pub fn queue_action(&mut self, a: actions::Action) {
         if self.state != State::Playing {
             return;

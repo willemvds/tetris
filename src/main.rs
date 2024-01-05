@@ -186,7 +186,7 @@ fn draw_playfield(
 ) {
     let (canvas_width, _) = canvas.window().size();
 
-    let start_x: i32 = (canvas_width as i32 - (size * 10)) / 2;
+    let start_x: i32 = (canvas_width as i32 - (size * pf.matrix.len() as i32 / 2)) / 2;
     let start_y: i32 = 1;
 
     let well_rows_start = pf.well_y();
@@ -256,6 +256,37 @@ fn render_text(
         .unwrap();
 
     let target = rect::Rect::new(x, y, char_width * text.len() as u32, char_height);
+
+    let _ = canvas.copy(&texture, None, Some(target));
+}
+
+fn render_text_centered(
+    canvas: &mut render::Canvas<video::Window>,
+    font: &ttf::Font,
+    colour: pixels::Color,
+    x: i32,
+    y: i32,
+    text: String,
+) {
+    let texture_creator = canvas.texture_creator();
+
+    let (char_width, char_height) = font.size_of_char('C').unwrap();
+
+    let surface = font
+        .render(&text)
+        .blended(colour)
+        .map_err(|e| e.to_string())
+        .unwrap();
+    let texture = texture_creator
+        .create_texture_from_surface(&surface)
+        .map_err(|e| e.to_string())
+        .unwrap();
+
+    let text_width = char_width * text.len() as u32;
+    let target_x = x - (text_width / 2) as i32;
+    let target_y = y - (char_height / 2) as i32;
+
+    let target = rect::Rect::new(target_x, target_y, text_width, char_height);
 
     let _ = canvas.copy(&texture, None, Some(target));
 }
@@ -393,7 +424,8 @@ fn main() -> Result<(), String> {
 
         thread::sleep(time::Duration::from_millis(1));
 
-        let start_x: i32 = (window_width as i32 - (cell_size * 10)) / 2;
+        let start_x: i32 =
+            (window_width as i32 - (cell_size * game.play_field.matrix.len() as i32 / 2)) / 2;
         let start_y: i32 = 1;
 
         if game.piece.y < 4 {
@@ -433,11 +465,12 @@ fn main() -> Result<(), String> {
             game.next_piece.forms[0],
             tetromino_colour(game.next_piece.kind),
             cell_size,
-            1300,
-            160,
+            start_x + (game.play_field.cols as i32 * cell_size) + (window_width as i32 / 10),
+            start_y + (window_width as i32 / 10),
         );
 
         let bright_green = pixels::Color::RGBA(0, 255, 0, 255);
+        let bright_red = pixels::Color::RGBA(255, 0, 0, 255);
 
         render_text(
             &mut canvas,
@@ -466,14 +499,25 @@ fn main() -> Result<(), String> {
             format!("Score: {0}", game.score_points),
         );
 
-        render_text(
-            &mut canvas,
-            &smaller_font,
-            bright_green,
-            1300,
-            100,
-            "Next Piece:".to_string(),
-        );
+        if game.is_paused() {
+            render_text_centered(
+                &mut canvas,
+                &font,
+                bright_red,
+                (window_width / 2) as i32,
+                50,
+                "PAUSED...".to_string(),
+            )
+        } else if game.is_gameover() {
+            render_text_centered(
+                &mut canvas,
+                &font,
+                bright_red,
+                (window_width / 2) as i32,
+                50,
+                "GAME OVER!".to_string(),
+            )
+        }
 
         canvas.present();
     }
