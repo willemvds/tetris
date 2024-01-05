@@ -381,6 +381,8 @@ fn main() -> Result<(), String> {
                         keyboard::Keycode::Space => {
                             if game.is_playing() {
                                 game.pause()
+                            } else if game.is_gameover() {
+                                game = game::Game::new()?
                             } else {
                                 game.unpause()
                             }
