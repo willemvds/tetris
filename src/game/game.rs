@@ -122,6 +122,7 @@ impl Game {
                 if self.grab_next_piece().is_err() {
                     self.state = State::GameOver;
                 }
+                self.recording.new_piece(t, self.next_piece.kind);
             } else {
                 if self.can_fall() {
                     self.piece.y += 1;
@@ -130,6 +131,7 @@ impl Game {
                     if self.grab_next_piece().is_err() {
                         self.state = State::GameOver;
                     }
+                    self.recording.new_piece(t, self.next_piece.kind);
                 }
             }
             let lines_cleared = self.play_field.clear_full_rows();
