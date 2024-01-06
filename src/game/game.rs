@@ -93,7 +93,7 @@ impl Game {
         //
         if self.next_action.is_some() {
             let action = self.next_action.unwrap();
-            self.recording.push(t, action);
+            self.recording.push_action(t, action);
 
             match self.next_action {
                 Some(actions::Action::MoveDown) => self.drop_one(),
@@ -122,7 +122,7 @@ impl Game {
                 if self.grab_next_piece().is_err() {
                     self.state = State::GameOver;
                 }
-                self.recording.new_piece(t, self.next_piece.kind);
+                self.recording.push_piece(t, self.next_piece.kind);
             } else {
                 if self.can_fall() {
                     self.piece.y += 1;
@@ -131,7 +131,7 @@ impl Game {
                     if self.grab_next_piece().is_err() {
                         self.state = State::GameOver;
                     }
-                    self.recording.new_piece(t, self.next_piece.kind);
+                    self.recording.push_piece(t, self.next_piece.kind);
                 }
             }
             let lines_cleared = self.play_field.clear_full_rows();
