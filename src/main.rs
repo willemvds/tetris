@@ -530,8 +530,6 @@ fn main() -> Result<(), String> {
     println!("Total frames rendered = {0}", frames);
     println!("FPS = {0}", frames / run_time.as_secs());
 
-    println!("Game recording = {:?}", game.recording);
-
     let mut recording_file =
         fs::File::create("last_game_recording.json").map_err(|e| e.to_string())?;
     let _ = serde_json::to_writer_pretty(&mut recording_file, &game.recording)
