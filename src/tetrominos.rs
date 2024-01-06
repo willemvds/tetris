@@ -1,4 +1,6 @@
-#[derive(Debug, Copy, Clone, PartialEq)]
+use serde::{Deserialize, Serialize};
+
+#[derive(Debug, Copy, Clone, PartialEq, Serialize, Deserialize)]
 pub enum Kind {
     Stick,
     Seven,
@@ -11,7 +13,7 @@ pub enum Kind {
 
 pub type Form = [[u8; 4]; 4];
 
-#[derive(Debug)]
+#[derive(Debug, Serialize, Deserialize)]
 pub struct Tetromino {
     pub kind: Kind,
     pub forms: [Form; 4],

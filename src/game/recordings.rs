@@ -1,7 +1,10 @@
 use crate::actions;
 use crate::tetrominos;
 
-#[derive(Debug)]
+use serde::{Deserialize, Serialize};
+use serde_json::{Result, Value};
+
+#[derive(Debug, Serialize, Deserialize)]
 enum EventKind {
     Pause,
     Unpause,
@@ -10,13 +13,13 @@ enum EventKind {
     Action(actions::Action),
 }
 
-#[derive(Debug)]
+#[derive(Debug, Serialize, Deserialize)]
 struct Event {
     kind: EventKind,
     at: f64,
 }
 
-#[derive(Debug)]
+#[derive(Debug, Serialize, Deserialize)]
 pub struct Recording {
     events: Vec<Event>,
 }

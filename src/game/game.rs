@@ -121,6 +121,9 @@ impl Game {
 
                 if self.grab_next_piece().is_err() {
                     self.state = State::GameOver;
+                    self.recording.gameover(t);
+
+                    return;
                 }
                 self.recording.push_piece(t, self.next_piece.kind);
             } else {
@@ -130,6 +133,9 @@ impl Game {
                     self.imprint_piece();
                     if self.grab_next_piece().is_err() {
                         self.state = State::GameOver;
+                        self.recording.gameover(t);
+
+                        return;
                     }
                     self.recording.push_piece(t, self.next_piece.kind);
                 }
