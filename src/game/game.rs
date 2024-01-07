@@ -37,6 +37,47 @@ impl Piece {
     }
 }
 
+trait PieceProvider {
+    fn next(&mut self) -> tetrominos::Kind;
+}
+
+struct TetrominoBag {
+    pieces: Vec<tetrominos::Kind>,
+}
+
+impl TetrominoBag {
+    fn new() -> TetrominoBag {
+        TetrominoBag {
+            pieces: Self::one_of_each_kind(),
+        }
+    }
+
+    fn one_of_each_kind() -> Vec<tetrominos::Kind> {
+        vec![
+            tetrominos::Kind::Stick,
+            tetrominos::Kind::Square,
+            tetrominos::Kind::Pyramid,
+            tetrominos::Kind::Seven,
+            tetrominos::Kind::Snake,
+            tetrominos::Kind::Hook,
+            tetrominos::Kind::Zig,
+        ]
+    }
+}
+
+impl PieceProvider for TetrominoBag {
+    fn next(&mut self) -> tetrominos::Kind {
+        if self.pieces.len() == 0 {
+            self.pieces = TetrominoBag::one_of_each_kind();
+        }
+
+        let mut rng = rand::thread_rng();
+        let n1: usize = rng.gen_range(0..self.pieces.len());
+
+        self.pieces.swap_remove(n1)
+    }
+}
+
 #[derive(PartialEq)]
 enum State {
     Init,
@@ -51,6 +92,7 @@ pub struct Game {
     pub play_field: playfield::PlayField,
     pub next_piece: &'static tetrominos::Tetromino,
     pub piece_bag: Vec<&'static tetrominos::Tetromino>,
+    piece_provider: Box<dyn PieceProvider>,
     pub piece: Piece,
     pub score_points: u32,
     pub score_lines_cleared: u32,
@@ -67,6 +109,7 @@ impl Game {
             speed: 42.0,
             play_field,
 
+            piece_provider: Box::new(TetrominoBag::new()),
             piece: Piece::new(tetrominos::from_kind(tetrominos::Kind::Stick)),
             next_piece: tetrominos::from_kind(tetrominos::Kind::Stick),
             piece_bag: new_tetromino_bag(),
@@ -265,22 +308,9 @@ impl Game {
         println!("NEW SPEED is {}", self.speed);
     }
 
-    pub fn grab_piece(&mut self) -> &'static tetrominos::Tetromino {
-        if self.piece_bag.len() == 0 {
-            self.piece_bag = new_tetromino_bag();
-        }
-
-        let mut rng = rand::thread_rng();
-        let n1: usize = rng.gen_range(0..self.piece_bag.len());
-
-        let p = self.piece_bag.swap_remove(n1);
-
-        p
-    }
-
     pub fn grab_next_piece(&mut self) -> Result<(), String> {
         self.piece.tetromino = self.next_piece;
-        self.next_piece = self.grab_piece();
+        self.next_piece = tetrominos::from_kind(self.piece_provider.next());
         self.piece.rotation = 0;
         self.piece.x = (self.play_field.well_x() + (self.play_field.cols / 2) - 2) as u16;
         self.piece.y = 2;
