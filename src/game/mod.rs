@@ -1,4 +1,5 @@
-mod game;
+pub mod game;
 pub use crate::game::game::*;
 
-mod recordings;
+pub mod recordings;
+pub use crate::game::recordings::*;

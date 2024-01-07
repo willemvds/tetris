@@ -1,4 +1,6 @@
+use std::env;
 use std::fs;
+use std::io;
 use std::thread;
 use std::time;
 
@@ -292,7 +294,180 @@ fn render_text_centered(
     let _ = canvas.copy(&texture, None, Some(target));
 }
 
+struct Replay {
+    recording: game::recordings::Recording,
+}
+
+struct ReplayPieces {
+    pieces: Vec<tetrominos::Kind>,
+    idx: usize,
+}
+
+impl ReplayPieces {
+    fn new(replay: &Replay) -> ReplayPieces {
+        let piece_events = replay
+            .recording
+            .events
+            .iter()
+            .filter(|ev| matches!(ev.kind, game::recordings::EventKind::PieceSpawned(_)));
+        let pieces = piece_events
+            .map(|ev| {
+                if let game::recordings::EventKind::PieceSpawned(k) = ev.kind {
+                    k
+                } else {
+                    panic!("BAD")
+                }
+            })
+            .collect();
+        ReplayPieces { pieces, idx: 0 }
+    }
+}
+
+impl game::PieceProvider for ReplayPieces {
+    fn next(&mut self) -> tetrominos::Kind {
+        let p = self.pieces[self.idx];
+
+        self.idx += 1;
+
+        p
+    }
+}
+
+fn render_game(
+    canvas: &mut render::Canvas<video::Window>,
+    game: &mut game::Game,
+    font: &ttf::Font,
+) {
+    canvas.set_draw_color(pixels::Color::RGB(0, 0, 0));
+    canvas.clear();
+
+    let (window_width, window_height) = canvas.window().size();
+    let cell_size: i32 = (window_height / 30) as i32;
+
+    draw_game(canvas, &game, cell_size);
+
+    thread::sleep(time::Duration::from_millis(1));
+
+    let start_x: i32 =
+        (window_width as i32 - (cell_size * game.play_field.matrix.len() as i32 / 2)) / 2;
+    let start_y: i32 = 1;
+
+    if game.piece.y < 4 {
+        draw_partial_shape(
+            canvas,
+            *game.piece.form(),
+            4 - game.piece.y as i16,
+            tetromino_colour(game.piece.tetromino.kind),
+            cell_size,
+            start_x + (game.piece.x as i32 * cell_size),
+            start_y + (game.piece.y as i32 * cell_size),
+        );
+    } else {
+        draw_shape(
+            canvas,
+            *game.piece.form(),
+            tetromino_colour(game.piece.tetromino.kind),
+            cell_size,
+            start_x + (game.piece.x as i32 * cell_size),
+            start_y + (game.piece.y as i32 * cell_size),
+        );
+    }
+
+    if game.drop_distance() > 0 {
+        draw_shape_outline(
+            canvas,
+            *game.piece.form(),
+            tetromino_colour(game.piece.tetromino.kind),
+            cell_size,
+            start_x + (game.piece.x as i32 * cell_size),
+            start_y + (game.piece.y + game.drop_distance() as u16 - 1) as i32 * cell_size,
+        )
+    }
+
+    draw_shape(
+        canvas,
+        game.next_piece.forms[0],
+        tetromino_colour(game.next_piece.kind),
+        cell_size,
+        start_x + (game.play_field.cols as i32 * cell_size) + (window_width as i32 / 10),
+        start_y + (window_width as i32 / 10),
+    );
+
+    let bright_green = pixels::Color::RGBA(0, 255, 0, 255);
+    let bright_red = pixels::Color::RGBA(255, 0, 0, 255);
+
+    //        render_text(
+    //            &mut canvas,
+    //            &font,
+    //            bright_green,
+    //            20,
+    //            20,
+    //            format!("{:.2} fps", frame_rate),
+    //        );
+
+    render_text(
+        canvas,
+        font,
+        bright_green,
+        20,
+        140,
+        format!("Lines Cleared: {0}", game.score_lines_cleared),
+    );
+
+    render_text(
+        canvas,
+        font,
+        bright_green,
+        20,
+        200,
+        format!("Score: {0}", game.score_points),
+    );
+
+    if game.is_paused() {
+        render_text_centered(
+            canvas,
+            font,
+            bright_red,
+            (window_width / 2) as i32,
+            50,
+            "PAUSED...".to_string(),
+        )
+    } else if game.is_gameover() {
+        render_text_centered(
+            canvas,
+            font,
+            bright_red,
+            (window_width / 2) as i32,
+            50,
+            "GAME OVER!".to_string(),
+        )
+    }
+
+    canvas.present();
+}
+
+#[derive(PartialEq)]
+enum Mode {
+    Tetris,
+    Replay,
+}
+
 fn main() -> Result<(), String> {
+    let mut mode = Mode::Tetris;
+    let args: Vec<String> = env::args().collect();
+
+    let mut replay: Option<Replay> = None;
+
+    let mut replay_action_index = 0;
+    if args.len() > 1 {
+        let recording_file = fs::File::open(args[1].clone()).map_err(|e| e.to_string())?;
+        let recording_file_reader = io::BufReader::new(recording_file);
+        let recording =
+            serde_json::from_reader(recording_file_reader).map_err(|e| e.to_string())?;
+        replay = Some(Replay { recording });
+        mode = Mode::Replay;
+    }
+
     let sdl_context = sdl2::init()?;
     let video_subsys = sdl_context.video()?;
     let ttf_context = sdl2::ttf::init().map_err(|e| e.to_string())?;
@@ -303,7 +478,7 @@ fn main() -> Result<(), String> {
     )?;
     font.set_style(sdl2::ttf::FontStyle::BOLD);
 
-    let smaller_font =
+    let _smaller_font =
         ttf_context.load_font("/usr/share/fonts/TTF/PressStart2P-Regular.ttf", 18)?;
 
     println!(
@@ -341,7 +516,13 @@ fn main() -> Result<(), String> {
     let mut start_time = time::Instant::now();
     let mut accumulator: f64 = 0.0;
 
-    let mut game = game::Game::new()?;
+    let mut game = match replay {
+        Some(ref r) => {
+            let replay_pieces = ReplayPieces::new(r);
+            game::Game::new(Some(Box::new(replay_pieces)))?
+        }
+        None => game::Game::new(None)?,
+    };
 
     'main: loop {
         frames = frames + 1;
@@ -377,34 +558,60 @@ fn main() -> Result<(), String> {
                     event::Event::KeyDown {
                         keycode: Some(keycode),
                         ..
-                    } => match keycode {
-                        keyboard::Keycode::Escape => break 'main,
-                        keyboard::Keycode::Space => {
-                            if game.is_playing() {
-                                game.pause()
-                            } else if game.is_gameover() {
-                                game = game::Game::new()?
-                            } else {
-                                game.unpause()
+                    } => {
+                        if mode == Mode::Replay {
+                            continue;
+                        }
+                        match keycode {
+                            keyboard::Keycode::Escape => break 'main,
+                            keyboard::Keycode::Space => {
+                                if game.is_playing() {
+                                    game.pause()
+                                } else if game.is_gameover() {
+                                    game = game::Game::new(None)?
+                                } else {
+                                    game.unpause()
+                                }
                             }
-                        }
 
-                        keyboard::Keycode::Kp7 => game.queue_action(actions::Action::MoveLeft),
-                        keyboard::Keycode::Kp9 => game.queue_action(actions::Action::MoveRight),
-                        keyboard::Keycode::Kp4 => game.queue_action(actions::Action::Drop),
-                        keyboard::Keycode::Kp5 => game.queue_action(actions::Action::MoveDown),
-                        keyboard::Keycode::Kp6 => {
-                            let _ = game.grab_next_piece();
+                            keyboard::Keycode::Kp7 => game.queue_action(actions::Action::MoveLeft),
+                            keyboard::Keycode::Kp9 => game.queue_action(actions::Action::MoveRight),
+                            keyboard::Keycode::Kp4 => game.queue_action(actions::Action::Drop),
+                            keyboard::Keycode::Kp5 => game.queue_action(actions::Action::MoveDown),
+                            keyboard::Keycode::Kp8 => game.queue_action(actions::Action::Rotate),
+                            keyboard::Keycode::KpPlus => game.speed_up(),
+                            keyboard::Keycode::KpMinus => game.speed_down(),
+                            _ => (),
                         }
-                        keyboard::Keycode::Kp8 => game.queue_action(actions::Action::Rotate),
-                        keyboard::Keycode::KpPlus => game.speed_up(),
-                        keyboard::Keycode::KpMinus => game.speed_down(),
-                        _ => (),
-                    },
+                    }
 
                     event::Event::MouseButtonDown { .. } => {}
 
                     _ => {}
+                }
+            }
+
+            if mode == Mode::Replay {
+                if let Some(ref r) = replay {
+                    while !matches!(
+                        r.recording.events[replay_action_index].kind,
+                        game::recordings::EventKind::Action(_)
+                    ) {
+                        replay_action_index += 1
+                    }
+                    match r.recording.events[replay_action_index].kind {
+                        game::recordings::EventKind::Action(a) => {
+                            if r.recording.events[replay_action_index].at <= t {
+                                println!(
+                                    "Queueing replay action @ {:?} {:?}",
+                                    r.recording.events[replay_action_index].at, a
+                                );
+                                replay_action_index += 1;
+                                game.queue_action(a)
+                            }
+                        }
+                        _ => (),
+                    }
                 }
             }
 
@@ -417,112 +624,7 @@ fn main() -> Result<(), String> {
             println!("Multiple({acc_runs}) simulations during single frame.");
         }
 
-        canvas.set_draw_color(pixels::Color::RGB(0, 0, 0));
-        canvas.clear();
-
-        let (window_width, window_height) = canvas.window().size();
-        let cell_size: i32 = (window_height / 30) as i32;
-
-        draw_game(&mut canvas, &game, cell_size);
-
-        thread::sleep(time::Duration::from_millis(1));
-
-        let start_x: i32 =
-            (window_width as i32 - (cell_size * game.play_field.matrix.len() as i32 / 2)) / 2;
-        let start_y: i32 = 1;
-
-        if game.piece.y < 4 {
-            draw_partial_shape(
-                &mut canvas,
-                *game.piece.form(),
-                4 - game.piece.y as i16,
-                tetromino_colour(game.piece.tetromino.kind),
-                cell_size,
-                start_x + (game.piece.x as i32 * cell_size),
-                start_y + (game.piece.y as i32 * cell_size),
-            );
-        } else {
-            draw_shape(
-                &mut canvas,
-                *game.piece.form(),
-                tetromino_colour(game.piece.tetromino.kind),
-                cell_size,
-                start_x + (game.piece.x as i32 * cell_size),
-                start_y + (game.piece.y as i32 * cell_size),
-            );
-        }
-
-        if game.drop_distance() > 0 {
-            draw_shape_outline(
-                &mut canvas,
-                *game.piece.form(),
-                tetromino_colour(game.piece.tetromino.kind),
-                cell_size,
-                start_x + (game.piece.x as i32 * cell_size),
-                start_y + (game.piece.y + game.drop_distance() as u16 - 1) as i32 * cell_size,
-            )
-        }
-
-        draw_shape(
-            &mut canvas,
-            game.next_piece.forms[0],
-            tetromino_colour(game.next_piece.kind),
-            cell_size,
-            start_x + (game.play_field.cols as i32 * cell_size) + (window_width as i32 / 10),
-            start_y + (window_width as i32 / 10),
-        );
-
-        let bright_green = pixels::Color::RGBA(0, 255, 0, 255);
-        let bright_red = pixels::Color::RGBA(255, 0, 0, 255);
-
-        render_text(
-            &mut canvas,
-            &font,
-            bright_green,
-            20,
-            20,
-            format!("{:.2} fps", frame_rate),
-        );
-
-        render_text(
-            &mut canvas,
-            &font,
-            bright_green,
-            20,
-            140,
-            format!("Lines Cleared: {0}", game.score_lines_cleared),
-        );
-
-        render_text(
-            &mut canvas,
-            &font,
-            bright_green,
-            20,
-            200,
-            format!("Score: {0}", game.score_points),
-        );
-
-        if game.is_paused() {
-            render_text_centered(
-                &mut canvas,
-                &font,
-                bright_red,
-                (window_width / 2) as i32,
-                50,
-                "PAUSED...".to_string(),
-            )
-        } else if game.is_gameover() {
-            render_text_centered(
-                &mut canvas,
-                &font,
-                bright_red,
-                (window_width / 2) as i32,
-                50,
-                "GAME OVER!".to_string(),
-            )
-        }
-
-        canvas.present();
+        render_game(&mut canvas, &mut game, &font)
     }
 
     let run_time = time::Instant::now().duration_since(game_loop_start_at);
@@ -530,10 +632,12 @@ fn main() -> Result<(), String> {
     println!("Total frames rendered = {0}", frames);
     println!("FPS = {0}", frames / run_time.as_secs());
 
-    let mut recording_file =
-        fs::File::create("last_game_recording.json").map_err(|e| e.to_string())?;
-    let _ = serde_json::to_writer_pretty(&mut recording_file, &game.recording)
-        .map_err(|e| e.to_string())?;
+    if mode != Mode::Replay {
+        let mut recording_file =
+            fs::File::create("last_game_recording.json").map_err(|e| e.to_string())?;
+        let _ = serde_json::to_writer_pretty(&mut recording_file, &game.recording)
+            .map_err(|e| e.to_string())?;
+    }
 
     Ok(())
 }

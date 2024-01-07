@@ -37,7 +37,7 @@ impl Piece {
     }
 }
 
-trait PieceProvider {
+pub trait PieceProvider {
     fn next(&mut self) -> tetrominos::Kind;
 }
 
@@ -102,14 +102,20 @@ pub struct Game {
 }
 
 impl Game {
-    pub fn new() -> Result<Game, String> {
+    pub fn new(piece_provider: Option<Box<dyn PieceProvider>>) -> Result<Game, String> {
         let play_field = playfield::PlayField::new(24, 10)?;
+
+        let provider = match piece_provider {
+            Some(p) => p,
+            None => Box::new(TetrominoBag::new()),
+        };
+
         let mut g = Game {
             state: State::Init,
             speed: 42.0,
             play_field,
 
-            piece_provider: Box::new(TetrominoBag::new()),
+            piece_provider: provider,
             piece: Piece::new(tetrominos::from_kind(tetrominos::Kind::Stick)),
             next_piece: tetrominos::from_kind(tetrominos::Kind::Stick),
             piece_bag: new_tetromino_bag(),
@@ -124,7 +130,9 @@ impl Game {
         // Grab the first two pieces from the first tetromino bag
         // to replace the temp values set above.
         let _ = g.grab_next_piece();
+        g.recording.push_piece(0.0, g.next_piece.kind);
         let _ = g.grab_next_piece();
+        g.recording.push_piece(0.0, g.next_piece.kind);
 
         g.state = State::Playing;
 

@@ -3,8 +3,8 @@ use crate::tetrominos;
 
 use serde::{Deserialize, Serialize};
 
-#[derive(Debug, Serialize, Deserialize)]
-enum EventKind {
+#[derive(Debug, Serialize, Deserialize, PartialEq)]
+pub enum EventKind {
     Pause,
     Unpause,
     GameOver,
@@ -13,14 +13,14 @@ enum EventKind {
 }
 
 #[derive(Debug, Serialize, Deserialize)]
-struct Event {
-    kind: EventKind,
-    at: f64,
+pub struct Event {
+    pub kind: EventKind,
+    pub at: f64,
 }
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct Recording {
-    events: Vec<Event>,
+    pub events: Vec<Event>,
 }
 
 impl Recording {
