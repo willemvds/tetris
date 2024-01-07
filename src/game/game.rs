@@ -355,21 +355,3 @@ fn new_tetromino_bag() -> Vec<&'static tetrominos::Tetromino> {
         tetrominos::from_kind(tetrominos::Kind::Zig),
     ];
 }
-
-fn rand_tetromino() -> &'static tetrominos::Tetromino {
-    let mut rng = rand::thread_rng();
-    let n1: u8 = rng.gen_range(0..7);
-
-    let t = match n1 {
-        0 => tetrominos::from_kind(tetrominos::Kind::Stick),
-        1 => tetrominos::from_kind(tetrominos::Kind::Square),
-        2 => tetrominos::from_kind(tetrominos::Kind::Pyramid),
-        3 => tetrominos::from_kind(tetrominos::Kind::Seven),
-        4 => tetrominos::from_kind(tetrominos::Kind::Snake),
-        5 => tetrominos::from_kind(tetrominos::Kind::Hook),
-        6 => tetrominos::from_kind(tetrominos::Kind::Zig),
-        _ => panic!("BAD ROBIT"),
-    };
-
-    t
-}
