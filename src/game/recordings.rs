@@ -2,7 +2,6 @@ use crate::actions;
 use crate::tetrominos;
 
 use serde::{Deserialize, Serialize};
-use serde_json::{Result, Value};
 
 #[derive(Debug, Serialize, Deserialize)]
 enum EventKind {
