@@ -82,7 +82,6 @@ impl PieceProvider for TetrominoBag {
 enum State {
     Init,
     Playing,
-    Paused,
     GameOver,
 }
 
@@ -139,7 +138,10 @@ impl Game {
         Ok(g)
     }
 
-    pub fn sim(&mut self, t: f64, dt: f64, _acc: f64) {
+    pub fn sim(&mut self, t: f64, dt: f64) {
+        if self.state == State::GameOver {
+            return;
+        }
         //println!("SIMULATING GAME ENGINE... {:?} {:?} {:?}", t, dt, acc);
         //
         if self.next_action.is_some() {

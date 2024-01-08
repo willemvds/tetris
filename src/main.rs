@@ -1,7 +1,6 @@
 use std::env;
 use std::fs;
 use std::io;
-use std::thread;
 use std::time;
 
 mod actions;
@@ -592,40 +591,36 @@ fn main() -> Result<(), String> {
         }
 
         let mut acc_runs = 0;
-        while !paused && !game.is_gameover() && accumulator >= dt {
-            if !paused {
+        if !paused && !game.is_gameover() {
+            while accumulator >= dt {
                 acc_runs += 1;
                 t += dt;
                 accumulator -= dt;
-            }
 
-            if mode == Mode::Replay {
-                if let Some(ref r) = replay {
-                    while replay_action_index < r.recording.events.len() - 1
-                        && !matches!(
-                            r.recording.events[replay_action_index].kind,
-                            game::recordings::EventKind::Action(_)
-                        )
-                    {
-                        replay_action_index += 1
-                    }
-                    match r.recording.events[replay_action_index].kind {
-                        game::recordings::EventKind::Action(a) => {
-                            if r.recording.events[replay_action_index].at <= t {
-                                println!(
-                                    "Queueing replay action @ {:?} {:?}",
-                                    r.recording.events[replay_action_index].at, a
-                                );
-                                replay_action_index += 1;
-                                let _ = game.queue_action(a);
-                            }
+                if mode == Mode::Replay {
+                    if let Some(ref r) = replay {
+                        while replay_action_index < r.recording.events.len() - 1
+                            && !matches!(
+                                r.recording.events[replay_action_index].kind,
+                                game::recordings::EventKind::Action(_)
+                            )
+                        {
+                            replay_action_index += 1
                         }
-                        _ => (),
+                        match r.recording.events[replay_action_index].kind {
+                            game::recordings::EventKind::Action(a) => {
+                                if r.recording.events[replay_action_index].at <= t {
+                                    replay_action_index += 1;
+                                    let _ = game.queue_action(a);
+                                }
+                            }
+                            _ => (),
+                        }
                     }
                 }
-            }
 
-            game.sim(t, dt, accumulator);
+                game.sim(t, dt);
+            }
         }
 
         if acc_runs > 1 {
