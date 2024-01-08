@@ -324,12 +324,16 @@ impl ReplayPieces {
 }
 
 impl game::PieceProvider for ReplayPieces {
-    fn next(&mut self) -> tetrominos::Kind {
+    fn next(&mut self) -> Result<tetrominos::Kind, String> {
+        if self.idx >= self.pieces.len() {
+            return Err("NO PIECES LEFT IN THE REPLAY".to_string());
+        }
+
         let p = self.pieces[self.idx];
 
         self.idx += 1;
 
-        p
+        Ok(p)
     }
 }
 
@@ -593,10 +597,12 @@ fn main() -> Result<(), String> {
 
             if mode == Mode::Replay {
                 if let Some(ref r) = replay {
-                    while !matches!(
-                        r.recording.events[replay_action_index].kind,
-                        game::recordings::EventKind::Action(_)
-                    ) {
+                    while replay_action_index < r.recording.events.len() - 1
+                        && !matches!(
+                            r.recording.events[replay_action_index].kind,
+                            game::recordings::EventKind::Action(_)
+                        )
+                    {
                         replay_action_index += 1
                     }
                     match r.recording.events[replay_action_index].kind {

@@ -38,7 +38,7 @@ impl Piece {
 }
 
 pub trait PieceProvider {
-    fn next(&mut self) -> tetrominos::Kind;
+    fn next(&mut self) -> Result<tetrominos::Kind, String>;
 }
 
 struct TetrominoBag {
@@ -66,7 +66,7 @@ impl TetrominoBag {
 }
 
 impl PieceProvider for TetrominoBag {
-    fn next(&mut self) -> tetrominos::Kind {
+    fn next(&mut self) -> Result<tetrominos::Kind, String> {
         if self.pieces.len() == 0 {
             self.pieces = TetrominoBag::one_of_each_kind();
         }
@@ -74,7 +74,7 @@ impl PieceProvider for TetrominoBag {
         let mut rng = rand::thread_rng();
         let n1: usize = rng.gen_range(0..self.pieces.len());
 
-        self.pieces.swap_remove(n1)
+        Ok(self.pieces.swap_remove(n1))
     }
 }
 
@@ -317,8 +317,10 @@ impl Game {
     }
 
     pub fn grab_next_piece(&mut self) -> Result<(), String> {
+        let next_piece = self.piece_provider.next()?;
+
         self.piece.tetromino = self.next_piece;
-        self.next_piece = tetrominos::from_kind(self.piece_provider.next());
+        self.next_piece = tetrominos::from_kind(next_piece);
         self.piece.rotation = 0;
         self.piece.x = (self.play_field.well_x() + (self.play_field.cols / 2) - 2) as u16;
         self.piece.y = 2;
