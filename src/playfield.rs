@@ -46,17 +46,10 @@ impl PlayField {
             matrix: vec![vec![Location::Edge; matrix_cols]; matrix_rows],
         };
 
-        // clear the top 4 rows
-        for row in 0..4 {
-            for col in 0..cols + COLS_PADDING {
-                pf.matrix[row][col] = Location::Empty;
-            }
-        }
-
         // cut out the well
         let row_offset = 4;
         let col_offset = COLS_PADDING / 2;
-        for row in row_offset..rows + row_offset {
+        for row in 0..rows + row_offset {
             for col in col_offset..cols + col_offset {
                 pf.matrix[row][col] = Location::Empty;
             }
