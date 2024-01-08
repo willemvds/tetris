@@ -544,7 +544,8 @@ fn main() -> Result<(), String> {
                     keyboard::Keycode::Escape => break 'main,
                     keyboard::Keycode::Space => {
                         if game.is_gameover() {
-                            game = game::Game::new(None)?
+                            game = game::Game::new(None)?;
+                            mode = Mode::Tetris;
                         } else if paused {
                             paused = false
                         } else {
