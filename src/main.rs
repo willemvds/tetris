@@ -350,8 +350,6 @@ fn render_game(
 
     draw_game(canvas, &game, cell_size);
 
-    thread::sleep(time::Duration::from_millis(1));
-
     let start_x: i32 =
         (window_width as i32 - (cell_size * game.play_field.matrix.len() as i32 / 2)) / 2;
     let start_y: i32 = 1;
@@ -399,15 +397,6 @@ fn render_game(
 
     let bright_green = pixels::Color::RGBA(0, 255, 0, 255);
     let bright_red = pixels::Color::RGBA(255, 0, 0, 255);
-
-    //        render_text(
-    //            &mut canvas,
-    //            &font,
-    //            bright_green,
-    //            20,
-    //            20,
-    //            format!("{:.2} fps", frame_rate),
-    //        );
 
     render_text(
         canvas,
@@ -503,6 +492,7 @@ fn main() -> Result<(), String> {
 
     let _total = 0;
     let mut frames = 0;
+    let mut slowest_frame = 0.0;
 
     let mut t: f64 = 0.0;
     let dt: f64 = 1.0 / 240.0;
@@ -521,12 +511,17 @@ fn main() -> Result<(), String> {
 
     'main: loop {
         frames = frames + 1;
-
         let now = time::Instant::now();
         let mut frame_time = now - start_time;
         let frame_rate = 1000000.0 / frame_time.as_micros() as f64;
         // println!("frames = {:?}, frame time = {:?}, frame rate = {:?}", frames, frame_time, frame_rate);
-        if frame_time.as_secs_f64() > 0.25 {
+        //
+        let ftf = frame_time.as_secs_f64();
+        if ftf > slowest_frame {
+            println!("SLOWEST frame so far frame={0}, duration={1}", frames, ftf);
+            slowest_frame = ftf;
+        }
+        if ftf > 0.25 {
             println!("******************************************************* SLOW");
             frame_time = time::Duration::from_millis(250);
         }
@@ -559,20 +554,24 @@ fn main() -> Result<(), String> {
                     }
 
                     _ => {
-                        if !paused && mode == Mode::Tetris {
+                        if !paused && !game.is_gameover() && mode == Mode::Tetris {
                             match keycode {
                                 keyboard::Keycode::Kp7 => {
-                                    game.queue_action(actions::Action::MoveLeft)
+                                    if let Err(e) = game.queue_action(actions::Action::MoveLeft) {
+                                        println!("Dropped GAME ACTION {:?}", e);
+                                    }
                                 }
                                 keyboard::Keycode::Kp9 => {
-                                    game.queue_action(actions::Action::MoveRight)
+                                    let _ = game.queue_action(actions::Action::MoveRight);
                                 }
-                                keyboard::Keycode::Kp4 => game.queue_action(actions::Action::Drop),
+                                keyboard::Keycode::Kp4 => {
+                                    let _ = game.queue_action(actions::Action::Drop);
+                                }
                                 keyboard::Keycode::Kp5 => {
-                                    game.queue_action(actions::Action::MoveDown)
+                                    let _ = game.queue_action(actions::Action::MoveDown);
                                 }
                                 keyboard::Keycode::Kp8 => {
-                                    game.queue_action(actions::Action::Rotate)
+                                    let _ = game.queue_action(actions::Action::Rotate);
                                 }
                                 keyboard::Keycode::KpPlus => game.speed_up(),
                                 keyboard::Keycode::KpMinus => game.speed_down(),
@@ -618,7 +617,7 @@ fn main() -> Result<(), String> {
                                     r.recording.events[replay_action_index].at, a
                                 );
                                 replay_action_index += 1;
-                                game.queue_action(a)
+                                let _ = game.queue_action(a);
                             }
                         }
                         _ => (),
@@ -647,6 +646,15 @@ fn main() -> Result<(), String> {
                 "PAUSED...".to_string(),
             )
         };
+
+        render_text(
+            &mut canvas,
+            &font,
+            pixels::Color::RGB(0, 0, 255),
+            20,
+            20,
+            format!("{:.2} fps", frame_rate),
+        );
 
         canvas.present()
     }

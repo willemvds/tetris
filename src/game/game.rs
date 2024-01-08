@@ -202,14 +202,18 @@ impl Game {
         return self.state == State::GameOver;
     }
 
-    pub fn queue_action(&mut self, a: actions::Action) {
+    pub fn queue_action(&mut self, a: actions::Action) -> Result<(), String> {
         if self.state != State::Playing {
-            return;
+            return Err("Can't queue action while game is not ready".to_string());
         }
 
         if self.next_action.is_none() {
-            self.next_action = Some(a)
+            self.next_action = Some(a);
+
+            return Ok(());
         }
+
+        Err("Already have action queued for next game tick".to_string())
     }
 
     pub fn rotate(&mut self) {
