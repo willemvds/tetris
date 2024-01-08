@@ -103,7 +103,7 @@ pub struct Game {
 
 impl Game {
     pub fn new(piece_provider: Option<Box<dyn PieceProvider>>) -> Result<Game, String> {
-        let play_field = playfield::PlayField::new(24, 10)?;
+        let play_field = playfield::PlayField::new(22, 10)?;
 
         let provider = match piece_provider {
             Some(p) => p,
@@ -196,26 +196,6 @@ impl Game {
             self.score_points += lines_cleared * 10;
             self.play_field.collapse();
         }
-    }
-
-    pub fn pause(&mut self) {
-        if self.state == State::Playing {
-            self.state = State::Paused
-        }
-    }
-
-    pub fn unpause(&mut self) {
-        if self.state == State::Paused {
-            self.state = State::Playing
-        }
-    }
-
-    pub fn is_playing(&self) -> bool {
-        return self.state == State::Playing;
-    }
-
-    pub fn is_paused(&self) -> bool {
-        return self.state == State::Paused;
     }
 
     pub fn is_gameover(&self) -> bool {

@@ -427,16 +427,7 @@ fn render_game(
         format!("Score: {0}", game.score_points),
     );
 
-    if game.is_paused() {
-        render_text_centered(
-            canvas,
-            font,
-            bright_red,
-            (window_width / 2) as i32,
-            50,
-            "PAUSED...".to_string(),
-        )
-    } else if game.is_gameover() {
+    if game.is_gameover() {
         render_text_centered(
             canvas,
             font,
@@ -445,9 +436,7 @@ fn render_game(
             50,
             "GAME OVER!".to_string(),
         )
-    }
-
-    canvas.present();
+    };
 }
 
 #[derive(PartialEq)]
@@ -457,6 +446,8 @@ enum Mode {
 }
 
 fn main() -> Result<(), String> {
+    let mut paused = false;
+
     let mut mode = Mode::Tetris;
     let args: Vec<String> = env::args().collect();
 
@@ -540,59 +531,73 @@ fn main() -> Result<(), String> {
             frame_time = time::Duration::from_millis(250);
         }
         start_time = now;
-        accumulator = accumulator + frame_time.as_secs_f64();
 
-        let mut acc_runs = 0;
-        while accumulator >= dt {
-            acc_runs += 1;
-            t += dt;
-            accumulator -= dt;
+        for event in events.poll_iter() {
+            match event {
+                event::Event::Quit { .. } => break 'main,
 
-            for event in events.poll_iter() {
-                match event {
-                    event::Event::Quit { .. } => break 'main,
+                event::Event::Window { win_event: wev, .. } => match wev {
+                    event::WindowEvent::SizeChanged(new_width, new_height) => {
+                        println!("New window width={0} height={1}", new_width, new_height);
+                    }
+                    _ => (),
+                },
 
-                    event::Event::Window { win_event: wev, .. } => match wev {
-                        event::WindowEvent::SizeChanged(new_width, new_height) => {
-                            println!("New window width={0} height={1}", new_width, new_height);
-                        }
-                        _ => (),
-                    },
-
-                    event::Event::KeyDown {
-                        keycode: Some(keycode),
-                        ..
-                    } => {
-                        if mode == Mode::Replay {
-                            continue;
-                        }
-                        match keycode {
-                            keyboard::Keycode::Escape => break 'main,
-                            keyboard::Keycode::Space => {
-                                if game.is_playing() {
-                                    game.pause()
-                                } else if game.is_gameover() {
-                                    game = game::Game::new(None)?
-                                } else {
-                                    game.unpause()
-                                }
-                            }
-
-                            keyboard::Keycode::Kp7 => game.queue_action(actions::Action::MoveLeft),
-                            keyboard::Keycode::Kp9 => game.queue_action(actions::Action::MoveRight),
-                            keyboard::Keycode::Kp4 => game.queue_action(actions::Action::Drop),
-                            keyboard::Keycode::Kp5 => game.queue_action(actions::Action::MoveDown),
-                            keyboard::Keycode::Kp8 => game.queue_action(actions::Action::Rotate),
-                            keyboard::Keycode::KpPlus => game.speed_up(),
-                            keyboard::Keycode::KpMinus => game.speed_down(),
-                            _ => (),
+                event::Event::KeyDown {
+                    keycode: Some(keycode),
+                    ..
+                } => match keycode {
+                    keyboard::Keycode::Escape => break 'main,
+                    keyboard::Keycode::Space => {
+                        if game.is_gameover() {
+                            game = game::Game::new(None)?
+                        } else if paused {
+                            paused = false
+                        } else {
+                            paused = true;
                         }
                     }
 
-                    event::Event::MouseButtonDown { .. } => {}
+                    _ => {
+                        if !paused && mode == Mode::Tetris {
+                            match keycode {
+                                keyboard::Keycode::Kp7 => {
+                                    game.queue_action(actions::Action::MoveLeft)
+                                }
+                                keyboard::Keycode::Kp9 => {
+                                    game.queue_action(actions::Action::MoveRight)
+                                }
+                                keyboard::Keycode::Kp4 => game.queue_action(actions::Action::Drop),
+                                keyboard::Keycode::Kp5 => {
+                                    game.queue_action(actions::Action::MoveDown)
+                                }
+                                keyboard::Keycode::Kp8 => {
+                                    game.queue_action(actions::Action::Rotate)
+                                }
+                                keyboard::Keycode::KpPlus => game.speed_up(),
+                                keyboard::Keycode::KpMinus => game.speed_down(),
+                                _ => (),
+                            }
+                        }
+                    }
+                },
 
-                    _ => {}
-                }
+                event::Event::MouseButtonDown { .. } => {}
+
+                _ => {}
+            }
+        }
+
+        if !paused {
+            accumulator = accumulator + frame_time.as_secs_f64();
+        }
+
+        let mut acc_runs = 0;
+        while !paused && !game.is_gameover() && accumulator >= dt {
+            if !paused {
+                acc_runs += 1;
+                t += dt;
+                accumulator -= dt;
             }
 
             if mode == Mode::Replay {
@@ -621,16 +626,29 @@ fn main() -> Result<(), String> {
                 }
             }
 
-            if game.is_playing() {
-                game.sim(t, dt, accumulator);
-            }
+            game.sim(t, dt, accumulator);
         }
 
         if acc_runs > 1 {
-            println!("Multiple({acc_runs}) simulations during single frame.");
+            println!("Multiple({acc_runs}) simulations during single drawing frame.");
         }
 
-        render_game(&mut canvas, &mut game, &font)
+        render_game(&mut canvas, &mut game, &font);
+
+        if paused {
+            let x: i32 = (canvas.window().size().0 / 2) as i32;
+
+            render_text_centered(
+                &mut canvas,
+                &font,
+                pixels::Color::RGBA(255, 0, 0, 255),
+                x,
+                50,
+                "PAUSED...".to_string(),
+            )
+        };
+
+        canvas.present()
     }
 
     let run_time = time::Instant::now().duration_since(game_loop_start_at);
