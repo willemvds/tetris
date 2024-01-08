@@ -474,7 +474,7 @@ fn main() -> Result<(), String> {
     let initial_window_height = 1080;
 
     let window = video_subsys
-        .window("Panda Tetris", initial_window_width, initial_window_height)
+        .window("Tetris", initial_window_width, initial_window_height)
         .position_centered()
         .resizable()
         .opengl()
