@@ -1,6 +1,8 @@
 use crate::tetrominos;
 
-#[derive(Debug, Copy, Clone, PartialEq)]
+use serde::{Deserialize, Serialize};
+
+#[derive(Debug, Copy, Clone, PartialEq, Serialize, Deserialize)]
 pub enum Location {
     Empty,
     Edge,
@@ -8,9 +10,10 @@ pub enum Location {
 }
 
 pub type Shape = [[u8; 4]; 4];
+
 type Matrix = Vec<Vec<Location>>;
 
-#[derive(Debug)]
+#[derive(Debug, Serialize, Deserialize)]
 pub struct PlayField {
     pub cols: usize,
     pub rows: usize,

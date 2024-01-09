@@ -6,6 +6,8 @@ use crate::tetrominos;
 
 use rand;
 use rand::Rng;
+use serde::{Deserialize, Serialize};
+use typetag;
 
 #[derive(Debug)]
 pub struct Position {
@@ -13,8 +15,9 @@ pub struct Position {
     pub y: usize,
 }
 
+#[derive(Serialize, Deserialize)]
 pub struct Piece {
-    pub tetromino: &'static tetrominos::Tetromino,
+    pub tetromino: tetrominos::Kind,
     pub x: u16,
     pub y: u16,
     creep: f64,
@@ -22,9 +25,9 @@ pub struct Piece {
 }
 
 impl Piece {
-    fn new(t: &'static tetrominos::Tetromino) -> Piece {
+    fn new(k: tetrominos::Kind) -> Piece {
         Piece {
-            tetromino: t,
+            tetromino: k,
             x: 4,
             y: 0,
             creep: 0.0,
@@ -33,14 +36,17 @@ impl Piece {
     }
 
     pub fn form(&self) -> &tetrominos::Form {
-        return &self.tetromino.forms[self.rotation as usize];
+        let t = tetrominos::from_kind(self.tetromino);
+        return &t.forms[self.rotation as usize];
     }
 }
 
+#[typetag::serde(tag = "type")]
 pub trait PieceProvider {
     fn next(&mut self) -> Result<tetrominos::Kind, String>;
 }
 
+#[derive(Serialize, Deserialize)]
 struct TetrominoBag {
     pieces: Vec<tetrominos::Kind>,
 }
@@ -65,6 +71,7 @@ impl TetrominoBag {
     }
 }
 
+#[typetag::serde]
 impl PieceProvider for TetrominoBag {
     fn next(&mut self) -> Result<tetrominos::Kind, String> {
         if self.pieces.len() == 0 {
@@ -78,19 +85,19 @@ impl PieceProvider for TetrominoBag {
     }
 }
 
-#[derive(PartialEq)]
+#[derive(PartialEq, Serialize, Deserialize)]
 enum State {
     Init,
     Playing,
     GameOver,
 }
 
+#[derive(Serialize, Deserialize)]
 pub struct Game {
     state: State,
     pub speed: f64,
     pub play_field: playfield::PlayField,
-    pub next_piece: &'static tetrominos::Tetromino,
-    pub piece_bag: Vec<&'static tetrominos::Tetromino>,
+    pub next_piece: tetrominos::Kind,
     piece_provider: Box<dyn PieceProvider>,
     pub piece: Piece,
     pub score_points: u32,
@@ -115,9 +122,8 @@ impl Game {
             play_field,
 
             piece_provider: provider,
-            piece: Piece::new(tetrominos::from_kind(tetrominos::Kind::Stick)),
-            next_piece: tetrominos::from_kind(tetrominos::Kind::Stick),
-            piece_bag: new_tetromino_bag(),
+            piece: Piece::new(tetrominos::Kind::Stick),
+            next_piece: tetrominos::Kind::Stick,
 
             score_points: 0,
             score_lines_cleared: 0,
@@ -129,9 +135,9 @@ impl Game {
         // Grab the first two pieces from the first tetromino bag
         // to replace the temp values set above.
         let _ = g.grab_next_piece();
-        g.recording.push_piece(0.0, g.next_piece.kind);
+        g.recording.push_piece(0.0, g.next_piece);
         let _ = g.grab_next_piece();
-        g.recording.push_piece(0.0, g.next_piece.kind);
+        g.recording.push_piece(0.0, g.next_piece);
 
         g.state = State::Playing;
 
@@ -178,7 +184,7 @@ impl Game {
 
                     return;
                 }
-                self.recording.push_piece(t, self.next_piece.kind);
+                self.recording.push_piece(t, self.next_piece);
             } else {
                 if self.can_fall() {
                     self.piece.y += 1;
@@ -190,7 +196,7 @@ impl Game {
 
                         return;
                     }
-                    self.recording.push_piece(t, self.next_piece.kind);
+                    self.recording.push_piece(t, self.next_piece);
                 }
             }
             let lines_cleared = self.play_field.clear_full_rows();
@@ -223,7 +229,8 @@ impl Game {
         if next_rotation >= 4 {
             next_rotation = 0;
         }
-        let next_shape = self.piece.tetromino.forms[next_rotation as usize];
+
+        let next_shape = tetrominos::from_kind(self.piece.tetromino).forms[next_rotation as usize];
 
         if !self.play_field.has_collission(
             self.piece.y as usize,
@@ -306,7 +313,7 @@ impl Game {
         let next_piece = self.piece_provider.next()?;
 
         self.piece.tetromino = self.next_piece;
-        self.next_piece = tetrominos::from_kind(next_piece);
+        self.next_piece = next_piece;
         self.piece.rotation = 0;
         self.piece.x = (self.play_field.well_x() + (self.play_field.cols / 2) - 2) as u16;
         self.piece.y = 2;
@@ -333,7 +340,7 @@ impl Game {
             for col in 0..4 {
                 if shape[row][col] == 1 {
                     self.play_field.matrix[row + row_offset][col + col_offset] =
-                        playfield::Location::Filled(self.piece.tetromino.kind);
+                        playfield::Location::Filled(self.piece.tetromino);
                 }
             }
         }

@@ -17,6 +17,9 @@ use sdl2::render;
 use sdl2::ttf;
 use sdl2::video;
 
+use serde::{Deserialize, Serialize};
+use typetag;
+
 fn tetromino_colour(kind: tetrominos::Kind) -> pixels::Color {
     match kind {
         tetrominos::Kind::Hook => pixels::Color::RGB(92, 101, 168),
@@ -297,6 +300,7 @@ struct Replay {
     recording: game::recordings::Recording,
 }
 
+#[derive(Serialize, Deserialize)]
 struct ReplayPieces {
     pieces: Vec<tetrominos::Kind>,
     idx: usize,
@@ -322,6 +326,7 @@ impl ReplayPieces {
     }
 }
 
+#[typetag::serde]
 impl game::PieceProvider for ReplayPieces {
     fn next(&mut self) -> Result<tetrominos::Kind, String> {
         if self.idx >= self.pieces.len() {
@@ -358,7 +363,7 @@ fn render_game(
             canvas,
             *game.piece.form(),
             4 - game.piece.y as i16,
-            tetromino_colour(game.piece.tetromino.kind),
+            tetromino_colour(game.piece.tetromino),
             cell_size,
             start_x + (game.piece.x as i32 * cell_size),
             start_y + (game.piece.y as i32 * cell_size),
@@ -367,7 +372,7 @@ fn render_game(
         draw_shape(
             canvas,
             *game.piece.form(),
-            tetromino_colour(game.piece.tetromino.kind),
+            tetromino_colour(game.piece.tetromino),
             cell_size,
             start_x + (game.piece.x as i32 * cell_size),
             start_y + (game.piece.y as i32 * cell_size),
@@ -378,7 +383,7 @@ fn render_game(
         draw_shape_outline(
             canvas,
             *game.piece.form(),
-            tetromino_colour(game.piece.tetromino.kind),
+            tetromino_colour(game.piece.tetromino),
             cell_size,
             start_x + (game.piece.x as i32 * cell_size),
             start_y + (game.piece.y + game.drop_distance() as u16 - 1) as i32 * cell_size,
@@ -387,8 +392,8 @@ fn render_game(
 
     draw_shape(
         canvas,
-        game.next_piece.forms[0],
-        tetromino_colour(game.next_piece.kind),
+        tetrominos::from_kind(game.next_piece).forms[0],
+        tetromino_colour(game.next_piece),
         cell_size,
         start_x + (game.play_field.cols as i32 * cell_size) + (window_width as i32 / 10),
         start_y + (window_width as i32 / 10),
@@ -442,6 +447,7 @@ fn main() -> Result<(), String> {
     let mut replay: Option<Replay> = None;
 
     let mut replay_action_index = 0;
+    let mut last_game = None;
     if args.len() > 1 {
         let recording_file = fs::File::open(args[1].clone()).map_err(|e| e.to_string())?;
         let recording_file_reader = io::BufReader::new(recording_file);
@@ -449,6 +455,15 @@ fn main() -> Result<(), String> {
             serde_json::from_reader(recording_file_reader).map_err(|e| e.to_string())?;
         replay = Some(Replay { recording });
         mode = Mode::Replay;
+    } else {
+        if let Ok(last_game_state_file) = fs::File::open("last_game_state.json") {
+            let last_game_state_reader = io::BufReader::new(last_game_state_file);
+            let last_game_state: game::Game =
+                serde_json::from_reader(last_game_state_reader).map_err(|e| e.to_string())?;
+            if !last_game_state.is_gameover() {
+                last_game = Some(last_game_state)
+            }
+        }
     }
 
     let sdl_context = sdl2::init()?;
@@ -505,7 +520,13 @@ fn main() -> Result<(), String> {
             let replay_pieces = ReplayPieces::new(r);
             game::Game::new(Some(Box::new(replay_pieces)))?
         }
-        None => game::Game::new(None)?,
+        None => {
+            if let Some(g) = last_game {
+                g
+            } else {
+                game::Game::new(None)?
+            }
+        }
     };
 
     'main: loop {
@@ -658,7 +679,11 @@ fn main() -> Result<(), String> {
     let run_time = time::Instant::now().duration_since(game_loop_start_at);
     println!("Total run time = {:?}", run_time.as_secs());
     println!("Total frames rendered = {0}", frames);
-    println!("FPS = {0}", frames / run_time.as_secs());
+    let mut run_time_secs = run_time.as_secs();
+    if run_time_secs < 1 {
+        run_time_secs = 1
+    }
+    println!("FPS = {0}", frames / run_time_secs);
 
     if mode != Mode::Replay {
         let mut recording_file =
@@ -666,6 +691,11 @@ fn main() -> Result<(), String> {
         let _ = serde_json::to_writer_pretty(&mut recording_file, &game.recording)
             .map_err(|e| e.to_string())?;
     }
+
+    let mut last_game_state_file =
+        fs::File::create("last_game_state.json").map_err(|e| e.to_string())?;
+    let _ = serde_json::to_writer_pretty(&mut last_game_state_file, &game)
+        .map_err(|e| e.to_string())?;
 
     Ok(())
 }
