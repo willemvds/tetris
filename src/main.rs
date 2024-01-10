@@ -608,7 +608,7 @@ fn main() -> Result<(), String> {
             }
         }
 
-        if !paused {
+        if !paused && !game.is_gameover() {
             accumulator = accumulator + frame_time.as_secs_f64();
         }
 
