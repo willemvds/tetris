@@ -9,6 +9,7 @@ Mostly following rules as outlined by the [Tetris Guideline](https://tetris.fand
 - Drop indicator.
 - Wall kicks.
 - Key bindings.
+- Menus.
 - Game stats.
 - Sound.
 - Game controller support.
