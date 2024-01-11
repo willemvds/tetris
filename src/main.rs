@@ -522,6 +522,7 @@ fn main() -> Result<(), String> {
         }
         None => {
             if let Some(g) = last_game {
+                paused = true;
                 g
             } else {
                 game::Game::new(None)?
