@@ -16,7 +16,7 @@ pub struct Rules {
 
 impl Rules {
     pub fn new() -> Rules {
-        Rules { lock_delay: 0 }
+        Rules { lock_delay: 50 }
     }
 }
 
@@ -27,6 +27,8 @@ pub struct Piece {
     pub y: u16,
     creep: usize,
     rotation: u8,
+    busy_locking: bool,
+    remaining_lock_frames: u32,
 }
 
 impl Piece {
@@ -37,6 +39,8 @@ impl Piece {
             y: 0,
             creep: 0,
             rotation: 0,
+            busy_locking: false,
+            remaining_lock_frames: 0,
         }
     }
 
@@ -172,6 +176,10 @@ impl Game {
             let action = self.next_action.unwrap();
             self.recording.push_action(self.ticks, action);
 
+            if self.piece.busy_locking {
+                self.piece.remaining_lock_frames = self.rules.lock_delay;
+            }
+
             match self.next_action {
                 Some(actions::Action::MoveDown) => self.drop_one(),
                 Some(actions::Action::MoveLeft) => self.move_left(),
@@ -192,22 +200,39 @@ impl Game {
             if self.can_fall() {
                 self.piece.y += 1;
             } else {
-                self.imprint_piece();
-
-                if let Err(e) = self.grab_next_piece() {
-                    println!("grab piece err: {}", e);
-                    self.state = State::GameOver;
-                    self.recording.gameover(self.ticks);
-
-                    return self.ticks;
-                }
-                self.recording.push_piece(self.ticks, self.next_piece);
             }
-            let lines_cleared = self.play_field.clear_full_rows();
-            self.score_lines_cleared += lines_cleared;
-            self.score_points += lines_cleared * 10;
-            self.play_field.collapse();
         }
+
+        if !self.can_fall() {
+            if self.piece.busy_locking {
+                if self.piece.remaining_lock_frames == 0 {
+                    self.piece.busy_locking = false;
+                    self.imprint_piece();
+                    if let Err(e) = self.grab_next_piece() {
+                        println!("grab piece err: {}", e);
+                        self.state = State::GameOver;
+                        self.recording.gameover(self.ticks);
+
+                        return self.ticks;
+                    }
+                    self.recording.push_piece(self.ticks, self.next_piece);
+                } else {
+                    self.piece.remaining_lock_frames -= 1;
+                    println!(
+                        "Dropped a remaining lock frame = {}",
+                        self.piece.remaining_lock_frames
+                    )
+                }
+            } else {
+                self.piece.busy_locking = true;
+                self.piece.remaining_lock_frames = self.rules.lock_delay;
+            }
+        }
+
+        let lines_cleared = self.play_field.clear_full_rows();
+        self.score_lines_cleared += lines_cleared;
+        self.score_points += lines_cleared * 10;
+        self.play_field.collapse();
 
         self.ticks
     }
@@ -294,9 +319,7 @@ impl Game {
     }
 
     pub fn drop_one(&mut self) {
-        if self.can_fall() {
-            self.piece.y += 1;
-        }
+        self.piece.creep = self.speed as usize;
     }
 
     pub fn drop_fast(&mut self) {
