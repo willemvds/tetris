@@ -9,12 +9,6 @@ use rand::Rng;
 use serde::{Deserialize, Serialize};
 use typetag;
 
-#[derive(Debug)]
-pub struct Position {
-    pub x: usize,
-    pub y: usize,
-}
-
 #[derive(Serialize, Deserialize)]
 pub struct Piece {
     pub tetromino: tetrominos::Kind,
