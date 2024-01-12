@@ -438,6 +438,20 @@ enum Mode {
     Replay,
 }
 
+fn load_last_game_state() -> Result<game::Game, String> {
+    if let Ok(last_game_state_file) = fs::File::open("last_game_state.json") {
+        let last_game_state_reader = io::BufReader::new(last_game_state_file);
+
+        let last_game_state: game::Game =
+            serde_json::from_reader(last_game_state_reader).map_err(|e| e.to_string())?;
+        if !last_game_state.is_gameover() {
+            return Ok(last_game_state);
+        }
+    }
+
+    return Err("Previous game state not available.".to_string());
+}
+
 fn main() -> Result<(), String> {
     let mut paused = false;
 
@@ -456,13 +470,9 @@ fn main() -> Result<(), String> {
         replay = Some(Replay { recording });
         mode = Mode::Replay;
     } else {
-        if let Ok(last_game_state_file) = fs::File::open("last_game_state.json") {
-            let last_game_state_reader = io::BufReader::new(last_game_state_file);
-            let last_game_state: game::Game =
-                serde_json::from_reader(last_game_state_reader).map_err(|e| e.to_string())?;
-            if !last_game_state.is_gameover() {
-                last_game = Some(last_game_state)
-            }
+        match load_last_game_state() {
+            Ok(lgs) => last_game = Some(lgs),
+            Err(e) => println!("{}", e),
         }
     }
 
@@ -515,17 +525,19 @@ fn main() -> Result<(), String> {
     let mut start_time = time::Instant::now();
     let mut accumulator: f64 = 0.0;
 
+    let game_rules = game::Rules::new();
+
     let mut game = match replay {
         Some(ref r) => {
             let replay_pieces = ReplayPieces::new(r);
-            game::Game::new(Some(Box::new(replay_pieces)))?
+            game::Game::new(game_rules.clone(), Some(Box::new(replay_pieces)))?
         }
         None => {
             if let Some(g) = last_game {
                 paused = true;
                 g
             } else {
-                game::Game::new(None)?
+                game::Game::new(game_rules.clone(), None)?
             }
         }
     };
@@ -566,7 +578,7 @@ fn main() -> Result<(), String> {
                     keyboard::Keycode::Escape => break 'main,
                     keyboard::Keycode::Space => {
                         if game.is_gameover() {
-                            game = game::Game::new(None)?;
+                            game = game::Game::new(game_rules.clone(), None)?;
                             mode = Mode::Tetris;
                         } else if paused {
                             paused = false

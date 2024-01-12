@@ -9,6 +9,17 @@ use rand::Rng;
 use serde::{Deserialize, Serialize};
 use typetag;
 
+#[derive(Clone, Serialize, Deserialize)]
+pub struct Rules {
+    lock_delay: u32,
+}
+
+impl Rules {
+    pub fn new() -> Rules {
+        Rules { lock_delay: 0 }
+    }
+}
+
 #[derive(Serialize, Deserialize)]
 pub struct Piece {
     pub tetromino: tetrominos::Kind,
@@ -88,6 +99,7 @@ enum State {
 
 #[derive(Serialize, Deserialize)]
 pub struct Game {
+    rules: Rules,
     state: State,
     pub speed: f64,
     pub play_field: playfield::PlayField,
@@ -102,7 +114,10 @@ pub struct Game {
 }
 
 impl Game {
-    pub fn new(piece_provider: Option<Box<dyn PieceProvider>>) -> Result<Game, String> {
+    pub fn new(
+        rules: Rules,
+        piece_provider: Option<Box<dyn PieceProvider>>,
+    ) -> Result<Game, String> {
         let play_field = playfield::PlayField::new(22, 10)?;
 
         let provider = match piece_provider {
@@ -111,6 +126,7 @@ impl Game {
         };
 
         let mut g = Game {
+            rules,
             state: State::Init,
             speed: 42.0,
             play_field,
