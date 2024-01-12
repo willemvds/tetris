@@ -520,7 +520,7 @@ fn main() -> Result<(), String> {
     let mut slowest_frame = 0.0;
 
     let mut t: f64 = 0.0;
-    let dt: f64 = 1.0 / 240.0;
+    let dt: f64 = 1.0 / 250.0; // 4ms tick rate.
 
     let game_loop_start_at = time::Instant::now();
     let mut start_time = time::Instant::now();
