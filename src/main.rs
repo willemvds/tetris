@@ -191,7 +191,8 @@ fn draw_playfield(
 ) {
     let (canvas_width, _) = canvas.window().size();
 
-    let start_x: i32 = (canvas_width as i32 - (size * pf.matrix.len() as i32 / 2)) / 2;
+    // The 3 is the left padding of the playfield.
+    let start_x: i32 = (canvas_width as i32 / 2) - (size * pf.cols as i32 / 2) - (3 * size);
     let start_y: i32 = 1;
 
     let well_rows_start = pf.well_y();
