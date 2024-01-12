@@ -103,7 +103,7 @@ pub struct Game {
     state: State,
     ticks: usize,
     // speed is measured in number of ticks so that:
-    // 1) A lowest value means fewer ticks and thus faster.
+    // 1) A lower value means fewer ticks and thus faster.
     // 2) 1 is the lowest value which means on every tick.
     // 3) A higher value means more ticks and thus slower.
     pub speed: u8,
