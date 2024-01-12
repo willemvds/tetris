@@ -356,7 +356,7 @@ fn render_game(
     draw_game(canvas, &game, cell_size);
 
     let start_x: i32 =
-        (window_width as i32 - (cell_size * game.play_field.matrix.len() as i32 / 2)) / 2;
+        (window_width as i32 / 2) - (cell_size * game.play_field.cols as i32 / 2) - (3 * cell_size);
     let start_y: i32 = 1;
 
     if game.piece.y < 4 {
