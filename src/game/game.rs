@@ -218,10 +218,6 @@ impl Game {
                     self.recording.push_piece(self.ticks, self.next_piece);
                 } else {
                     self.piece.remaining_lock_frames -= 1;
-                    println!(
-                        "Dropped a remaining lock frame = {}",
-                        self.piece.remaining_lock_frames
-                    )
                 }
             } else {
                 self.piece.busy_locking = true;
