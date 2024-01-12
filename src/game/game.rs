@@ -25,7 +25,7 @@ pub struct Piece {
     pub tetromino: tetrominos::Kind,
     pub x: u16,
     pub y: u16,
-    creep: f64,
+    creep: usize,
     rotation: u8,
 }
 
@@ -35,7 +35,7 @@ impl Piece {
             tetromino: k,
             x: 4,
             y: 0,
-            creep: 0.0,
+            creep: 0,
             rotation: 0,
         }
     }
@@ -101,7 +101,8 @@ enum State {
 pub struct Game {
     rules: Rules,
     state: State,
-    pub speed: f64,
+    ticks: usize,
+    pub speed: u8,
     pub play_field: playfield::PlayField,
     pub next_piece: tetrominos::Kind,
     piece_provider: Box<dyn PieceProvider>,
@@ -128,7 +129,8 @@ impl Game {
         let mut g = Game {
             rules,
             state: State::Init,
-            speed: 42.0,
+            ticks: 0,
+            speed: 42,
             play_field,
 
             piece_provider: provider,
@@ -154,10 +156,12 @@ impl Game {
         Ok(g)
     }
 
-    pub fn sim(&mut self, t: f64, dt: f64) {
+    pub fn sim(&mut self, t: f64) {
         if self.state == State::GameOver {
             return;
         }
+
+        self.ticks += 1;
         //println!("SIMULATING GAME ENGINE... {:?} {:?} {:?}", t, dt, acc);
         //
         if self.next_action.is_some() {
@@ -176,18 +180,15 @@ impl Game {
             self.next_action = None;
         }
 
-        self.piece.creep += dt;
-        if self.piece.creep > dt * self.speed {
+        self.piece.creep += 1;
+        if self.piece.creep > self.speed as usize {
             // move the piece
-            self.piece.creep = 0.0;
+            self.piece.creep = 0;
 
-            let bottom = self.piece.y + 4;
-            if bottom as usize == self.play_field.matrix.len() {
-                // we are already on the floor so leave us and create a new piece
-
-                // overlay the shape + position onto the map
+            if self.can_fall() {
+                self.piece.y += 1;
+            } else {
                 self.imprint_piece();
-
                 if self.grab_next_piece().is_err() {
                     self.state = State::GameOver;
                     self.recording.gameover(t);
@@ -195,19 +196,6 @@ impl Game {
                     return;
                 }
                 self.recording.push_piece(t, self.next_piece);
-            } else {
-                if self.can_fall() {
-                    self.piece.y += 1;
-                } else {
-                    self.imprint_piece();
-                    if self.grab_next_piece().is_err() {
-                        self.state = State::GameOver;
-                        self.recording.gameover(t);
-
-                        return;
-                    }
-                    self.recording.push_piece(t, self.next_piece);
-                }
             }
             let lines_cleared = self.play_field.clear_full_rows();
             self.score_lines_cleared += lines_cleared;
@@ -307,15 +295,16 @@ impl Game {
         while self.can_fall() {
             self.piece.y += 1;
         }
+        self.piece.creep = self.speed as usize
     }
 
     pub fn speed_up(&mut self) {
-        self.speed -= 4.0;
+        self.speed -= 4;
         println!("NEW SPEED is {}", self.speed);
     }
 
     pub fn speed_down(&mut self) {
-        self.speed += 4.0;
+        self.speed += 4;
         println!("NEW SPEED is {}", self.speed);
     }
 
@@ -327,7 +316,7 @@ impl Game {
         self.piece.rotation = 0;
         self.piece.x = (self.play_field.well_x() + (self.play_field.cols / 2) - 2) as u16;
         self.piece.y = 2;
-        self.piece.creep = 0.0;
+        self.piece.creep = 0;
 
         if self.play_field.has_collission(
             self.piece.y as usize,

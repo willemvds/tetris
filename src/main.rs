@@ -654,7 +654,7 @@ fn main() -> Result<(), String> {
                     }
                 }
 
-                game.sim(t, dt);
+                game.sim(t);
             }
         }
 
