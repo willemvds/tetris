@@ -656,7 +656,7 @@ fn main() -> Result<(), String> {
                     }
                 }
 
-                game_ticks = game.sim(t);
+                game_ticks = game.tick(t);
             }
         }
 

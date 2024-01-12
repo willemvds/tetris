@@ -102,6 +102,10 @@ pub struct Game {
     rules: Rules,
     state: State,
     ticks: usize,
+    // speed is measured in number of ticks so that:
+    // 1) A lowest value means fewer ticks and thus faster.
+    // 2) 1 is the lowest value which means on every tick.
+    // 3) A higher value means more ticks and thus slower.
     pub speed: u8,
     pub play_field: playfield::PlayField,
     pub next_piece: tetrominos::Kind,
@@ -130,7 +134,7 @@ impl Game {
             rules,
             state: State::Init,
             ticks: 0,
-            speed: 42,
+            speed: 40,
             play_field,
 
             piece_provider: provider,
@@ -156,7 +160,7 @@ impl Game {
         Ok(g)
     }
 
-    pub fn sim(&mut self, t: f64) -> usize {
+    pub fn tick(&mut self, t: f64) -> usize {
         if self.state == State::GameOver {
             return self.ticks;
         }
@@ -189,7 +193,9 @@ impl Game {
                 self.piece.y += 1;
             } else {
                 self.imprint_piece();
-                if self.grab_next_piece().is_err() {
+
+                if let Err(e) = self.grab_next_piece() {
+                    println!("grab piece err: {}", e);
                     self.state = State::GameOver;
                     self.recording.gameover(self.ticks);
 
