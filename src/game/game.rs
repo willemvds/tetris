@@ -147,18 +147,18 @@ impl Game {
         // Grab the first two pieces from the first tetromino bag
         // to replace the temp values set above.
         let _ = g.grab_next_piece();
-        g.recording.push_piece(0.0, g.next_piece);
+        g.recording.push_piece(0, g.next_piece);
         let _ = g.grab_next_piece();
-        g.recording.push_piece(0.0, g.next_piece);
+        g.recording.push_piece(0, g.next_piece);
 
         g.state = State::Playing;
 
         Ok(g)
     }
 
-    pub fn sim(&mut self, t: f64) {
+    pub fn sim(&mut self, t: f64) -> usize {
         if self.state == State::GameOver {
-            return;
+            return self.ticks;
         }
 
         self.ticks += 1;
@@ -166,7 +166,7 @@ impl Game {
         //
         if self.next_action.is_some() {
             let action = self.next_action.unwrap();
-            self.recording.push_action(t, action);
+            self.recording.push_action(self.ticks, action);
 
             match self.next_action {
                 Some(actions::Action::MoveDown) => self.drop_one(),
@@ -191,17 +191,19 @@ impl Game {
                 self.imprint_piece();
                 if self.grab_next_piece().is_err() {
                     self.state = State::GameOver;
-                    self.recording.gameover(t);
+                    self.recording.gameover(self.ticks);
 
-                    return;
+                    return self.ticks;
                 }
-                self.recording.push_piece(t, self.next_piece);
+                self.recording.push_piece(self.ticks, self.next_piece);
             }
             let lines_cleared = self.play_field.clear_full_rows();
             self.score_lines_cleared += lines_cleared;
             self.score_points += lines_cleared * 10;
             self.play_field.collapse();
         }
+
+        self.ticks
     }
 
     pub fn is_gameover(&self) -> bool {

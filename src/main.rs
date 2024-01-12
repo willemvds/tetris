@@ -526,6 +526,7 @@ fn main() -> Result<(), String> {
     let mut accumulator: f64 = 0.0;
 
     let game_rules = game::Rules::new();
+    let mut game_ticks = 0;
 
     let mut game = match replay {
         Some(ref r) => {
@@ -644,7 +645,7 @@ fn main() -> Result<(), String> {
                         }
                         match r.recording.events[replay_action_index].kind {
                             game::recordings::EventKind::Action(a) => {
-                                if r.recording.events[replay_action_index].at <= t {
+                                if r.recording.events[replay_action_index].at <= game_ticks {
                                     replay_action_index += 1;
                                     let _ = game.queue_action(a);
                                 }
@@ -654,7 +655,7 @@ fn main() -> Result<(), String> {
                     }
                 }
 
-                game.sim(t);
+                game_ticks = game.sim(t);
             }
         }
 
