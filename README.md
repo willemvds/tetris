@@ -14,7 +14,7 @@ Mostly following rules as outlined by the [Tetris Guideline](https://tetris.fand
 - ☐ Sound.
 - ☐ Game controller support.
 - ☐ User preferences.
-- ☐ Configurable game rules.
+- ✅ Configurable game rules.
 - ✅ Resume game aka keep playing after reboot.
 - ☐ Custom colour schemes (also creates some accessibility support).
 - ✅ Replay system (through input recording or action events).
