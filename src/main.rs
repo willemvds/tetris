@@ -526,7 +526,8 @@ fn main() -> Result<(), String> {
     let mut start_time = time::Instant::now();
     let mut accumulator: f64 = 0.0;
 
-    let game_rules = game::Rules::new();
+    let mut game_rules = game::Rules::new();
+    game_rules.lock_delay(20);
     let mut game_ticks = 0;
 
     let mut game = match replay {

@@ -12,11 +12,21 @@ use typetag;
 #[derive(Clone, Serialize, Deserialize)]
 pub struct Rules {
     lock_delay: u32,
+    lock_delay_on_hard_drop: bool,
+    wall_kicks: bool,
 }
 
 impl Rules {
     pub fn new() -> Rules {
-        Rules { lock_delay: 50 }
+        Rules {
+            lock_delay: 0,
+            lock_delay_on_hard_drop: false,
+            wall_kicks: false,
+        }
+    }
+
+    pub fn lock_delay(&mut self, ld: u32) {
+        self.lock_delay = ld
     }
 }
 
