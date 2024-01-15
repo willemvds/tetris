@@ -20,4 +20,5 @@ Mostly following rules as outlined by the [Tetris Guideline](https://tetris.fand
 - ✅ Replay system (through input recording or action events).
 - ☐ Macro for defining shapes using a method like tetrominos.txt.
 - ☐ Quake style console.
+- ☐ Binary serialisation formats.
 
