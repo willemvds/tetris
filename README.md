@@ -7,7 +7,7 @@ Mostly following rules as outlined by the [Tetris Guideline](https://tetris.fand
 - ✅ Keypresses queue action for next game sim tick instead of instantly applying.
 - ✅ PlayField improvements -> Correct grid parameters, correct piece placement, etc.
 - ✅ Drop indicator.
-- ☐ Wall kicks.
+- ✅ Wall kicks.
 - ☐ Key bindings.
 - ☐ Menus.
 - ☐ Game stats.
