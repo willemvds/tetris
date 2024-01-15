@@ -21,7 +21,7 @@ impl Rules {
         Rules {
             lock_delay: 0,
             lock_delay_on_hard_drop: false,
-            wall_kicks: false,
+            wall_kicks: true,
         }
     }
 
@@ -283,6 +283,33 @@ impl Game {
             &next_shape,
         ) {
             self.piece.rotation = next_rotation;
+            return;
+        }
+
+        if !self.rules.wall_kicks {
+            return;
+        }
+
+        // try moving piece left
+        if !self.play_field.has_collission(
+            self.piece.y as usize,
+            self.piece.x as usize - 1,
+            &next_shape,
+        ) {
+            self.piece.rotation = next_rotation;
+            self.piece.x -= 1;
+            return;
+        }
+
+        // try moving piece right
+        if !self.play_field.has_collission(
+            self.piece.y as usize,
+            self.piece.x as usize + 1,
+            &next_shape,
+        ) {
+            self.piece.rotation = next_rotation;
+            self.piece.x += 1;
+            return;
         }
     }
 
