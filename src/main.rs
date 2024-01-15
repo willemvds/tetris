@@ -527,7 +527,8 @@ fn main() -> Result<(), String> {
     let mut accumulator: f64 = 0.0;
 
     let mut game_rules = game::Rules::new();
-    game_rules.lock_delay(20);
+    game_rules.lock_delay(50);
+    // game_rules.lock_delay_on_hard_drop(true);
     let mut game_ticks = 0;
 
     let mut game = match replay {

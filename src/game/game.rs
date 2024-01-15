@@ -11,9 +11,9 @@ use typetag;
 
 #[derive(Clone, Serialize, Deserialize)]
 pub struct Rules {
-    lock_delay: u32,
-    lock_delay_on_hard_drop: bool,
-    wall_kicks: bool,
+    pub lock_delay: u32,
+    pub lock_delay_on_hard_drop: bool,
+    pub wall_kicks: bool,
 }
 
 impl Rules {
@@ -27,6 +27,10 @@ impl Rules {
 
     pub fn lock_delay(&mut self, ld: u32) {
         self.lock_delay = ld
+    }
+
+    pub fn lock_delay_on_hard_drop(&mut self, v: bool) {
+        self.lock_delay_on_hard_drop = v
     }
 }
 
@@ -182,6 +186,7 @@ impl Game {
         self.ticks += 1;
         //println!("SIMULATING GAME ENGINE... {:?} {:?} {:?}", t, dt, acc);
         //
+        let mut dropped = false;
         if self.next_action.is_some() {
             let action = self.next_action.unwrap();
             self.recording.push_action(self.ticks, action);
@@ -195,7 +200,9 @@ impl Game {
                 Some(actions::Action::MoveLeft) => self.move_left(),
                 Some(actions::Action::MoveRight) => self.move_right(),
                 Some(actions::Action::Rotate) => self.rotate(),
-                Some(actions::Action::Drop) => self.drop_fast(),
+                Some(actions::Action::Drop) => {
+                    dropped = self.drop_fast();
+                }
                 _ => (),
             }
 
@@ -209,7 +216,6 @@ impl Game {
 
             if self.can_fall() {
                 self.piece.y += 1;
-            } else {
             }
         }
 
@@ -231,7 +237,9 @@ impl Game {
                 }
             } else {
                 self.piece.busy_locking = true;
-                self.piece.remaining_lock_frames = self.rules.lock_delay;
+                if !dropped || self.rules.lock_delay_on_hard_drop {
+                    self.piece.remaining_lock_frames = self.rules.lock_delay;
+                };
             }
         }
 
@@ -328,11 +336,15 @@ impl Game {
         self.piece.creep = self.speed as usize;
     }
 
-    pub fn drop_fast(&mut self) {
+    pub fn drop_fast(&mut self) -> bool {
+        let mut dropped = false;
         while self.can_fall() {
             self.piece.y += 1;
+            dropped = true;
+            self.piece.creep = self.speed as usize;
         }
-        self.piece.creep = self.speed as usize
+
+        dropped
     }
 
     pub fn speed_up(&mut self) {
