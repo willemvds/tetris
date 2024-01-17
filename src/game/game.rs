@@ -178,7 +178,7 @@ impl Game {
         Ok(g)
     }
 
-    pub fn tick(&mut self, t: f64) -> usize {
+    pub fn tick(&mut self) -> usize {
         if self.state == State::GameOver {
             return self.ticks;
         }

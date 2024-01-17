@@ -658,7 +658,7 @@ fn main() -> Result<(), String> {
                     }
                 }
 
-                game_ticks = game.tick(t);
+                game_ticks = game.tick();
             }
         }
 
