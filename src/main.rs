@@ -6,6 +6,7 @@ use std::time;
 mod actions;
 mod game;
 mod playfield;
+mod preferences;
 mod tetrominos;
 
 extern crate sdl2;
@@ -345,6 +346,7 @@ impl game::PieceProvider for ReplayPieces {
 fn render_game(
     canvas: &mut render::Canvas<video::Window>,
     game: &mut game::Game,
+    prefs: &preferences::Preferences,
     font: &ttf::Font,
 ) {
     canvas.set_draw_color(pixels::Color::RGB(0, 0, 0));
@@ -380,7 +382,7 @@ fn render_game(
         );
     }
 
-    if game.drop_distance() > 0 {
+    if prefs.drop_indicator && game.drop_distance() > 0 {
         draw_shape_outline(
             canvas,
             *game.piece.form(),
@@ -454,6 +456,7 @@ fn load_last_game_state() -> Result<game::Game, String> {
 }
 
 fn main() -> Result<(), String> {
+    let prefs = preferences::Preferences::new();
     let mut paused = false;
 
     let mut mode = Mode::Tetris;
@@ -666,7 +669,7 @@ fn main() -> Result<(), String> {
             println!("Multiple({acc_runs}) simulations during single drawing frame.");
         }
 
-        render_game(&mut canvas, &mut game, &font);
+        render_game(&mut canvas, &mut game, &prefs, &font);
 
         if paused {
             let x: i32 = (canvas.window().size().0 / 2) as i32;
