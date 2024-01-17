@@ -382,15 +382,26 @@ fn render_game(
         );
     }
 
-    if prefs.drop_indicator && game.drop_distance() > 0 {
-        draw_shape_outline(
-            canvas,
-            *game.piece.form(),
-            tetromino_colour(game.piece.tetromino),
-            cell_size,
-            start_x + (game.piece.x as i32 * cell_size),
-            start_y + (game.piece.y + game.drop_distance() as u16 - 1) as i32 * cell_size,
-        )
+    if game.drop_distance() > 0 {
+        if prefs.drop_indicator == preferences::DropIndicatorStyle::Outline {
+            draw_shape_outline(
+                canvas,
+                *game.piece.form(),
+                tetromino_colour(game.piece.tetromino),
+                cell_size,
+                start_x + (game.piece.x as i32 * cell_size),
+                start_y + (game.piece.y + game.drop_distance() as u16 - 1) as i32 * cell_size,
+            )
+        } else if prefs.drop_indicator == preferences::DropIndicatorStyle::Triangles {
+            draw_shape_triangles(
+                canvas,
+                *game.piece.form(),
+                tetromino_colour(game.piece.tetromino),
+                cell_size,
+                start_x + (game.piece.x as i32 * cell_size),
+                start_y + (game.piece.y + game.drop_distance() as u16 - 1) as i32 * cell_size,
+            )
+        }
     }
 
     draw_shape(
