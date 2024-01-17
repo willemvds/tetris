@@ -191,10 +191,6 @@ impl Game {
             let action = self.next_action.unwrap();
             self.recording.push_action(self.ticks, action);
 
-            if self.piece.busy_locking {
-                self.piece.remaining_lock_frames = self.rules.lock_delay;
-            }
-
             match self.next_action {
                 Some(actions::Action::MoveDown) => self.drop_one(),
                 Some(actions::Action::MoveLeft) => self.move_left(),
@@ -313,6 +309,12 @@ impl Game {
         }
     }
 
+    fn reset_remaining_lock_frames(&mut self) {
+        if self.piece.busy_locking {
+            self.piece.remaining_lock_frames = self.rules.lock_delay;
+        }
+    }
+
     pub fn move_left(&mut self) {
         if self.piece.x == 0 {
             return;
@@ -324,6 +326,7 @@ impl Game {
             self.piece.form(),
         ) {
             self.piece.x -= 1;
+            self.reset_remaining_lock_frames();
         }
     }
 
@@ -334,6 +337,7 @@ impl Game {
             self.piece.form(),
         ) {
             self.piece.x += 1;
+            self.reset_remaining_lock_frames();
         }
     }
 
