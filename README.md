@@ -13,7 +13,7 @@ Mostly following rules as outlined by the [Tetris Guideline](https://tetris.fand
 - ☐ Game stats.
 - ☐ Sound.
 - ☐ Game controller support.
-- ☐ User preferences.
+- ✅ User preferences.
 - ✅ Configurable game rules.
 - ✅ Resume game aka keep playing after reboot.
 - ☐ Custom colour schemes (also creates some accessibility support).
