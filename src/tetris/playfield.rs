@@ -1,4 +1,4 @@
-use crate::tetrominos;
+use crate::tetris::tetrominos;
 
 use serde::{Deserialize, Serialize};
 

@@ -1,5 +1,5 @@
-use crate::actions;
-use crate::tetrominos;
+use crate::tetris::actions;
+use crate::tetris::tetrominos;
 
 use serde::{Deserialize, Serialize};
 

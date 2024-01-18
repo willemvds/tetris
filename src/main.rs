@@ -3,11 +3,12 @@ use std::fs;
 use std::io;
 use std::time;
 
-mod actions;
-mod game;
-mod playfield;
+//mod console;
+mod tetris;
 mod preferences;
-mod tetrominos;
+use tetris::game;
+use tetris::playfield;
+use tetris::tetrominos;
 
 extern crate sdl2;
 use sdl2::event;
@@ -349,7 +350,7 @@ fn render_text_centered(
 }
 
 struct Replay {
-    recording: game::recordings::Recording,
+    recording: tetris::recordings::Recording,
 }
 
 #[derive(Serialize, Deserialize)]
@@ -364,10 +365,10 @@ impl ReplayPieces {
             .recording
             .events
             .iter()
-            .filter(|ev| matches!(ev.kind, game::recordings::EventKind::PieceSpawned(_)));
+            .filter(|ev| matches!(ev.kind, tetris::recordings::EventKind::PieceSpawned(_)));
         let pieces = piece_events
             .map(|ev| {
-                if let game::recordings::EventKind::PieceSpawned(k) = ev.kind {
+                if let tetris::recordings::EventKind::PieceSpawned(k) = ev.kind {
                     k
                 } else {
                     panic!("BAD")
@@ -666,21 +667,23 @@ fn main() -> Result<(), String> {
                         if !paused && !game.is_gameover() && mode == Mode::Tetris {
                             match keycode {
                                 keyboard::Keycode::Kp7 => {
-                                    if let Err(e) = game.queue_action(actions::Action::MoveLeft) {
+                                    if let Err(e) =
+                                        game.queue_action(tetris::actions::Action::MoveLeft)
+                                    {
                                         println!("Dropped GAME ACTION {:?}", e);
                                     }
                                 }
                                 keyboard::Keycode::Kp9 => {
-                                    let _ = game.queue_action(actions::Action::MoveRight);
+                                    let _ = game.queue_action(tetris::actions::Action::MoveRight);
                                 }
                                 keyboard::Keycode::Kp4 => {
-                                    let _ = game.queue_action(actions::Action::Drop);
+                                    let _ = game.queue_action(tetris::actions::Action::Drop);
                                 }
                                 keyboard::Keycode::Kp5 => {
-                                    let _ = game.queue_action(actions::Action::MoveDown);
+                                    let _ = game.queue_action(tetris::actions::Action::MoveDown);
                                 }
                                 keyboard::Keycode::Kp8 => {
-                                    let _ = game.queue_action(actions::Action::Rotate);
+                                    let _ = game.queue_action(tetris::actions::Action::Rotate);
                                 }
                                 keyboard::Keycode::KpPlus => game.speed_up(),
                                 keyboard::Keycode::KpMinus => game.speed_down(),
@@ -712,13 +715,13 @@ fn main() -> Result<(), String> {
                         while replay_action_index < r.recording.events.len() - 1
                             && !matches!(
                                 r.recording.events[replay_action_index].kind,
-                                game::recordings::EventKind::Action(_)
+                                tetris::recordings::EventKind::Action(_)
                             )
                         {
                             replay_action_index += 1
                         }
                         match r.recording.events[replay_action_index].kind {
-                            game::recordings::EventKind::Action(a) => {
+                            tetris::recordings::EventKind::Action(a) => {
                                 if r.recording.events[replay_action_index].at <= game_ticks {
                                     replay_action_index += 1;
                                     let _ = game.queue_action(a);

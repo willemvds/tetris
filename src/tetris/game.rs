@@ -1,8 +1,8 @@
-use crate::game::recordings;
+use crate::tetris::actions;
+use crate::tetris::recordings;
 
-use crate::actions;
-use crate::playfield;
-use crate::tetrominos;
+use crate::tetris::tetrominos;
+use crate::tetris::playfield;
 
 use rand;
 use rand::Rng;
