@@ -21,4 +21,5 @@ Mostly following rules as outlined by the [Tetris Guideline](https://tetris.fand
 - ☐ Macro for defining shapes using a method like tetrominos.txt.
 - ☐ Quake style console.
 - ☐ Binary serialisation formats.
+- ☐ Look at vendoring deps in rust. 
 
