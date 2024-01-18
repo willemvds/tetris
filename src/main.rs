@@ -21,6 +21,56 @@ use sdl2::video;
 use serde::{Deserialize, Serialize};
 use typetag;
 
+#[derive(PartialEq)]
+enum UIAction {
+    Quit,
+    HideConsole,
+}
+
+struct Console {
+    history: Vec<String>,
+    buffer: String,
+}
+
+impl Console {
+    fn new() -> Console {
+        Console {
+            history: vec![],
+            buffer: "".to_string(),
+        }
+    }
+
+    fn process_events(&mut self, event_pump: &mut sdl2::EventPump) -> Vec<UIAction> {
+        let mut ui_actions = vec![];
+        for event in event_pump.poll_iter() {
+            match event {
+                event::Event::Quit { .. } => ui_actions.push(UIAction::Quit),
+                event::Event::KeyDown {
+                    keycode: Some(keycode),
+                    ..
+                } => match keycode {
+                    keyboard::Keycode::Escape => ui_actions.push(UIAction::Quit),
+                    keyboard::Keycode::Backquote => ui_actions.push(UIAction::HideConsole),
+                    _ => println!("Console got this keycode: {0}", keycode),
+                },
+                _ => (),
+            }
+        }
+
+        ui_actions
+    }
+
+    fn render(&self, canvas: &mut render::Canvas<video::Window>) {
+        let (canvas_width, _) = canvas.window().size();
+        canvas.set_draw_color(pixels::Color::RGBA(200, 200, 200, 200));
+        let _ = canvas.fill_rect(rect::Rect::new(0, 0, canvas_width, 500));
+    }
+}
+
+const UI_LAYER_GAME: u8 = 0b0001;
+const UI_LAYER_CONSOLE: u8 = 0b0010;
+const UI_LAYER_MENU: u8 = 0b0100;
+
 fn tetromino_colour(kind: tetrominos::Kind) -> pixels::Color {
     match kind {
         tetrominos::Kind::Hook => pixels::Color::RGB(92, 101, 168),
@@ -467,6 +517,10 @@ fn load_last_game_state() -> Result<game::Game, String> {
 }
 
 fn main() -> Result<(), String> {
+    let mut ui_layers = UI_LAYER_GAME | UI_LAYER_CONSOLE;
+    println!("ui_layers {0}", ui_layers);
+    let mut console = Console::new();
+
     let prefs = preferences::Preferences::new();
     let mut paused = false;
 
@@ -578,22 +632,25 @@ fn main() -> Result<(), String> {
         }
         start_time = now;
 
+        if ui_layers & UI_LAYER_CONSOLE == UI_LAYER_CONSOLE {
+            let ui_actions = console.process_events(&mut events);
+            for action in ui_actions.iter() {
+                match *action {
+                    UIAction::Quit => break 'main,
+                    UIAction::HideConsole => ui_layers = ui_layers ^ UI_LAYER_CONSOLE,
+                }
+            }
+        }
+
         for event in events.poll_iter() {
             match event {
                 event::Event::Quit { .. } => break 'main,
-
-                event::Event::Window { win_event: wev, .. } => match wev {
-                    event::WindowEvent::SizeChanged(new_width, new_height) => {
-                        println!("New window width={0} height={1}", new_width, new_height);
-                    }
-                    _ => (),
-                },
-
                 event::Event::KeyDown {
                     keycode: Some(keycode),
                     ..
                 } => match keycode {
                     keyboard::Keycode::Escape => break 'main,
+                    keyboard::Keycode::Backquote => ui_layers = ui_layers | UI_LAYER_CONSOLE,
                     keyboard::Keycode::Space => {
                         if game.is_gameover() {
                             game = game::Game::new(game_rules.clone(), None)?;
@@ -681,6 +738,9 @@ fn main() -> Result<(), String> {
         }
 
         render_game(&mut canvas, &mut game, &prefs, &font);
+        if ui_layers & UI_LAYER_CONSOLE == UI_LAYER_CONSOLE {
+            console.render(&mut canvas);
+        }
 
         if paused {
             let x: i32 = (canvas.window().size().0 / 2) as i32;
