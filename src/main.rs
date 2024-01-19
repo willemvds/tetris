@@ -597,7 +597,17 @@ fn main() -> Result<(), String> {
                 match action {
                     actions::Action::Quit => break 'main,
                     actions::Action::HideConsole => ui_layers = ui_layers ^ UI_LAYER_CONSOLE,
-                    actions::Action::ConsoleCommand(cmd) => println!("CONSOLE CMD = {0}", cmd),
+                    actions::Action::ConsoleCommand(cmd) => {
+                        if cmd == "quit" {
+                            break 'main;
+                        }
+                        if cmd == "speed" {
+                            console.println(format!("Speed = {0}", game.speed));
+                        } else {
+                            console.println("EH wha?".to_string());
+                        }
+                        println!("CONSOLE CMD = {0}", cmd);
+                    }
                 }
             }
         } else {

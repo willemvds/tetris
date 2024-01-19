@@ -44,16 +44,17 @@ impl<'ttf, 'rwops> Console<'ttf, 'rwops> {
                             let cmd = self.buffer.clone();
                             ui_actions.push(actions::Action::ConsoleCommand(cmd.clone()));
 
-                            self.history.push(cmd);
+                            self.println(format!("> {0}", cmd));
                             self.buffer = "".to_string();
                         }
                     }
                     _ => {
-                        println!("{0}", keycode as i32);
-                        println!("Console got this keycode: {0}", keycode);
                         let keynum = keycode as u8;
                         if (keynum >= 97 && keynum <= 122) || keynum == 32 {
                             self.buffer.push(keycode as u8 as char);
+                        } else {
+                            println!("{0}", keycode as i32);
+                            println!("Console got this keycode: {0}", keycode);
                         }
                     }
                 },
@@ -64,12 +65,16 @@ impl<'ttf, 'rwops> Console<'ttf, 'rwops> {
         ui_actions
     }
 
+    pub fn println(&mut self, text: String) {
+        self.history.push(text)
+    }
+
     pub fn render(&self, canvas: &mut render::Canvas<video::Window>) {
         let (canvas_width, _) = canvas.window().size();
         canvas.set_draw_color(pixels::Color::RGBA(80, 80, 80, 200));
         let _ = canvas.fill_rect(rect::Rect::new(0, 0, canvas_width, 500));
 
-        let mut y = 0;
+        let mut y = 10;
         for line in self.history.iter() {
             render_text(
                 canvas,
