@@ -475,8 +475,6 @@ fn load_last_game_state() -> Result<game::Game, String> {
 fn main() -> Result<(), String> {
     let mut ui_layers = UI_LAYER_GAME | UI_LAYER_CONSOLE;
     println!("ui_layers {0}", ui_layers);
-    let mut console = console::Console::new();
-
     let prefs = preferences::Preferences::new();
     let mut paused = false;
 
@@ -504,6 +502,11 @@ fn main() -> Result<(), String> {
     let sdl_context = sdl2::init()?;
     let video_subsys = sdl_context.video()?;
     let ttf_context = sdl2::ttf::init().map_err(|e| e.to_string())?;
+
+    let console_font =
+        ttf_context.load_font("/usr/share/fonts/TTF/PressStart2P-Regular.ttf", 18)?;
+
+    let mut console = console::Console::new(console_font);
 
     let mut font = ttf_context.load_font(
         "/usr/share/fonts/adobe-source-code-pro/SourceCodePro-Regular.otf",
@@ -596,61 +599,63 @@ fn main() -> Result<(), String> {
                     actions::Action::HideConsole => ui_layers = ui_layers ^ UI_LAYER_CONSOLE,
                 }
             }
-        }
-
-        for event in events.poll_iter() {
-            match event {
-                event::Event::Quit { .. } => break 'main,
-                event::Event::KeyDown {
-                    keycode: Some(keycode),
-                    ..
-                } => match keycode {
-                    keyboard::Keycode::Escape => break 'main,
-                    keyboard::Keycode::Backquote => ui_layers = ui_layers | UI_LAYER_CONSOLE,
-                    keyboard::Keycode::Space => {
-                        if game.is_gameover() {
-                            game = game::Game::new(game_rules.clone(), None)?;
-                            mode = Mode::Tetris;
-                        } else if paused {
-                            paused = false
-                        } else {
-                            paused = true;
-                        }
-                    }
-
-                    _ => {
-                        if !paused && !game.is_gameover() && mode == Mode::Tetris {
-                            match keycode {
-                                keyboard::Keycode::Kp7 => {
-                                    if let Err(e) =
-                                        game.queue_action(tetris::actions::Action::MoveLeft)
-                                    {
-                                        println!("Dropped GAME ACTION {:?}", e);
-                                    }
-                                }
-                                keyboard::Keycode::Kp9 => {
-                                    let _ = game.queue_action(tetris::actions::Action::MoveRight);
-                                }
-                                keyboard::Keycode::Kp4 => {
-                                    let _ = game.queue_action(tetris::actions::Action::Drop);
-                                }
-                                keyboard::Keycode::Kp5 => {
-                                    let _ = game.queue_action(tetris::actions::Action::MoveDown);
-                                }
-                                keyboard::Keycode::Kp8 => {
-                                    let _ = game.queue_action(tetris::actions::Action::Rotate);
-                                }
-                                keyboard::Keycode::KpPlus => game.speed_up(),
-                                keyboard::Keycode::KpMinus => game.speed_down(),
-                                _ => (),
+        } else {
+            for event in events.poll_iter() {
+                match event {
+                    event::Event::Quit { .. } => break 'main,
+                    event::Event::KeyDown {
+                        keycode: Some(keycode),
+                        ..
+                    } => match keycode {
+                        keyboard::Keycode::Escape => break 'main,
+                        keyboard::Keycode::Backquote => ui_layers = ui_layers | UI_LAYER_CONSOLE,
+                        keyboard::Keycode::Space => {
+                            if game.is_gameover() {
+                                game = game::Game::new(game_rules.clone(), None)?;
+                                mode = Mode::Tetris;
+                            } else if paused {
+                                paused = false
+                            } else {
+                                paused = true;
                             }
                         }
-                    }
-                },
 
-                event::Event::MouseButtonDown { .. } => {}
+                        _ => {
+                            if !paused && !game.is_gameover() && mode == Mode::Tetris {
+                                match keycode {
+                                    keyboard::Keycode::Kp7 => {
+                                        if let Err(e) =
+                                            game.queue_action(tetris::actions::Action::MoveLeft)
+                                        {
+                                            println!("Dropped GAME ACTION {:?}", e);
+                                        }
+                                    }
+                                    keyboard::Keycode::Kp9 => {
+                                        let _ =
+                                            game.queue_action(tetris::actions::Action::MoveRight);
+                                    }
+                                    keyboard::Keycode::Kp4 => {
+                                        let _ = game.queue_action(tetris::actions::Action::Drop);
+                                    }
+                                    keyboard::Keycode::Kp5 => {
+                                        let _ =
+                                            game.queue_action(tetris::actions::Action::MoveDown);
+                                    }
+                                    keyboard::Keycode::Kp8 => {
+                                        let _ = game.queue_action(tetris::actions::Action::Rotate);
+                                    }
+                                    keyboard::Keycode::KpPlus => game.speed_up(),
+                                    keyboard::Keycode::KpMinus => game.speed_down(),
+                                    _ => (),
+                                }
+                            }
+                        }
+                    },
 
-                _ => {}
+                    event::Event::MouseButtonDown { .. } => {}
+
+                    _ => {}
+                }
             }
         }
 
@@ -696,10 +701,6 @@ fn main() -> Result<(), String> {
         }
 
         render_game(&mut canvas, &mut game, &prefs, &font);
-        if ui_layers & UI_LAYER_CONSOLE == UI_LAYER_CONSOLE {
-            console.render(&mut canvas);
-        }
-
         if paused {
             let x: i32 = (canvas.window().size().0 / 2) as i32;
 
@@ -721,6 +722,10 @@ fn main() -> Result<(), String> {
             20,
             format!("{:.2} fps", frame_rate),
         );
+
+        if ui_layers & UI_LAYER_CONSOLE == UI_LAYER_CONSOLE {
+            console.render(&mut canvas);
+        }
 
         canvas.present()
     }
