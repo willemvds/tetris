@@ -1,7 +1,8 @@
 #[derive(PartialEq)]
 pub enum Action {
     Quit,
-    HideConsole,
-    HideMenu,
+    MenuHide,
     ConsoleCommand(String),
+    ConsoleHide,
+    ConsoleShow,
 }

@@ -622,7 +622,7 @@ fn main() -> Result<(), String> {
             for action in ui_actions.iter() {
                 match action {
                     actions::Action::Quit => break 'main,
-                    actions::Action::HideConsole => ui_layers.hide(UI_LAYER_CONSOLE),
+                    actions::Action::ConsoleHide => ui_layers.hide(UI_LAYER_CONSOLE),
                     actions::Action::ConsoleCommand(cmd) => {
                         if cmd == "quit" {
                             break 'main;
@@ -641,7 +641,9 @@ fn main() -> Result<(), String> {
             let ui_actions = menu.process_events(&mut events);
             for action in ui_actions.iter() {
                 match action {
-                    actions::Action::HideMenu => ui_layers.hide(UI_LAYER_MENU),
+                    actions::Action::Quit => break 'main,
+                    actions::Action::MenuHide => ui_layers.hide(UI_LAYER_MENU),
+                    actions::Action::ConsoleShow => ui_layers.show(UI_LAYER_CONSOLE),
                     _ => (),
                 }
             }

@@ -33,11 +33,13 @@ impl Menu {
         let mut ui_actions = vec![];
         for event in event_pump.poll_iter() {
             match event {
+                event::Event::Quit { .. } => ui_actions.push(actions::Action::Quit),
                 event::Event::KeyDown {
                     keycode: Some(keycode),
                     ..
                 } => match keycode {
-                    keyboard::Keycode::Escape => ui_actions.push(actions::Action::HideMenu),
+                    keyboard::Keycode::Escape => ui_actions.push(actions::Action::MenuHide),
+                    keyboard::Keycode::Backquote => ui_actions.push(actions::Action::ConsoleShow),
                     _ => (),
                 },
                 _ => (),

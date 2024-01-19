@@ -34,8 +34,7 @@ impl<'ttf, 'rwops> Console<'ttf, 'rwops> {
                     scancode: Some(scancode),
                     ..
                 } => match keycode {
-                    keyboard::Keycode::Escape => ui_actions.push(actions::Action::Quit),
-                    keyboard::Keycode::Backquote => ui_actions.push(actions::Action::HideConsole),
+                    keyboard::Keycode::Backquote => ui_actions.push(actions::Action::ConsoleHide),
                     keyboard::Keycode::Backspace => {
                         self.buffer.pop();
                     }
