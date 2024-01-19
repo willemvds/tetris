@@ -5,6 +5,7 @@ use std::time;
 
 mod actions;
 mod console;
+mod menu;
 mod preferences;
 mod tetris;
 use tetris::game;
@@ -23,9 +24,34 @@ use sdl2::video;
 use serde::{Deserialize, Serialize};
 use typetag;
 
+struct UILayers {
+    layers: u8,
+}
+
+impl UILayers {
+    fn new() -> UILayers {
+        UILayers {
+            layers: UI_LAYER_GAME | UI_LAYER_MENU,
+        }
+    }
+
+    fn hide(&mut self, layer: u8) {
+        self.layers = self.layers ^ layer
+    }
+
+    fn show(&mut self, layer: u8) {
+        self.layers = self.layers | layer
+    }
+
+    fn is_showing(&self, layer: u8) -> bool {
+        self.layers & layer == layer
+    }
+}
+
 const UI_LAYER_GAME: u8 = 0b0001;
-const UI_LAYER_CONSOLE: u8 = 0b0010;
-const UI_LAYER_MENU: u8 = 0b0100;
+const UI_LAYER_CONSOLE: u8 = 0b0100;
+const UI_LAYER_MENU: u8 = 0b0010;
+const UI_LAYER_OVERLAY: u8 = 0b1000;
 
 fn tetromino_colour(kind: tetrominos::Kind) -> pixels::Color {
     match kind {
@@ -473,8 +499,7 @@ fn load_last_game_state() -> Result<game::Game, String> {
 }
 
 fn main() -> Result<(), String> {
-    let mut ui_layers = UI_LAYER_GAME | UI_LAYER_CONSOLE;
-    println!("ui_layers {0}", ui_layers);
+    let mut ui_layers = UILayers::new();
     let prefs = preferences::Preferences::new();
     let mut paused = false;
 
@@ -507,6 +532,7 @@ fn main() -> Result<(), String> {
         ttf_context.load_font("/usr/share/fonts/TTF/PressStart2P-Regular.ttf", 18)?;
 
     let mut console = console::Console::new(console_font);
+    let mut menu = menu::Menu::new();
 
     let mut font = ttf_context.load_font(
         "/usr/share/fonts/adobe-source-code-pro/SourceCodePro-Regular.otf",
@@ -591,12 +617,12 @@ fn main() -> Result<(), String> {
         }
         start_time = now;
 
-        if ui_layers & UI_LAYER_CONSOLE == UI_LAYER_CONSOLE {
+        if ui_layers.is_showing(UI_LAYER_CONSOLE) {
             let ui_actions = console.process_events(&mut events);
             for action in ui_actions.iter() {
                 match action {
                     actions::Action::Quit => break 'main,
-                    actions::Action::HideConsole => ui_layers = ui_layers ^ UI_LAYER_CONSOLE,
+                    actions::Action::HideConsole => ui_layers.hide(UI_LAYER_CONSOLE),
                     actions::Action::ConsoleCommand(cmd) => {
                         if cmd == "quit" {
                             break 'main;
@@ -608,6 +634,15 @@ fn main() -> Result<(), String> {
                         }
                         println!("CONSOLE CMD = {0}", cmd);
                     }
+                    _ => (),
+                }
+            }
+        } else if ui_layers.is_showing(UI_LAYER_MENU) {
+            let ui_actions = menu.process_events(&mut events);
+            for action in ui_actions.iter() {
+                match action {
+                    actions::Action::HideMenu => ui_layers.hide(UI_LAYER_MENU),
+                    _ => (),
                 }
             }
         } else {
@@ -618,8 +653,10 @@ fn main() -> Result<(), String> {
                         keycode: Some(keycode),
                         ..
                     } => match keycode {
-                        keyboard::Keycode::Escape => break 'main,
-                        keyboard::Keycode::Backquote => ui_layers = ui_layers | UI_LAYER_CONSOLE,
+                        keyboard::Keycode::Escape => {
+                            ui_layers.show(UI_LAYER_MENU);
+                        }
+                        keyboard::Keycode::Backquote => ui_layers.show(UI_LAYER_CONSOLE),
                         keyboard::Keycode::Space => {
                             if game.is_gameover() {
                                 game = game::Game::new(game_rules.clone(), None)?;
@@ -734,7 +771,11 @@ fn main() -> Result<(), String> {
             format!("{:.2} fps", frame_rate),
         );
 
-        if ui_layers & UI_LAYER_CONSOLE == UI_LAYER_CONSOLE {
+        if ui_layers.is_showing(UI_LAYER_MENU) {
+            menu.render(&mut canvas);
+        }
+
+        if ui_layers.is_showing(UI_LAYER_CONSOLE) {
             console.render(&mut canvas);
         }
 
