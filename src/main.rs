@@ -594,9 +594,10 @@ fn main() -> Result<(), String> {
         if ui_layers & UI_LAYER_CONSOLE == UI_LAYER_CONSOLE {
             let ui_actions = console.process_events(&mut events);
             for action in ui_actions.iter() {
-                match *action {
+                match action {
                     actions::Action::Quit => break 'main,
                     actions::Action::HideConsole => ui_layers = ui_layers ^ UI_LAYER_CONSOLE,
+                    actions::Action::ConsoleCommand(cmd) => println!("CONSOLE CMD = {0}", cmd),
                 }
             }
         } else {

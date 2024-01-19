@@ -42,7 +42,7 @@ impl<'ttf, 'rwops> Console<'ttf, 'rwops> {
                     keyboard::Keycode::Return => {
                         if self.buffer.len() > 0 {
                             let cmd = self.buffer.clone();
-                            self.handle_cmd(&cmd);
+                            ui_actions.push(actions::Action::ConsoleCommand(cmd.clone()));
 
                             self.history.push(cmd);
                             self.buffer = "".to_string();
@@ -62,10 +62,6 @@ impl<'ttf, 'rwops> Console<'ttf, 'rwops> {
         }
 
         ui_actions
-    }
-
-    fn handle_cmd(&self, cmd: &str) {
-        println!("HANDLING COMMAND = {0}", cmd);
     }
 
     pub fn render(&self, canvas: &mut render::Canvas<video::Window>) {
