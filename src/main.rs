@@ -400,7 +400,7 @@ fn render_game(
         bright_green,
         20,
         140,
-        format!("Lines Cleared: {0}", game.score_lines_cleared),
+        &format!("Lines Cleared: {0}", game.score_lines_cleared),
     );
 
     graphics::render_text(
@@ -409,7 +409,7 @@ fn render_game(
         bright_green,
         20,
         200,
-        format!("Score: {0}", game.score_points),
+        &format!("Score: {0}", game.score_points),
     );
 
     if game.is_gameover() {
@@ -419,7 +419,7 @@ fn render_game(
             bright_red,
             (window_width / 2) as i32,
             50,
-            "GAME OVER!".to_string(),
+            "GAME OVER!",
         )
     };
 }
@@ -713,7 +713,7 @@ fn main() -> Result<(), String> {
                 pixels::Color::RGBA(255, 0, 0, 255),
                 x,
                 50,
-                "PAUSED...".to_string(),
+                "PAUSED...",
             )
         };
 
@@ -723,7 +723,7 @@ fn main() -> Result<(), String> {
             pixels::Color::RGB(0, 0, 255),
             20,
             20,
-            format!("{:.2} fps", frame_rate),
+            &format!("{:.2} fps", frame_rate),
         );
 
         if ui_layers.is_showing(UI_LAYER_MENU) {

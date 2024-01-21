@@ -49,7 +49,7 @@ impl<'ttf, 'rwops> Menu<'ttf, 'rwops> {
             pixels::Color::RGBA(255, 255, 255, 255),
             100,
             500,
-            "Play".to_string(),
+            "Play",
         );
 
         graphics::render_text(
@@ -58,7 +58,7 @@ impl<'ttf, 'rwops> Menu<'ttf, 'rwops> {
             pixels::Color::RGBA(255, 255, 255, 255),
             100,
             600,
-            "Quit".to_string(),
+            "Quit",
         );
     }
     pub fn process_events(&mut self, event_pump: &mut sdl2::EventPump) -> Vec<actions::Action> {

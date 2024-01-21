@@ -10,14 +10,14 @@ pub fn render_text(
     colour: pixels::Color,
     x: i32,
     y: i32,
-    text: String,
+    text: &str,
 ) {
     let texture_creator = canvas.texture_creator();
 
     let (char_width, char_height) = font.size_of_char('C').unwrap();
 
     let surface = font
-        .render(&text)
+        .render(text)
         .blended(colour)
         .map_err(|e| e.to_string())
         .unwrap();
@@ -37,14 +37,14 @@ pub fn render_text_centered(
     colour: pixels::Color,
     x: i32,
     y: i32,
-    text: String,
+    text: &str,
 ) {
     let texture_creator = canvas.texture_creator();
 
     let (char_width, char_height) = font.size_of_char('C').unwrap();
 
     let surface = font
-        .render(&text)
+        .render(text)
         .blended(colour)
         .map_err(|e| e.to_string())
         .unwrap();

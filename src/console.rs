@@ -93,7 +93,7 @@ impl<'ttf, 'rwops> Console<'ttf, 'rwops> {
                 pixels::Color::RGBA(255, 255, 255, 255),
                 20,
                 y,
-                line.to_string(),
+                line,
             );
             y += 30
         }
@@ -105,7 +105,7 @@ impl<'ttf, 'rwops> Console<'ttf, 'rwops> {
                 pixels::Color::RGBA(0, 255, 0, 255),
                 20,
                 450,
-                self.buffer.clone(),
+                &self.buffer,
             );
         }
     }
