@@ -1,10 +1,12 @@
 use crate::actions;
+use crate::assets;
 
 use sdl2::event;
 use sdl2::keyboard;
 use sdl2::pixels;
 use sdl2::rect;
 use sdl2::render;
+use sdl2::rwops;
 use sdl2::ttf;
 use sdl2::video;
 
@@ -16,12 +18,21 @@ pub struct Console<'ttf, 'rwops> {
 }
 
 impl<'ttf, 'rwops> Console<'ttf, 'rwops> {
-    pub fn new(font: ttf::Font<'ttf, 'rwops>) -> Console<'ttf, 'rwops> {
-        Console {
+    pub fn new(
+        registry: &'rwops assets::Registry,
+        ttf_context: &'ttf ttf::Sdl2TtfContext,
+    ) -> Result<Console<'ttf, 'rwops>, String> {
+        let font_bytes = registry
+            .get("PressStart2P-Regular.ttf")
+            .map_err(|e| e.to_string())?;
+        let rw = rwops::RWops::from_bytes(font_bytes)?;
+        let font = ttf_context.load_font_from_rwops(rw, 18)?;
+
+        Ok(Console {
             history: vec![],
             buffer: "".to_string(),
             font,
-        }
+        })
     }
 
     pub fn process_events(&mut self, event_pump: &mut sdl2::EventPump) -> Vec<actions::Action> {

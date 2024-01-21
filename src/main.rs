@@ -1,9 +1,11 @@
+use std::collections;
 use std::env;
 use std::fs;
 use std::io;
 use std::time;
 
 mod actions;
+mod assets;
 mod console;
 mod menu;
 mod preferences;
@@ -498,10 +500,21 @@ fn load_last_game_state() -> Result<game::Game, String> {
     return Err("Previous game state not available.".to_string());
 }
 
+fn asset_manifest() -> collections::HashSet<&'static str> {
+    collections::HashSet::from(["PressStart2P-Regular.ttf", "SourceCodePro-Regular.otf"])
+}
+
 fn main() -> Result<(), String> {
     let mut ui_layers = UILayers::new();
     let prefs = preferences::Preferences::new();
     let mut paused = false;
+
+    let mut registry = assets::Registry::new();
+    let assets = asset_manifest();
+    for asset in assets.iter() {
+        let content = fs::read(format!("assets/{}", asset)).map_err(|e| e.to_string())?;
+        registry.insert(asset, content)
+    }
 
     let mut mode = Mode::Tetris;
     let args: Vec<String> = env::args().collect();
@@ -528,20 +541,16 @@ fn main() -> Result<(), String> {
     let video_subsys = sdl_context.video()?;
     let ttf_context = sdl2::ttf::init().map_err(|e| e.to_string())?;
 
-    let console_font =
-        ttf_context.load_font("/usr/share/fonts/TTF/PressStart2P-Regular.ttf", 18)?;
+    let mut console = console::Console::new(&registry, &ttf_context)?;
+    let mut menu = menu::Menu::new(&registry, &ttf_context)?;
 
-    let mut console = console::Console::new(console_font);
-    let mut menu = menu::Menu::new();
-
-    let mut font = ttf_context.load_font(
-        "/usr/share/fonts/adobe-source-code-pro/SourceCodePro-Regular.otf",
+    let mut font = ttf_context.load_font_from_rwops(
+        registry
+            .get_rwops("SourceCodePro-Regular.otf")
+            .map_err(|e| e.to_string())?,
         48,
     )?;
     font.set_style(sdl2::ttf::FontStyle::BOLD);
-
-    let _smaller_font =
-        ttf_context.load_font("/usr/share/fonts/TTF/PressStart2P-Regular.ttf", 18)?;
 
     println!(
         "video driver = {:?}, display name = {:?}",
