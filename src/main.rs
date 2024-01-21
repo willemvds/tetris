@@ -28,8 +28,8 @@ use typetag;
 
 #[rustfmt::skip]
 const ASSET_MANIFEST: [&str; 2] = [
-    "PressStart2P-Regular.ttf",
-    "SourceCodePro-Regular.otf"
+    "fonts/PressStart2P-Regular.ttf",
+    "fonts/SourceCodePro-Regular.otf"
 ];
 
 const UI_LAYER_GAME: u8 = 0b0001;
@@ -490,7 +490,7 @@ fn main() -> Result<(), String> {
 
     let mut font = ttf_context.load_font_from_rwops(
         registry
-            .get_rwops("SourceCodePro-Regular.otf")
+            .get_rwops("fonts/SourceCodePro-Regular.otf")
             .map_err(|e| e.to_string())?,
         48,
     )?;

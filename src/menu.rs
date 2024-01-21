@@ -21,7 +21,7 @@ impl<'ttf, 'rwops> Menu<'ttf, 'rwops> {
         ttf_context: &'ttf ttf::Sdl2TtfContext,
     ) -> Result<Menu<'ttf, 'rwops>, String> {
         let asset = registry
-            .get("PressStart2P-Regular.ttf")
+            .get("fonts/PressStart2P-Regular.ttf")
             .map_err(|e| e.to_string())?;
         {
             let rw = rwops::RWops::from_bytes(asset)?;

@@ -24,7 +24,7 @@ impl<'ttf, 'rwops> Console<'ttf, 'rwops> {
         ttf_context: &'ttf ttf::Sdl2TtfContext,
     ) -> Result<Console<'ttf, 'rwops>, String> {
         let font_bytes = registry
-            .get("PressStart2P-Regular.ttf")
+            .get("fonts/PressStart2P-Regular.ttf")
             .map_err(|e| e.to_string())?;
         let rw = rwops::RWops::from_bytes(font_bytes)?;
         let font = ttf_context.load_font_from_rwops(rw, 18)?;
