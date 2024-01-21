@@ -19,6 +19,7 @@ Mostly following rules as outlined by the [Tetris Guideline](https://tetris.fand
 - ☐ Custom colour schemes (also creates some accessibility support).
 - ✅ Replay system (through input recording or action events).
 - ☐ Macro for defining shapes using a method like tetrominos.txt.
+- ☐ High Scores!
 - ☐ Quake style console.
 - ☐ Binary serialisation formats.
 - ☐ Look at vendoring deps in rust. 
