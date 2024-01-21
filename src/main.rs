@@ -1,4 +1,3 @@
-use std::collections;
 use std::env;
 use std::fs;
 use std::io;
@@ -26,6 +25,12 @@ use sdl2::video;
 
 use serde::{Deserialize, Serialize};
 use typetag;
+
+#[rustfmt::skip]
+const ASSET_MANIFEST: [&str; 2] = [
+    "PressStart2P-Regular.ttf",
+    "SourceCodePro-Regular.otf"
+];
 
 const UI_LAYER_GAME: u8 = 0b0001;
 const UI_LAYER_CONSOLE: u8 = 0b0000_0100;
@@ -444,18 +449,13 @@ fn load_last_game_state() -> Result<game::Game, String> {
     return Err("Previous game state not available.".to_string());
 }
 
-fn asset_manifest() -> collections::HashSet<&'static str> {
-    collections::HashSet::from(["PressStart2P-Regular.ttf", "SourceCodePro-Regular.otf"])
-}
-
 fn main() -> Result<(), String> {
     let mut ui_layers = UILayers::new();
     let prefs = preferences::Preferences::new();
     let mut paused = false;
 
     let mut registry = assets::Registry::new();
-    let assets = asset_manifest();
-    for asset in assets.iter() {
+    for asset in ASSET_MANIFEST.iter() {
         let content = fs::read(format!("assets/{}", asset)).map_err(|e| e.to_string())?;
         registry.insert(asset, content)
     }
