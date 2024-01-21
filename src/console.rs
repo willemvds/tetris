@@ -1,5 +1,6 @@
 use crate::actions;
 use crate::assets;
+use crate::graphics;
 
 use sdl2::event;
 use sdl2::keyboard;
@@ -86,53 +87,26 @@ impl<'ttf, 'rwops> Console<'ttf, 'rwops> {
 
         let mut y = 10;
         for line in self.history.iter() {
-            render_text(
+            graphics::render_text(
                 canvas,
                 &self.font,
                 pixels::Color::RGBA(255, 255, 255, 255),
                 20,
                 y,
-                line,
+                line.to_string(),
             );
             y += 30
         }
 
         if self.buffer.len() > 0 {
-            render_text(
+            graphics::render_text(
                 canvas,
                 &self.font,
                 pixels::Color::RGBA(0, 255, 0, 255),
                 20,
                 450,
-                &self.buffer,
+                self.buffer.clone(),
             );
         }
     }
-}
-
-fn render_text(
-    canvas: &mut render::Canvas<video::Window>,
-    font: &ttf::Font,
-    colour: pixels::Color,
-    x: i32,
-    y: i32,
-    text: &String,
-) {
-    let texture_creator = canvas.texture_creator();
-
-    let (char_width, char_height) = font.size_of_char('C').unwrap();
-
-    let surface = font
-        .render(&text)
-        .blended(colour)
-        .map_err(|e| e.to_string())
-        .unwrap();
-    let texture = texture_creator
-        .create_texture_from_surface(&surface)
-        .map_err(|e| e.to_string())
-        .unwrap();
-
-    let target = rect::Rect::new(x, y, char_width * text.len() as u32, char_height);
-
-    let _ = canvas.copy(&texture, None, Some(target));
 }

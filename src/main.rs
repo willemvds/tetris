@@ -7,6 +7,7 @@ use std::time;
 mod actions;
 mod assets;
 mod console;
+mod graphics;
 mod menu;
 mod preferences;
 mod tetris;
@@ -25,6 +26,12 @@ use sdl2::video;
 
 use serde::{Deserialize, Serialize};
 use typetag;
+
+const UI_LAYER_GAME: u8 = 0b0001;
+const UI_LAYER_CONSOLE: u8 = 0b0000_0100;
+const UI_LAYER_MENU: u8 = 0b0000_0010;
+const UI_LAYER_CINEMA: u8 = 0b0000_1000;
+const UI_LAYER_OVERLAY: u8 = 0b0001_0000;
 
 struct UILayers {
     layers: u8,
@@ -49,11 +56,6 @@ impl UILayers {
         self.layers & layer == layer
     }
 }
-
-const UI_LAYER_GAME: u8 = 0b0001;
-const UI_LAYER_CONSOLE: u8 = 0b0100;
-const UI_LAYER_MENU: u8 = 0b0010;
-const UI_LAYER_OVERLAY: u8 = 0b1000;
 
 fn tetromino_colour(kind: tetrominos::Kind) -> pixels::Color {
     match kind {
@@ -274,64 +276,6 @@ fn draw_game(canvas: &mut render::Canvas<video::Window>, game: &game::Game, size
     draw_playfield(canvas, &game.play_field, size);
 }
 
-fn render_text(
-    canvas: &mut render::Canvas<video::Window>,
-    font: &ttf::Font,
-    colour: pixels::Color,
-    x: i32,
-    y: i32,
-    text: String,
-) {
-    let texture_creator = canvas.texture_creator();
-
-    let (char_width, char_height) = font.size_of_char('C').unwrap();
-
-    let surface = font
-        .render(&text)
-        .blended(colour)
-        .map_err(|e| e.to_string())
-        .unwrap();
-    let texture = texture_creator
-        .create_texture_from_surface(&surface)
-        .map_err(|e| e.to_string())
-        .unwrap();
-
-    let target = rect::Rect::new(x, y, char_width * text.len() as u32, char_height);
-
-    let _ = canvas.copy(&texture, None, Some(target));
-}
-
-fn render_text_centered(
-    canvas: &mut render::Canvas<video::Window>,
-    font: &ttf::Font,
-    colour: pixels::Color,
-    x: i32,
-    y: i32,
-    text: String,
-) {
-    let texture_creator = canvas.texture_creator();
-
-    let (char_width, char_height) = font.size_of_char('C').unwrap();
-
-    let surface = font
-        .render(&text)
-        .blended(colour)
-        .map_err(|e| e.to_string())
-        .unwrap();
-    let texture = texture_creator
-        .create_texture_from_surface(&surface)
-        .map_err(|e| e.to_string())
-        .unwrap();
-
-    let text_width = char_width * text.len() as u32;
-    let target_x = x - (text_width / 2) as i32;
-    let target_y = y - (char_height / 2) as i32;
-
-    let target = rect::Rect::new(target_x, target_y, text_width, char_height);
-
-    let _ = canvas.copy(&texture, None, Some(target));
-}
-
 struct Replay {
     recording: tetris::recordings::Recording,
 }
@@ -450,7 +394,7 @@ fn render_game(
     let bright_green = pixels::Color::RGBA(0, 255, 0, 255);
     let bright_red = pixels::Color::RGBA(255, 0, 0, 255);
 
-    render_text(
+    graphics::render_text(
         canvas,
         font,
         bright_green,
@@ -459,7 +403,7 @@ fn render_game(
         format!("Lines Cleared: {0}", game.score_lines_cleared),
     );
 
-    render_text(
+    graphics::render_text(
         canvas,
         font,
         bright_green,
@@ -469,7 +413,7 @@ fn render_game(
     );
 
     if game.is_gameover() {
-        render_text_centered(
+        graphics::render_text_centered(
             canvas,
             font,
             bright_red,
@@ -763,7 +707,7 @@ fn main() -> Result<(), String> {
         if paused {
             let x: i32 = (canvas.window().size().0 / 2) as i32;
 
-            render_text_centered(
+            graphics::render_text_centered(
                 &mut canvas,
                 &font,
                 pixels::Color::RGBA(255, 0, 0, 255),
@@ -773,7 +717,7 @@ fn main() -> Result<(), String> {
             )
         };
 
-        render_text(
+        graphics::render_text(
             &mut canvas,
             &font,
             pixels::Color::RGB(0, 0, 255),

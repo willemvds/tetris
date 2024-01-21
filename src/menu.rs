@@ -1,5 +1,6 @@
 use crate::actions;
 use crate::assets;
+use crate::graphics;
 
 use sdl2::event;
 use sdl2::keyboard;
@@ -42,22 +43,22 @@ impl<'ttf, 'rwops> Menu<'ttf, 'rwops> {
             100,
         ));
 
-        render_text(
+        graphics::render_text(
             canvas,
             &self.font,
             pixels::Color::RGBA(255, 255, 255, 255),
             100,
             500,
-            &"Play".to_string(),
+            "Play".to_string(),
         );
 
-        render_text(
+        graphics::render_text(
             canvas,
             &self.font,
             pixels::Color::RGBA(255, 255, 255, 255),
             100,
             600,
-            &"Quit".to_string(),
+            "Quit".to_string(),
         );
     }
     pub fn process_events(&mut self, event_pump: &mut sdl2::EventPump) -> Vec<actions::Action> {
@@ -79,31 +80,4 @@ impl<'ttf, 'rwops> Menu<'ttf, 'rwops> {
 
         ui_actions
     }
-}
-
-fn render_text(
-    canvas: &mut render::Canvas<video::Window>,
-    font: &ttf::Font,
-    colour: pixels::Color,
-    x: i32,
-    y: i32,
-    text: &String,
-) {
-    let texture_creator = canvas.texture_creator();
-
-    let (char_width, char_height) = font.size_of_char('C').unwrap();
-
-    let surface = font
-        .render(&text)
-        .blended(colour)
-        .map_err(|e| e.to_string())
-        .unwrap();
-    let texture = texture_creator
-        .create_texture_from_surface(&surface)
-        .map_err(|e| e.to_string())
-        .unwrap();
-
-    let target = rect::Rect::new(x, y, char_width * text.len() as u32, char_height);
-
-    let _ = canvas.copy(&texture, None, Some(target));
 }
