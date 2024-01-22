@@ -425,15 +425,3 @@ impl Game {
         }
     }
 }
-
-fn new_tetromino_bag() -> Vec<&'static tetrominos::Tetromino> {
-    return vec![
-        tetrominos::from_kind(tetrominos::Kind::Stick),
-        tetrominos::from_kind(tetrominos::Kind::Square),
-        tetrominos::from_kind(tetrominos::Kind::Pyramid),
-        tetrominos::from_kind(tetrominos::Kind::Seven),
-        tetrominos::from_kind(tetrominos::Kind::Snake),
-        tetrominos::from_kind(tetrominos::Kind::Hook),
-        tetrominos::from_kind(tetrominos::Kind::Zig),
-    ];
-}

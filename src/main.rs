@@ -524,7 +524,6 @@ fn main() -> Result<(), String> {
     let mut frames = 0;
     let mut slowest_frame = 0.0;
 
-    let mut t: f64 = 0.0;
     let dt: f64 = 1.0 / 250.0; // 4ms tick rate.
 
     let game_loop_start_at = time::Instant::now();
@@ -669,7 +668,6 @@ fn main() -> Result<(), String> {
         if !paused && !game.is_gameover() {
             while accumulator >= dt {
                 acc_runs += 1;
-                t += dt;
                 accumulator -= dt;
 
                 if mode == Mode::Replay {

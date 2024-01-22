@@ -43,7 +43,6 @@ impl<'ttf, 'rwops> Console<'ttf, 'rwops> {
                 event::Event::Quit { .. } => ui_actions.push(actions::Action::Quit),
                 event::Event::KeyDown {
                     keycode: Some(keycode),
-                    scancode: Some(scancode),
                     ..
                 } => match keycode {
                     keyboard::Keycode::Backquote => ui_actions.push(actions::Action::ConsoleHide),
