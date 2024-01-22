@@ -50,7 +50,7 @@ impl<'ttf, 'rwops> Console<'ttf, 'rwops> {
                         self.buffer.pop();
                     }
                     keyboard::Keycode::Return => {
-                        if self.buffer.len() > 0 {
+                        if !self.buffer.is_empty() {
                             let cmd = self.buffer.clone();
                             ui_actions.push(actions::Action::ConsoleCommand(cmd.clone()));
 
@@ -97,7 +97,7 @@ impl<'ttf, 'rwops> Console<'ttf, 'rwops> {
             y += 30
         }
 
-        if self.buffer.len() > 0 {
+        if !self.buffer.is_empty() {
             graphics::render_text(
                 canvas,
                 &self.font,
