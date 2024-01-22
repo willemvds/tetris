@@ -614,10 +614,8 @@ fn main() -> Result<(), String> {
                             if game.is_gameover() {
                                 game = game::Game::new(game_rules.clone(), None)?;
                                 mode = Mode::Tetris;
-                            } else if paused {
-                                paused = false
                             } else {
-                                paused = true;
+                                paused = !paused;
                             }
                         }
 
