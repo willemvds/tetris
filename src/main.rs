@@ -257,7 +257,7 @@ fn draw_playfield(
             if pf.matrix[row][col] == playfield::Location::Empty {
                 continue;
             }
-            canvas.set_draw_color((&pf.matrix[row][col]).color());
+            canvas.set_draw_color(pf.matrix[row][col].color());
             let _ = canvas.fill_rect(rect::Rect::new(
                 start_x + (col as i32 * size),
                 start_y + (row as i32 * size),
@@ -337,7 +337,7 @@ fn render_game(
     let (window_width, window_height) = canvas.window().size();
     let cell_size: i32 = (window_height / 30) as i32;
 
-    draw_game(canvas, &game, cell_size);
+    draw_game(canvas, game, cell_size);
 
     let start_x: i32 =
         (window_width as i32 / 2) - (cell_size * game.play_field.cols as i32 / 2) - (3 * cell_size);
