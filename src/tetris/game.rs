@@ -97,7 +97,7 @@ impl TetrominoBag {
 #[typetag::serde]
 impl PieceProvider for TetrominoBag {
     fn next(&mut self) -> Result<tetrominos::Kind, String> {
-        if self.pieces.len() == 0 {
+        if self.pieces.is_empty() {
             self.pieces = TetrominoBag::one_of_each_kind();
         }
 
