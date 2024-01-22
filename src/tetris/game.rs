@@ -60,7 +60,8 @@ impl Piece {
 
     pub fn form(&self) -> &tetrominos::Form {
         let t = tetrominos::from_kind(self.tetromino);
-        return &t.forms[self.rotation as usize];
+
+        &t.forms[self.rotation as usize]
     }
 }
 
@@ -248,7 +249,7 @@ impl Game {
     }
 
     pub fn is_gameover(&self) -> bool {
-        return self.state == State::GameOver;
+        self.state == State::GameOver
     }
 
     pub fn queue_action(&mut self, a: actions::Action) -> Result<(), String> {
@@ -305,7 +306,6 @@ impl Game {
         ) {
             self.piece.rotation = next_rotation;
             self.piece.x += 1;
-            return;
         }
     }
 

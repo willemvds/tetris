@@ -62,11 +62,11 @@ impl PlayField {
     }
 
     pub fn well_x(&self) -> usize {
-        return COLS_PADDING / 2;
+        COLS_PADDING / 2
     }
 
     pub fn well_y(&self) -> usize {
-        return 4;
+        4
     }
 
     pub fn has_collission(&self, shape_y: usize, shape_x: usize, shape: &Shape) -> bool {

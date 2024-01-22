@@ -26,7 +26,7 @@ impl<'ttf, 'rwops> Menu<'ttf, 'rwops> {
         {
             let rw = rwops::RWops::from_bytes(asset)?;
             let font = ttf_context.load_font_from_rwops(rw, 34)?;
-            return Ok(Menu { font });
+            Ok(Menu { font })
         }
     }
 

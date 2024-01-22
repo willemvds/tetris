@@ -445,7 +445,7 @@ fn load_last_game_state() -> Result<game::Game, String> {
         }
     }
 
-    return Err("Previous game state not available.".to_string());
+    Err("Previous game state not available.".to_string())
 }
 
 fn main() -> Result<(), String> {
