@@ -24,7 +24,6 @@ use sdl2::ttf;
 use sdl2::video;
 
 use serde::{Deserialize, Serialize};
-use typetag;
 
 #[rustfmt::skip]
 const ASSET_MANIFEST: [&str; 2] = [
