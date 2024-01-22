@@ -49,11 +49,11 @@ impl UILayers {
     }
 
     fn hide(&mut self, layer: u8) {
-        self.layers = self.layers ^ layer
+        self.layers ^= layer
     }
 
     fn show(&mut self, layer: u8) {
-        self.layers = self.layers | layer
+        self.layers |= layer
     }
 
     fn is_showing(&self, layer: u8) -> bool {
@@ -551,7 +551,7 @@ fn main() -> Result<(), String> {
     };
 
     'main: loop {
-        frames = frames + 1;
+        frames += 1;
         let now = time::Instant::now();
         let mut frame_time = now - start_time;
         let frame_rate = 1000000.0 / frame_time.as_micros() as f64;
@@ -661,7 +661,7 @@ fn main() -> Result<(), String> {
         }
 
         if !paused && !game.is_gameover() {
-            accumulator = accumulator + frame_time.as_secs_f64();
+            accumulator += frame_time.as_secs_f64();
         }
 
         let mut acc_runs = 0;
