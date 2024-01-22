@@ -35,13 +35,10 @@ impl<'r> Registry<'r> {
     }
 
     pub fn get_rwops(&self, path: &str) -> Result<rwops::RWops, ErrNotFound> {
-        match self.assets.get(path) {
-            Some(asset) => {
-                if let Ok(rw) = rwops::RWops::from_bytes(asset) {
-                    return Ok(rw);
-                }
+        if let Some(asset) = self.assets.get(path) {
+            if let Ok(rw) = rwops::RWops::from_bytes(asset) {
+                return Ok(rw);
             }
-            None => (),
         }
 
         Err(ErrNotFound {})

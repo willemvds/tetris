@@ -680,14 +680,13 @@ fn main() -> Result<(), String> {
                         {
                             replay_action_index += 1
                         }
-                        match r.recording.events[replay_action_index].kind {
-                            tetris::recordings::EventKind::Action(a) => {
-                                if r.recording.events[replay_action_index].at <= game_ticks {
-                                    replay_action_index += 1;
-                                    let _ = game.queue_action(a);
-                                }
+                        if let tetris::recordings::EventKind::Action(a) =
+                            r.recording.events[replay_action_index].kind
+                        {
+                            if r.recording.events[replay_action_index].at <= game_ticks {
+                                replay_action_index += 1;
+                                let _ = game.queue_action(a);
                             }
-                            _ => (),
                         }
                     }
                 }
