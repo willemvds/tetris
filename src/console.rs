@@ -60,7 +60,7 @@ impl<'ttf, 'rwops> Console<'ttf, 'rwops> {
                     }
                     _ => {
                         let keynum = keycode as u8;
-                        if (keynum >= 97 && keynum <= 122) || keynum == 32 {
+                        if (97..=122).contains(&keynum) || keynum == 32 {
                             self.buffer.push(keycode as u8 as char);
                         } else {
                             println!("{0}", keycode as i32);
