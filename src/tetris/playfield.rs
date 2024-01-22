@@ -154,7 +154,7 @@ mod tests {
         let pf = PlayField::new(10, 10).unwrap();
         let shape: Shape = [[1, 1, 1, 1], [1, 1, 1, 1], [1, 1, 1, 1], [1, 1, 1, 1]];
 
-        assert_eq!(false, pf.has_collission(5, 5, &shape));
+        assert!(!pf.has_collission(5, 5, &shape));
     }
 
     #[test]
@@ -163,6 +163,6 @@ mod tests {
         pf.matrix[0][0] = Location::Filled(tetrominos::Kind::Hook);
         let shape: Shape = [[1, 1, 1, 1], [1, 1, 1, 1], [1, 1, 1, 1], [1, 1, 1, 1]];
 
-        assert_eq!(true, pf.has_collission(0, 0, &shape));
+        assert!(pf.has_collission(0, 0, &shape));
     }
 }
