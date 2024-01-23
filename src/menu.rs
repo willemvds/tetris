@@ -11,8 +11,33 @@ use sdl2::rwops;
 use sdl2::ttf;
 use sdl2::video;
 
+pub enum MenuOptionSize {
+    Regular,
+    Large,
+}
+
+pub struct MenuOption {
+    text: String,
+    size: MenuOptionSize,
+    selected: bool,
+}
+
+impl MenuOption {
+    fn new(text: String, size: MenuOptionSize) -> MenuOption {
+        MenuOption {
+            text,
+            size,
+            selected: false,
+        }
+    }
+}
+
 pub struct Menu<'ttf, 'rwops> {
-    font: ttf::Font<'ttf, 'rwops>,
+    regular_font: ttf::Font<'ttf, 'rwops>,
+    large_font: ttf::Font<'ttf, 'rwops>,
+
+    options: Vec<MenuOption>,
+    selected_option: Option<usize>,
 }
 
 impl<'ttf, 'rwops> Menu<'ttf, 'rwops> {
@@ -20,14 +45,54 @@ impl<'ttf, 'rwops> Menu<'ttf, 'rwops> {
         registry: &'rwops assets::Registry,
         ttf_context: &'ttf ttf::Sdl2TtfContext,
     ) -> Result<Menu<'ttf, 'rwops>, String> {
-        let asset = registry
+        let font_bytes = registry
             .get("fonts/PressStart2P-Regular.ttf")
             .map_err(|e| e.to_string())?;
         {
-            let rw = rwops::RWops::from_bytes(asset)?;
-            let font = ttf_context.load_font_from_rwops(rw, 34)?;
-            Ok(Menu { font })
+            let regular_rwops = rwops::RWops::from_bytes(font_bytes)?;
+            let regular_font = ttf_context.load_font_from_rwops(regular_rwops, 28)?;
+
+            let large_rwops = rwops::RWops::from_bytes(font_bytes)?;
+            let large_font = ttf_context.load_font_from_rwops(large_rwops, 42)?;
+
+            let mut menu = Menu {
+                regular_font,
+                large_font,
+                options: vec![],
+                selected_option: None,
+            };
+
+            menu.options
+                .push(MenuOption::new("Play".to_string(), MenuOptionSize::Large));
+            menu.options[0].selected = true;
+            menu.options.push(MenuOption::new(
+                "Quit (q)".to_string(),
+                MenuOptionSize::Regular,
+            ));
+
+            Ok(menu)
         }
+    }
+
+    pub fn render_option(
+        &self,
+        canvas: &mut render::Canvas<video::Window>,
+        opt: &MenuOption,
+        y: i32,
+    ) {
+        if opt.selected {
+            canvas.set_draw_color(pixels::Color::RGBA(252, 252, 252, 255));
+            let _ = canvas.fill_rect(rect::Rect::new(50, y - 20, 500, 80));
+        }
+        let f = match opt.size {
+            MenuOptionSize::Regular => &self.regular_font,
+            MenuOptionSize::Large => &self.large_font,
+        };
+        let c = match opt.selected {
+            true => pixels::Color::RGBA(0, 255, 0, 255),
+            false => pixels::Color::RGBA(255, 255, 255, 255),
+        };
+        graphics::render_text(canvas, f, c, 100, y, &opt.text);
     }
 
     pub fn render(&self, canvas: &mut render::Canvas<video::Window>) {
@@ -35,31 +100,11 @@ impl<'ttf, 'rwops> Menu<'ttf, 'rwops> {
         canvas.set_draw_color(pixels::Color::RGBA(200, 100, 13, 100));
         let _ = canvas.fill_rect(rect::Rect::new(0, 0, canvas_width, canvas_height));
 
-        canvas.set_draw_color(pixels::Color::RGBA(50, 220, 20, 255));
-        let _ = canvas.fill_rect(rect::Rect::new(
-            (canvas_width / 2) as i32 - 200,
-            100,
-            400,
-            100,
-        ));
-
-        graphics::render_text(
-            canvas,
-            &self.font,
-            pixels::Color::RGBA(255, 255, 255, 255),
-            100,
-            500,
-            "Play",
-        );
-
-        graphics::render_text(
-            canvas,
-            &self.font,
-            pixels::Color::RGBA(255, 255, 255, 255),
-            100,
-            600,
-            "Quit",
-        );
+        let mut y = 500;
+        for opt in self.options.iter() {
+            self.render_option(canvas, opt, y);
+            y += 100;
+        }
     }
     pub fn process_events(&mut self, event_pump: &mut sdl2::EventPump) -> Vec<actions::Action> {
         let mut ui_actions = vec![];
