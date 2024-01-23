@@ -743,14 +743,13 @@ fn main() -> Result<(), String> {
     if mode != Mode::Replay {
         let mut recording_file =
             fs::File::create("last_game_recording.json").map_err(|e| e.to_string())?;
-        let _ = serde_json::to_writer_pretty(&mut recording_file, &game.recording)
+        serde_json::to_writer_pretty(&mut recording_file, &game.recording)
             .map_err(|e| e.to_string())?;
     }
 
     let mut last_game_state_file =
         fs::File::create("last_game_state.json").map_err(|e| e.to_string())?;
-    let _ = serde_json::to_writer_pretty(&mut last_game_state_file, &game)
-        .map_err(|e| e.to_string())?;
+    serde_json::to_writer_pretty(&mut last_game_state_file, &game).map_err(|e| e.to_string())?;
 
     Ok(())
 }
