@@ -117,6 +117,7 @@ impl<'ttf, 'rwops> Menu<'ttf, 'rwops> {
                 } => match keycode {
                     keyboard::Keycode::Escape => ui_actions.push(actions::Action::MenuHide),
                     keyboard::Keycode::Backquote => ui_actions.push(actions::Action::ConsoleShow),
+                    keyboard::Keycode::Q => ui_actions.push(actions::Action::Quit),
                     _ => (),
                 },
                 _ => (),
