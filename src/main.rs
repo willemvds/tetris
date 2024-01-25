@@ -6,22 +6,16 @@ use std::time;
 mod actions;
 mod assets;
 mod console;
+mod game_shell;
 mod graphics;
 mod menu;
 mod preferences;
 mod tetris;
 use tetris::game;
-use tetris::playfield;
 use tetris::tetrominos;
 
 extern crate sdl2;
-use sdl2::event;
-use sdl2::keyboard;
 use sdl2::pixels;
-use sdl2::rect;
-use sdl2::render;
-use sdl2::ttf;
-use sdl2::video;
 
 use serde::{Deserialize, Serialize};
 
@@ -59,225 +53,6 @@ impl UILayers {
     fn is_showing(&self, layer: u8) -> bool {
         self.layers & layer == layer
     }
-}
-
-fn tetromino_colour(kind: tetrominos::Kind) -> pixels::Color {
-    match kind {
-        tetrominos::Kind::Hook => pixels::Color::RGB(92, 101, 168),
-        tetrominos::Kind::Pyramid => pixels::Color::RGB(161, 82, 153),
-        tetrominos::Kind::Seven => pixels::Color::RGB(224, 127, 58),
-        tetrominos::Kind::Snake => pixels::Color::RGB(100, 180, 82),
-        tetrominos::Kind::Square => pixels::Color::RGB(241, 212, 72),
-        tetrominos::Kind::Stick => pixels::Color::RGB(99, 196, 234),
-        tetrominos::Kind::Zig => pixels::Color::RGB(220, 58, 53),
-    }
-}
-
-impl playfield::Location {
-    fn color(self) -> pixels::Color {
-        match self {
-            playfield::Location::Empty => pixels::Color::RGB(0, 0, 0),
-            playfield::Location::Edge => pixels::Color::RGB(200, 200, 200),
-            playfield::Location::Filled(k) => match k {
-                tetrominos::Kind::Stick => pixels::Color::RGB(99, 196, 234),
-                tetrominos::Kind::Square => pixels::Color::RGB(241, 212, 72),
-                tetrominos::Kind::Pyramid => pixels::Color::RGB(161, 82, 153),
-                tetrominos::Kind::Seven => pixels::Color::RGB(224, 127, 58),
-                tetrominos::Kind::Snake => pixels::Color::RGB(100, 180, 82),
-                tetrominos::Kind::Hook => pixels::Color::RGB(92, 101, 168),
-                tetrominos::Kind::Zig => pixels::Color::RGB(220, 58, 53),
-            },
-        }
-    }
-}
-
-fn draw_shape(
-    canvas: &mut render::Canvas<video::Window>,
-    s: playfield::Shape,
-    colour: pixels::Color,
-    size: i32,
-    x: i32,
-    y: i32,
-) {
-    canvas.set_draw_color(colour);
-    for row in 0..4 {
-        for col in 0..4 {
-            if s[row][col] == 0 {
-                continue;
-            }
-            let _ = canvas.fill_rect(rect::Rect::new(
-                x + (col as i32 * size),
-                y + (row as i32 * size),
-                size as u32,
-                size as u32,
-            ));
-        }
-    }
-}
-
-fn draw_shape_triangles(
-    canvas: &mut render::Canvas<video::Window>,
-    s: playfield::Shape,
-    colour: pixels::Color,
-    size: i32,
-    x: i32,
-    y: i32,
-) {
-    canvas.set_draw_color(colour);
-    for row in 0..4 {
-        for col in 0..4 {
-            if s[row][col] == 0 {
-                continue;
-            }
-            let start_x = x + (col as i32 * size);
-            let start_y = y + (row as i32 * size);
-            let end_x = start_x + size;
-            let end_y = start_y + size;
-            let _ = canvas.draw_line(
-                rect::Point::new(start_x, start_y),
-                rect::Point::new(end_x, end_y),
-            );
-            let _ = canvas.draw_rect(rect::Rect::new(
-                x + (col as i32 * size),
-                y + (row as i32 * size),
-                size as u32,
-                size as u32,
-            ));
-        }
-    }
-}
-
-fn draw_shape_outline(
-    canvas: &mut render::Canvas<video::Window>,
-    s: playfield::Shape,
-    colour: pixels::Color,
-    size: i32,
-    x: i32,
-    y: i32,
-) {
-    canvas.set_draw_color(colour);
-    for row in 0..4 {
-        for col in 0..4 {
-            if s[row][col] == 0 {
-                continue;
-            }
-
-            let start_x = x + (col as i32 * size);
-            let start_y = y + (row as i32 * size);
-
-            // draw_top_line
-            if row == 0 || s[row - 1][col] == 0 {
-                let _ = canvas.draw_line(
-                    rect::Point::new(start_x, start_y),
-                    rect::Point::new(start_x + size, start_y),
-                );
-            }
-
-            // draw_right_line
-            if col == 3 || s[row][col + 1] == 0 {
-                let _ = canvas.draw_line(
-                    rect::Point::new(start_x + size, start_y),
-                    rect::Point::new(start_x + size, start_y + size),
-                );
-            }
-
-            // draw_bottom_line
-            if row == 3 || s[row + 1][col] == 0 {
-                let _ = canvas.draw_line(
-                    rect::Point::new(start_x, start_y + size),
-                    rect::Point::new(start_x + size, start_y + size),
-                );
-            }
-
-            // draw_left_line
-            if col == 0 || s[row][col - 1] == 0 {
-                let _ = canvas.draw_line(
-                    rect::Point::new(start_x, start_y),
-                    rect::Point::new(start_x, start_y + size),
-                );
-            }
-        }
-    }
-}
-
-fn draw_partial_shape(
-    canvas: &mut render::Canvas<video::Window>,
-    s: playfield::Shape,
-    s_first_row: i16,
-    colour: pixels::Color,
-    size: i32,
-    x: i32,
-    y: i32,
-) {
-    canvas.set_draw_color(colour);
-    for row in s_first_row as usize..4 {
-        for col in 0..4 {
-            if s[row][col] == 0 {
-                continue;
-            }
-            let _ = canvas.fill_rect(rect::Rect::new(
-                x + (col as i32 * size),
-                y + (row as i32 * size),
-                size as u32,
-                size as u32,
-            ));
-        }
-    }
-}
-
-fn draw_playfield(
-    canvas: &mut render::Canvas<video::Window>,
-    pf: &playfield::PlayField,
-    size: i32,
-) {
-    let (canvas_width, _) = canvas.window().size();
-
-    // The 3 is the left padding of the playfield.
-    let start_x: i32 = (canvas_width as i32 / 2) - (size * pf.cols as i32 / 2) - (3 * size);
-    let start_y: i32 = 1;
-
-    let well_rows_start = pf.well_y();
-    let well_rows_end = well_rows_start + pf.rows;
-    let well_cols_start = pf.well_x();
-    let well_cols_end = well_cols_start + pf.cols;
-
-    let width: u32 = (size * pf.cols as i32) as u32 + 2;
-    let height: u32 = (size * pf.rows as i32) as u32 + 2;
-
-    for row in well_rows_start..well_rows_end {
-        for col in well_cols_start..well_cols_end {
-            canvas.set_draw_color(pixels::Color::RGB(20, 20, 20));
-            let _ = canvas.draw_rect(rect::Rect::new(
-                start_x + (col as i32 * size),
-                start_y + (row as i32 * size),
-                size as u32,
-                size as u32,
-            ));
-
-            if pf.matrix[row][col] == playfield::Location::Empty {
-                continue;
-            }
-            canvas.set_draw_color(pf.matrix[row][col].color());
-            let _ = canvas.fill_rect(rect::Rect::new(
-                start_x + (col as i32 * size),
-                start_y + (row as i32 * size),
-                size as u32,
-                size as u32,
-            ));
-        }
-    }
-
-    canvas.set_draw_color(pixels::Color::RGB(72, 72, 72));
-    let _ = canvas.draw_rect(rect::Rect::new(
-        start_x + (well_cols_start as i32 * size),
-        start_y + (well_rows_start as i32 * size),
-        width,
-        height,
-    ));
-}
-
-fn draw_game(canvas: &mut render::Canvas<video::Window>, game: &game::Game, size: i32) {
-    draw_playfield(canvas, &game.play_field, size);
 }
 
 struct Replay {
@@ -325,109 +100,6 @@ impl game::PieceProvider for ReplayPieces {
     }
 }
 
-fn render_game(
-    canvas: &mut render::Canvas<video::Window>,
-    game: &mut game::Game,
-    prefs: &preferences::Preferences,
-    font: &ttf::Font,
-) {
-    canvas.set_draw_color(pixels::Color::RGB(0, 0, 0));
-    canvas.clear();
-
-    let (window_width, window_height) = canvas.window().size();
-    let cell_size: i32 = (window_height / 30) as i32;
-
-    draw_game(canvas, game, cell_size);
-
-    let start_x: i32 =
-        (window_width as i32 / 2) - (cell_size * game.play_field.cols as i32 / 2) - (3 * cell_size);
-    let start_y: i32 = 1;
-
-    if game.piece.y < 4 {
-        draw_partial_shape(
-            canvas,
-            *game.piece.form(),
-            4 - game.piece.y as i16,
-            tetromino_colour(game.piece.tetromino),
-            cell_size,
-            start_x + (game.piece.x as i32 * cell_size),
-            start_y + (game.piece.y as i32 * cell_size),
-        );
-    } else {
-        draw_shape(
-            canvas,
-            *game.piece.form(),
-            tetromino_colour(game.piece.tetromino),
-            cell_size,
-            start_x + (game.piece.x as i32 * cell_size),
-            start_y + (game.piece.y as i32 * cell_size),
-        );
-    }
-
-    if game.drop_distance() > 0 {
-        if prefs.drop_indicator == preferences::DropIndicatorStyle::Outline {
-            draw_shape_outline(
-                canvas,
-                *game.piece.form(),
-                tetromino_colour(game.piece.tetromino),
-                cell_size,
-                start_x + (game.piece.x as i32 * cell_size),
-                start_y + (game.piece.y + game.drop_distance() as u16 - 1) as i32 * cell_size,
-            )
-        } else if prefs.drop_indicator == preferences::DropIndicatorStyle::Triangles {
-            draw_shape_triangles(
-                canvas,
-                *game.piece.form(),
-                tetromino_colour(game.piece.tetromino),
-                cell_size,
-                start_x + (game.piece.x as i32 * cell_size),
-                start_y + (game.piece.y + game.drop_distance() as u16 - 1) as i32 * cell_size,
-            )
-        }
-    }
-
-    draw_shape(
-        canvas,
-        tetrominos::from_kind(game.next_piece).forms[0],
-        tetromino_colour(game.next_piece),
-        cell_size,
-        start_x + (game.play_field.cols as i32 * cell_size) + (window_width as i32 / 10),
-        start_y + (window_width as i32 / 10),
-    );
-
-    let bright_green = pixels::Color::RGBA(0, 255, 0, 255);
-    let bright_red = pixels::Color::RGBA(255, 0, 0, 255);
-
-    graphics::render_text(
-        canvas,
-        font,
-        bright_green,
-        20,
-        140,
-        &format!("Lines Cleared: {0}", game.score_lines_cleared),
-    );
-
-    graphics::render_text(
-        canvas,
-        font,
-        bright_green,
-        20,
-        200,
-        &format!("Score: {0}", game.score_points),
-    );
-
-    if game.is_gameover() {
-        graphics::render_text_centered(
-            canvas,
-            font,
-            bright_red,
-            (window_width / 2) as i32,
-            50,
-            "GAME OVER!",
-        )
-    };
-}
-
 #[derive(PartialEq)]
 enum Mode {
     Tetris,
@@ -448,61 +120,9 @@ fn load_last_game_state() -> Result<game::Game, String> {
     Err("Previous game state not available.".to_string())
 }
 
-fn process_game_events(
-    event_pump: &mut sdl2::EventPump,
-    paused: &bool,
-    game: &game::Game,
-    mode: &Mode,
-) -> Vec<actions::Action> {
-    let mut ui_actions = vec![];
-
-    for event in event_pump.poll_iter() {
-        match event {
-            event::Event::Quit { .. } => ui_actions.push(actions::Action::Quit),
-            event::Event::KeyDown {
-                keycode: Some(keycode),
-                ..
-            } => match keycode {
-                keyboard::Keycode::Escape => ui_actions.push(actions::Action::MenuShow),
-                keyboard::Keycode::Backquote => ui_actions.push(actions::Action::ConsoleShow),
-                keyboard::Keycode::Space => ui_actions.push(actions::Action::TogglePause),
-
-                _ => {
-                    if !paused && !game.is_gameover() && *mode == Mode::Tetris {
-                        match keycode {
-                            keyboard::Keycode::Kp7 => ui_actions.push(
-                                actions::Action::QueueGameAction(tetris::actions::Action::MoveLeft),
-                            ),
-                            keyboard::Keycode::Kp9 => {
-                                ui_actions.push(actions::Action::QueueGameAction(
-                                    tetris::actions::Action::MoveRight,
-                                ))
-                            }
-                            keyboard::Keycode::Kp4 => ui_actions.push(
-                                actions::Action::QueueGameAction(tetris::actions::Action::Drop),
-                            ),
-                            keyboard::Keycode::Kp5 => ui_actions.push(
-                                actions::Action::QueueGameAction(tetris::actions::Action::MoveDown),
-                            ),
-                            keyboard::Keycode::Kp8 => ui_actions.push(
-                                actions::Action::QueueGameAction(tetris::actions::Action::Rotate),
-                            ),
-                            _ => (),
-                        }
-                    }
-                }
-            },
-
-            _ => {}
-        }
-    }
-    ui_actions
-}
-
 fn main() -> Result<(), String> {
     let mut ui_layers = UILayers::new();
     let prefs = preferences::Preferences::new();
-    let mut paused = false;
 
     let mut registry = assets::Registry::new();
     for asset in ASSET_MANIFEST.iter() {
@@ -586,20 +206,20 @@ fn main() -> Result<(), String> {
     // game_rules.lock_delay_on_hard_drop(true);
     let mut game_ticks = 0;
 
-    let mut game = match replay {
+    let game = match replay {
         Some(ref r) => {
             let replay_pieces = ReplayPieces::new(r);
             game::Game::new(game_rules.clone(), Some(Box::new(replay_pieces)))?
         }
         None => {
             if let Some(g) = last_game {
-                paused = true;
                 g
             } else {
                 game::Game::new(game_rules.clone(), None)?
             }
         }
     };
+    let mut game_shell = game_shell::GameShell::new(game);
 
     'main: loop {
         frames += 1;
@@ -625,26 +245,28 @@ fn main() -> Result<(), String> {
             } else if ui_layers.is_showing(UI_LAYER_MENU) {
                 menu.process_events(&mut events)
             } else {
-                process_game_events(&mut events, &paused, &game, &mode)
+                game_shell.process_events(&mut events)
             }
         };
 
         for action in ui_actions.iter() {
             match action {
                 actions::Action::Quit => break 'main,
+                actions::Action::NewGame => {
+                    let _ = game_shell.new_game(game_rules.clone());
+                }
                 actions::Action::QueueGameAction(a) => {
-                    let _ = game.queue_action(*a);
+                    let _ = game_shell.queue_action(*a);
                 }
-                actions::Action::TogglePause => {
-                    if game.is_gameover() {
-                        game = game::Game::new(game_rules.clone(), None)?;
-                        mode = Mode::Tetris;
-                    } else {
-                        paused = !paused;
-                    }
+                actions::Action::TogglePause => game_shell.toggle_pause(),
+                actions::Action::MenuShow => {
+                    ui_layers.show(UI_LAYER_MENU);
+                    game_shell.pause();
                 }
-                actions::Action::MenuShow => ui_layers.show(UI_LAYER_MENU),
-                actions::Action::MenuHide => ui_layers.hide(UI_LAYER_MENU),
+                actions::Action::MenuHide => {
+                    ui_layers.hide(UI_LAYER_MENU);
+                    game_shell.unpause();
+                }
                 actions::Action::ConsoleShow => ui_layers.show(UI_LAYER_CONSOLE),
                 actions::Action::ConsoleHide => ui_layers.hide(UI_LAYER_CONSOLE),
                 actions::Action::ConsoleCommand(cmd) => {
@@ -652,22 +274,21 @@ fn main() -> Result<(), String> {
                         break 'main;
                     }
                     if cmd == "speed" {
-                        console.println(format!("Speed = {0}", game.speed));
+                        //                        console.println(format!("Speed = {0}", game.speed));
                     } else {
                         console.println("EH wha?".to_string());
                     }
                     println!("CONSOLE CMD = {0}", cmd);
                 }
-                _ => (),
             }
         }
 
-        if !paused && !game.is_gameover() {
+        if !game_shell.is_paused() && !game_shell.is_gameover() {
             accumulator += frame_time.as_secs_f64();
         }
 
         let mut acc_runs = 0;
-        if !paused && !game.is_gameover() {
+        if !game_shell.is_paused() && !game_shell.is_gameover() {
             while accumulator >= dt {
                 acc_runs += 1;
                 accumulator -= dt;
@@ -687,13 +308,13 @@ fn main() -> Result<(), String> {
                         {
                             if r.recording.events[replay_action_index].at <= game_ticks {
                                 replay_action_index += 1;
-                                let _ = game.queue_action(a);
+                                let _ = game_shell.queue_action(a);
                             }
                         }
                     }
                 }
 
-                game_ticks = game.tick();
+                game_ticks = game_shell.tick();
             }
         }
 
@@ -701,19 +322,7 @@ fn main() -> Result<(), String> {
             println!("Multiple({acc_runs}) simulations during single drawing frame.");
         }
 
-        render_game(&mut canvas, &mut game, &prefs, &font);
-        if paused {
-            let x: i32 = (canvas.window().size().0 / 2) as i32;
-
-            graphics::render_text_centered(
-                &mut canvas,
-                &font,
-                pixels::Color::RGBA(255, 0, 0, 255),
-                x,
-                50,
-                "PAUSED...",
-            )
-        };
+        game_shell.render(&mut canvas, &prefs, &font);
 
         graphics::render_text(
             &mut canvas,
@@ -744,7 +353,7 @@ fn main() -> Result<(), String> {
     }
     println!("FPS = {0}", frames / run_time_secs);
 
-    if mode != Mode::Replay {
+    /*    if mode != Mode::Replay {
         let mut recording_file =
             fs::File::create("last_game_recording.json").map_err(|e| e.to_string())?;
         serde_json::to_writer_pretty(&mut recording_file, &game.recording)
@@ -753,7 +362,7 @@ fn main() -> Result<(), String> {
 
     let mut last_game_state_file =
         fs::File::create("last_game_state.json").map_err(|e| e.to_string())?;
-    serde_json::to_writer_pretty(&mut last_game_state_file, &game).map_err(|e| e.to_string())?;
+    serde_json::to_writer_pretty(&mut last_game_state_file, &game).map_err(|e| e.to_string())?;*/
 
     Ok(())
 }

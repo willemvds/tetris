@@ -44,6 +44,10 @@ fn quit_action() -> actions::Action {
     actions::Action::Quit
 }
 
+fn menu_hide_action() -> actions::Action {
+    actions::Action::MenuHide
+}
+
 impl<'ttf, 'rwops> Menu<'ttf, 'rwops> {
     pub fn new(
         registry: &'rwops assets::Registry,
@@ -69,7 +73,7 @@ impl<'ttf, 'rwops> Menu<'ttf, 'rwops> {
             menu.options.push(MenuOption::new(
                 "Play".to_string(),
                 MenuOptionSize::Large,
-                quit_action,
+                menu_hide_action,
             ));
             menu.options.push(MenuOption::new(
                 "Replays".to_string(),
@@ -178,7 +182,7 @@ impl<'ttf, 'rwops> Menu<'ttf, 'rwops> {
 
     fn action(&mut self, ui_actions: &mut Vec<actions::Action>) {
         match self.selected_option {
-            None => return,
+            None => (),
             Some(option) => ui_actions.push((self.options[option].handler_fn)()),
         }
     }
