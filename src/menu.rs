@@ -19,16 +19,11 @@ pub enum MenuOptionSize {
 pub struct MenuOption {
     text: String,
     size: MenuOptionSize,
-    selected: bool,
 }
 
 impl MenuOption {
     fn new(text: String, size: MenuOptionSize) -> MenuOption {
-        MenuOption {
-            text,
-            size,
-            selected: false,
-        }
+        MenuOption { text, size }
     }
 }
 
@@ -64,11 +59,16 @@ impl<'ttf, 'rwops> Menu<'ttf, 'rwops> {
 
             menu.options
                 .push(MenuOption::new("Play".to_string(), MenuOptionSize::Large));
-            menu.options[0].selected = true;
+            menu.options.push(MenuOption::new(
+                "Replays".to_string(),
+                MenuOptionSize::Regular,
+            ));
+
             menu.options.push(MenuOption::new(
                 "Quit (q)".to_string(),
                 MenuOptionSize::Regular,
             ));
+            menu.selected_option = Some(0);
 
             Ok(menu)
         }
@@ -79,8 +79,9 @@ impl<'ttf, 'rwops> Menu<'ttf, 'rwops> {
         canvas: &mut render::Canvas<video::Window>,
         opt: &MenuOption,
         y: i32,
+        selected: bool,
     ) {
-        if opt.selected {
+        if selected {
             canvas.set_draw_color(pixels::Color::RGBA(252, 252, 252, 255));
             let _ = canvas.fill_rect(rect::Rect::new(50, y - 20, 500, 80));
         }
@@ -88,7 +89,7 @@ impl<'ttf, 'rwops> Menu<'ttf, 'rwops> {
             MenuOptionSize::Regular => &self.regular_font,
             MenuOptionSize::Large => &self.large_font,
         };
-        let c = match opt.selected {
+        let c = match selected {
             true => pixels::Color::RGBA(0, 255, 0, 255),
             false => pixels::Color::RGBA(255, 255, 255, 255),
         };
@@ -101,8 +102,13 @@ impl<'ttf, 'rwops> Menu<'ttf, 'rwops> {
         let _ = canvas.fill_rect(rect::Rect::new(0, 0, canvas_width, canvas_height));
 
         let mut y = 500;
-        for opt in self.options.iter() {
-            self.render_option(canvas, opt, y);
+        for (idx, opt) in self.options.iter().enumerate() {
+            self.render_option(
+                canvas,
+                opt,
+                y,
+                idx == self.selected_option.unwrap_or_default(),
+            );
             y += 100;
         }
     }
@@ -118,6 +124,8 @@ impl<'ttf, 'rwops> Menu<'ttf, 'rwops> {
                     keyboard::Keycode::Escape => ui_actions.push(actions::Action::MenuHide),
                     keyboard::Keycode::Backquote => ui_actions.push(actions::Action::ConsoleShow),
                     keyboard::Keycode::Q => ui_actions.push(actions::Action::Quit),
+                    keyboard::Keycode::Down => self.move_down(),
+                    keyboard::Keycode::Up => self.move_up(),
                     _ => (),
                 },
                 _ => (),
@@ -125,5 +133,31 @@ impl<'ttf, 'rwops> Menu<'ttf, 'rwops> {
         }
 
         ui_actions
+    }
+
+    fn move_down(&mut self) {
+        match self.selected_option {
+            Some(option) => {
+                if option < self.options.len() - 1 {
+                    self.selected_option = Some(option + 1)
+                }
+            }
+            None => {
+                self.selected_option = Some(self.options.len() - 1);
+            }
+        }
+    }
+
+    fn move_up(&mut self) {
+        match self.selected_option {
+            Some(option) => {
+                if option > 0 {
+                    self.selected_option = Some(option - 1)
+                }
+            }
+            None => {
+                self.selected_option = Some(0);
+            }
+        }
     }
 }
