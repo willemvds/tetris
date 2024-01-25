@@ -19,11 +19,15 @@ pub enum MenuOptionSize {
 pub struct MenuOption {
     text: String,
     size: MenuOptionSize,
+    handler_fn: fn() -> actions::Action,
 }
 
 impl MenuOption {
-    fn new(text: String, size: MenuOptionSize) -> MenuOption {
-        MenuOption { text, size }
+    fn new(text: String,
+           size: MenuOptionSize,
+           handler_fn: fn () -> actions::Action,
+           ) -> MenuOption {
+        MenuOption { text, size, handler_fn }
     }
 }
 
@@ -34,6 +38,10 @@ pub struct Menu<'ttf, 'rwops> {
     options: Vec<MenuOption>,
     selected_option: Option<usize>,
 }
+
+    fn quit_action() -> actions::Action {
+        actions::Action::Quit
+    }
 
 impl<'ttf, 'rwops> Menu<'ttf, 'rwops> {
     pub fn new(
@@ -58,15 +66,17 @@ impl<'ttf, 'rwops> Menu<'ttf, 'rwops> {
             };
 
             menu.options
-                .push(MenuOption::new("Play".to_string(), MenuOptionSize::Large));
+                .push(MenuOption::new("Play".to_string(), MenuOptionSize::Large, quit_action));
             menu.options.push(MenuOption::new(
                 "Replays".to_string(),
                 MenuOptionSize::Regular,
+                quit_action,
             ));
 
             menu.options.push(MenuOption::new(
                 "Quit (q)".to_string(),
                 MenuOptionSize::Regular,
+                quit_action,
             ));
             menu.selected_option = Some(0);
 
@@ -126,6 +136,7 @@ impl<'ttf, 'rwops> Menu<'ttf, 'rwops> {
                     keyboard::Keycode::Q => ui_actions.push(actions::Action::Quit),
                     keyboard::Keycode::Down => self.move_down(),
                     keyboard::Keycode::Up => self.move_up(),
+                    keyboard::Keycode::Return => self.action(&mut ui_actions),
                     _ => (),
                 },
                 _ => (),
@@ -158,6 +169,15 @@ impl<'ttf, 'rwops> Menu<'ttf, 'rwops> {
             None => {
                 self.selected_option = Some(0);
             }
+        }
+    }
+
+    fn action(&mut self, ui_actions: &mut Vec<actions::Action>) {
+        match self.selected_option {
+            None => return,
+            Some(option) => {
+                ui_actions.push((self.options[option].handler_fn)())
+            },
         }
     }
 }
