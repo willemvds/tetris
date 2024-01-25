@@ -23,11 +23,12 @@ pub struct MenuOption {
 }
 
 impl MenuOption {
-    fn new(text: String,
-           size: MenuOptionSize,
-           handler_fn: fn () -> actions::Action,
-           ) -> MenuOption {
-        MenuOption { text, size, handler_fn }
+    fn new(text: String, size: MenuOptionSize, handler_fn: fn() -> actions::Action) -> MenuOption {
+        MenuOption {
+            text,
+            size,
+            handler_fn,
+        }
     }
 }
 
@@ -39,9 +40,9 @@ pub struct Menu<'ttf, 'rwops> {
     selected_option: Option<usize>,
 }
 
-    fn quit_action() -> actions::Action {
-        actions::Action::Quit
-    }
+fn quit_action() -> actions::Action {
+    actions::Action::Quit
+}
 
 impl<'ttf, 'rwops> Menu<'ttf, 'rwops> {
     pub fn new(
@@ -65,8 +66,11 @@ impl<'ttf, 'rwops> Menu<'ttf, 'rwops> {
                 selected_option: None,
             };
 
-            menu.options
-                .push(MenuOption::new("Play".to_string(), MenuOptionSize::Large, quit_action));
+            menu.options.push(MenuOption::new(
+                "Play".to_string(),
+                MenuOptionSize::Large,
+                quit_action,
+            ));
             menu.options.push(MenuOption::new(
                 "Replays".to_string(),
                 MenuOptionSize::Regular,
@@ -175,9 +179,7 @@ impl<'ttf, 'rwops> Menu<'ttf, 'rwops> {
     fn action(&mut self, ui_actions: &mut Vec<actions::Action>) {
         match self.selected_option {
             None => return,
-            Some(option) => {
-                ui_actions.push((self.options[option].handler_fn)())
-            },
+            Some(option) => ui_actions.push((self.options[option].handler_fn)()),
         }
     }
 }

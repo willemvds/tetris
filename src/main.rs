@@ -448,6 +448,57 @@ fn load_last_game_state() -> Result<game::Game, String> {
     Err("Previous game state not available.".to_string())
 }
 
+fn process_game_events(
+    event_pump: &mut sdl2::EventPump,
+    paused: &bool,
+    game: &game::Game,
+    mode: &Mode,
+) -> Vec<actions::Action> {
+    let mut ui_actions = vec![];
+
+    for event in event_pump.poll_iter() {
+        match event {
+            event::Event::Quit { .. } => ui_actions.push(actions::Action::Quit),
+            event::Event::KeyDown {
+                keycode: Some(keycode),
+                ..
+            } => match keycode {
+                keyboard::Keycode::Escape => ui_actions.push(actions::Action::MenuShow),
+                keyboard::Keycode::Backquote => ui_actions.push(actions::Action::ConsoleShow),
+                keyboard::Keycode::Space => ui_actions.push(actions::Action::TogglePause),
+
+                _ => {
+                    if !paused && !game.is_gameover() && *mode == Mode::Tetris {
+                        match keycode {
+                            keyboard::Keycode::Kp7 => ui_actions.push(
+                                actions::Action::QueueGameAction(tetris::actions::Action::MoveLeft),
+                            ),
+                            keyboard::Keycode::Kp9 => {
+                                ui_actions.push(actions::Action::QueueGameAction(
+                                    tetris::actions::Action::MoveRight,
+                                ))
+                            }
+                            keyboard::Keycode::Kp4 => ui_actions.push(
+                                actions::Action::QueueGameAction(tetris::actions::Action::Drop),
+                            ),
+                            keyboard::Keycode::Kp5 => ui_actions.push(
+                                actions::Action::QueueGameAction(tetris::actions::Action::MoveDown),
+                            ),
+                            keyboard::Keycode::Kp8 => ui_actions.push(
+                                actions::Action::QueueGameAction(tetris::actions::Action::Rotate),
+                            ),
+                            _ => (),
+                        }
+                    }
+                }
+            },
+
+            _ => {}
+        }
+    }
+    ui_actions
+}
+
 fn main() -> Result<(), String> {
     let mut ui_layers = UILayers::new();
     let prefs = preferences::Preferences::new();
@@ -568,93 +619,46 @@ fn main() -> Result<(), String> {
         }
         start_time = now;
 
-        if ui_layers.is_showing(UI_LAYER_CONSOLE) {
-            let ui_actions = console.process_events(&mut events);
-            for action in ui_actions.iter() {
-                match action {
-                    actions::Action::Quit => break 'main,
-                    actions::Action::ConsoleHide => ui_layers.hide(UI_LAYER_CONSOLE),
-                    actions::Action::ConsoleCommand(cmd) => {
-                        if cmd == "quit" {
-                            break 'main;
-                        }
-                        if cmd == "speed" {
-                            console.println(format!("Speed = {0}", game.speed));
-                        } else {
-                            console.println("EH wha?".to_string());
-                        }
-                        println!("CONSOLE CMD = {0}", cmd);
+        let ui_actions = {
+            if ui_layers.is_showing(UI_LAYER_CONSOLE) {
+                console.process_events(&mut events)
+            } else if ui_layers.is_showing(UI_LAYER_MENU) {
+                menu.process_events(&mut events)
+            } else {
+                process_game_events(&mut events, &paused, &game, &mode)
+            }
+        };
+
+        for action in ui_actions.iter() {
+            match action {
+                actions::Action::Quit => break 'main,
+                actions::Action::QueueGameAction(a) => {
+                    let _ = game.queue_action(*a);
+                }
+                actions::Action::TogglePause => {
+                    if game.is_gameover() {
+                        game = game::Game::new(game_rules.clone(), None)?;
+                        mode = Mode::Tetris;
+                    } else {
+                        paused = !paused;
                     }
-                    _ => (),
                 }
-            }
-        } else if ui_layers.is_showing(UI_LAYER_MENU) {
-            let ui_actions = menu.process_events(&mut events);
-            for action in ui_actions.iter() {
-                match action {
-                    actions::Action::Quit => break 'main,
-                    actions::Action::MenuHide => ui_layers.hide(UI_LAYER_MENU),
-                    actions::Action::ConsoleShow => ui_layers.show(UI_LAYER_CONSOLE),
-                    _ => (),
+                actions::Action::MenuShow => ui_layers.show(UI_LAYER_MENU),
+                actions::Action::MenuHide => ui_layers.hide(UI_LAYER_MENU),
+                actions::Action::ConsoleShow => ui_layers.show(UI_LAYER_CONSOLE),
+                actions::Action::ConsoleHide => ui_layers.hide(UI_LAYER_CONSOLE),
+                actions::Action::ConsoleCommand(cmd) => {
+                    if cmd == "quit" {
+                        break 'main;
+                    }
+                    if cmd == "speed" {
+                        console.println(format!("Speed = {0}", game.speed));
+                    } else {
+                        console.println("EH wha?".to_string());
+                    }
+                    println!("CONSOLE CMD = {0}", cmd);
                 }
-            }
-        } else {
-            for event in events.poll_iter() {
-                match event {
-                    event::Event::Quit { .. } => break 'main,
-                    event::Event::KeyDown {
-                        keycode: Some(keycode),
-                        ..
-                    } => match keycode {
-                        keyboard::Keycode::Escape => {
-                            ui_layers.show(UI_LAYER_MENU);
-                        }
-                        keyboard::Keycode::Backquote => ui_layers.show(UI_LAYER_CONSOLE),
-                        keyboard::Keycode::Space => {
-                            if game.is_gameover() {
-                                game = game::Game::new(game_rules.clone(), None)?;
-                                mode = Mode::Tetris;
-                            } else {
-                                paused = !paused;
-                            }
-                        }
-
-                        _ => {
-                            if !paused && !game.is_gameover() && mode == Mode::Tetris {
-                                match keycode {
-                                    keyboard::Keycode::Kp7 => {
-                                        if let Err(e) =
-                                            game.queue_action(tetris::actions::Action::MoveLeft)
-                                        {
-                                            println!("Dropped GAME ACTION {:?}", e);
-                                        }
-                                    }
-                                    keyboard::Keycode::Kp9 => {
-                                        let _ =
-                                            game.queue_action(tetris::actions::Action::MoveRight);
-                                    }
-                                    keyboard::Keycode::Kp4 => {
-                                        let _ = game.queue_action(tetris::actions::Action::Drop);
-                                    }
-                                    keyboard::Keycode::Kp5 => {
-                                        let _ =
-                                            game.queue_action(tetris::actions::Action::MoveDown);
-                                    }
-                                    keyboard::Keycode::Kp8 => {
-                                        let _ = game.queue_action(tetris::actions::Action::Rotate);
-                                    }
-                                    keyboard::Keycode::KpPlus => game.speed_up(),
-                                    keyboard::Keycode::KpMinus => game.speed_down(),
-                                    _ => (),
-                                }
-                            }
-                        }
-                    },
-
-                    event::Event::MouseButtonDown { .. } => {}
-
-                    _ => {}
-                }
+                _ => (),
             }
         }
 
