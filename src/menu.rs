@@ -117,7 +117,12 @@ impl<'ttf, 'rwops> Menu<'ttf, 'rwops> {
     pub fn render(&self, canvas: &mut render::Canvas<video::Window>) {
         let (canvas_width, canvas_height) = canvas.window().size();
         canvas.set_draw_color(pixels::Color::RGBA(200, 100, 13, 100));
-        let _ = canvas.fill_rect(rect::Rect::new(0, (canvas_height/3) as i32, canvas_width, (canvas_height/3)*2));
+        let _ = canvas.fill_rect(rect::Rect::new(
+            0,
+            (canvas_height / 3) as i32,
+            canvas_width,
+            (canvas_height / 3) * 2,
+        ));
 
         let mut y = 500;
         for (idx, opt) in self.options.iter().enumerate() {
