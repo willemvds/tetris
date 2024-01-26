@@ -160,6 +160,11 @@ fn main() -> Result<(), String> {
         }
     };
 
+    if game_shell.is_showing_replay() {
+        game_shell.unpause();
+        ui_layers.hide(UI_LAYER_MENU);
+    }
+
     'main: loop {
         frames += 1;
         let now = time::Instant::now();
