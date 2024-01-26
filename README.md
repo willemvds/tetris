@@ -8,8 +8,9 @@ Mostly following rules as outlined by the [Tetris Guideline](https://tetris.fand
 - ✅ PlayField improvements -> Correct grid parameters, correct piece placement, etc.
 - ✅ Drop indicator.
 - ✅ Wall kicks.
+- ☐ Lights, Camera, Action pre game countdown.
 - ☐ Key bindings.
-- ☐ Menus.
+- ✅ Menus.
 - ☐ Game stats.
 - ☐ Sound.
 - ☐ Game controller support.
@@ -20,7 +21,7 @@ Mostly following rules as outlined by the [Tetris Guideline](https://tetris.fand
 - ✅ Replay system (through input recording or action events).
 - ☐ Macro for defining shapes using a method like tetrominos.txt.
 - ☐ High Scores!
-- ☐ Quake style console.
+- ✅ Quake style console.
 - ☐ Binary serialisation formats.
 - ☐ Look at vendoring deps in rust. 
 
