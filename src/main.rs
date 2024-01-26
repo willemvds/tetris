@@ -196,6 +196,13 @@ fn main() -> Result<(), String> {
         for action in ui_actions.iter() {
             match action {
                 actions::Action::Quit => break 'main,
+                actions::Action::Play => {
+                    if game_shell.is_gameover() {
+                        let _ = game_shell.new_game(game_rules.clone());
+                    }
+                    ui_layers.hide(UI_LAYER_MENU);
+                    game_shell.unpause();
+                }
                 actions::Action::NewGame => {
                     let _ = game_shell.new_game(game_rules.clone());
                 }

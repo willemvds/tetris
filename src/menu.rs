@@ -44,8 +44,8 @@ fn quit_action() -> actions::Action {
     actions::Action::Quit
 }
 
-fn menu_hide_action() -> actions::Action {
-    actions::Action::MenuHide
+fn play_action() -> actions::Action {
+    actions::Action::Play
 }
 
 impl<'ttf, 'rwops> Menu<'ttf, 'rwops> {
@@ -73,12 +73,12 @@ impl<'ttf, 'rwops> Menu<'ttf, 'rwops> {
             menu.options.push(MenuOption::new(
                 "Play".to_string(),
                 MenuOptionSize::Large,
-                menu_hide_action,
+                play_action,
             ));
             menu.options.push(MenuOption::new(
                 "Replays".to_string(),
                 MenuOptionSize::Regular,
-                quit_action,
+                play_action,
             ));
 
             menu.options.push(MenuOption::new(
