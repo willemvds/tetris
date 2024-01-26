@@ -1,9 +1,13 @@
+use std::time;
+
 use crate::actions;
 use crate::graphics;
 use crate::preferences;
+use crate::replays;
 use crate::tetris;
 use crate::tetris::game;
 use crate::tetris::playfield;
+use crate::tetris::recordings;
 use crate::tetris::tetrominos;
 
 use sdl2::event;
@@ -22,16 +26,39 @@ enum Mode {
 
 pub struct GameShell {
     game: game::Game,
+    game_ticks: usize,
     paused: bool,
     mode: Mode,
+    replay: Option<replays::Replay>,
+    replay_action_index: usize,
+
+    accumulator: f64,
 }
 
 impl GameShell {
     pub fn new(initial_game: game::Game) -> GameShell {
         GameShell {
             game: initial_game,
+            game_ticks: 0,
             paused: true,
             mode: Mode::Tetris,
+            replay: None,
+            replay_action_index: 0,
+
+            accumulator: 0.0,
+        }
+    }
+
+    pub fn new_with_replay(gm: game::Game, replay: replays::Replay) -> GameShell {
+        GameShell {
+            game: gm,
+            game_ticks: 0,
+            paused: true,
+            mode: Mode::Replay,
+            replay: Some(replay),
+            replay_action_index: 0,
+
+            accumulator: 0.0,
         }
     }
 
@@ -56,12 +83,66 @@ impl GameShell {
         self.game.is_gameover()
     }
 
-    pub fn tick(&mut self) -> usize {
-        self.game.tick()
-    }
-
     pub fn toggle_pause(&mut self) {
         self.paused = !self.paused
+    }
+
+    pub fn recording(&self) -> Result<&recordings::Recording, String> {
+        match self.mode {
+            Mode::Replay => Err("Sorry, don't have a recording for you.".to_string()),
+            Mode::Tetris => {
+                if self.game.is_gameover() {
+                    Ok(&self.game.recording)
+                } else {
+                    Err("Recording is not available while game is in progress.".to_string())
+                }
+            }
+        }
+    }
+
+    pub fn game(&self) -> &game::Game {
+        &self.game
+    }
+
+    pub fn frame_tick(&mut self, frame_time: time::Duration, dt: f64) {
+        if self.is_paused() {
+            return;
+        }
+
+        if self.game.is_gameover() {
+            return;
+        }
+
+        self.accumulator += frame_time.as_secs_f64();
+
+        let mut acc_runs = 0;
+        while self.accumulator >= dt {
+            acc_runs += 1;
+            self.accumulator -= dt;
+
+            if self.mode == Mode::Replay {
+                if let Some(ref r) = self.replay {
+                    while self.replay_action_index < r.recording.events.len() - 1
+                        && !matches!(
+                            r.recording.events[self.replay_action_index].kind,
+                            tetris::recordings::EventKind::Action(_)
+                        )
+                    {
+                        self.replay_action_index += 1
+                    }
+                    if let tetris::recordings::EventKind::Action(a) =
+                        r.recording.events[self.replay_action_index].kind
+                    {
+                        if r.recording.events[self.replay_action_index].at <= self.game_ticks {
+                            self.replay_action_index += 1;
+                            let _ = self.game.queue_action(a);
+                        }
+                    }
+                }
+            }
+
+            self.game_ticks = self.game.tick();
+        }
     }
 
     pub fn process_events(&self, event_pump: &mut sdl2::EventPump) -> Vec<actions::Action> {

@@ -12,7 +12,7 @@ pub struct Preferences {
 impl Preferences {
     pub fn new() -> Preferences {
         Preferences {
-            drop_indicator: DropIndicatorStyle::Triangles,
+            drop_indicator: DropIndicatorStyle::Outline,
         }
     }
 }

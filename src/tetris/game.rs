@@ -263,6 +263,7 @@ impl Game {
             return Ok(());
         }
 
+        dbg!("DROPPED ACTION", a);
         Err("Already have action queued for next game tick".to_string())
     }
 

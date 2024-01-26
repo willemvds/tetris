@@ -10,14 +10,12 @@ mod game_shell;
 mod graphics;
 mod menu;
 mod preferences;
+mod replays;
 mod tetris;
 use tetris::game;
-use tetris::tetrominos;
 
 extern crate sdl2;
 use sdl2::pixels;
-
-use serde::{Deserialize, Serialize};
 
 #[rustfmt::skip]
 const ASSET_MANIFEST: [&str; 2] = [
@@ -55,57 +53,6 @@ impl UILayers {
     }
 }
 
-struct Replay {
-    recording: tetris::recordings::Recording,
-}
-
-#[derive(Serialize, Deserialize)]
-struct ReplayPieces {
-    pieces: Vec<tetrominos::Kind>,
-    idx: usize,
-}
-
-impl ReplayPieces {
-    fn new(replay: &Replay) -> ReplayPieces {
-        let piece_events = replay
-            .recording
-            .events
-            .iter()
-            .filter(|ev| matches!(ev.kind, tetris::recordings::EventKind::PieceSpawned(_)));
-        let pieces = piece_events
-            .map(|ev| {
-                if let tetris::recordings::EventKind::PieceSpawned(k) = ev.kind {
-                    k
-                } else {
-                    panic!("BAD")
-                }
-            })
-            .collect();
-        ReplayPieces { pieces, idx: 0 }
-    }
-}
-
-#[typetag::serde]
-impl game::PieceProvider for ReplayPieces {
-    fn next(&mut self) -> Result<tetrominos::Kind, String> {
-        if self.idx >= self.pieces.len() {
-            return Err("NO PIECES LEFT IN THE REPLAY".to_string());
-        }
-
-        let p = self.pieces[self.idx];
-
-        self.idx += 1;
-
-        Ok(p)
-    }
-}
-
-#[derive(PartialEq)]
-enum Mode {
-    Tetris,
-    Replay,
-}
-
 fn load_last_game_state() -> Result<game::Game, String> {
     if let Ok(last_game_state_file) = fs::File::open("last_game_state.json") {
         let last_game_state_reader = io::BufReader::new(last_game_state_file);
@@ -130,20 +77,16 @@ fn main() -> Result<(), String> {
         registry.insert(asset, content)
     }
 
-    let mut mode = Mode::Tetris;
     let args: Vec<String> = env::args().collect();
 
-    let mut replay: Option<Replay> = None;
-
-    let mut replay_action_index = 0;
+    let mut replay: Option<replays::Replay> = None;
     let mut last_game = None;
     if args.len() > 1 {
         let recording_file = fs::File::open(args[1].clone()).map_err(|e| e.to_string())?;
         let recording_file_reader = io::BufReader::new(recording_file);
         let recording =
             serde_json::from_reader(recording_file_reader).map_err(|e| e.to_string())?;
-        replay = Some(Replay { recording });
-        mode = Mode::Replay;
+        replay = Some(replays::Replay { recording });
     } else {
         match load_last_game_state() {
             Ok(lgs) => last_game = Some(lgs),
@@ -187,9 +130,7 @@ fn main() -> Result<(), String> {
     canvas.set_draw_color(pixels::Color::RGB(0, 0, 0));
     canvas.present();
 
-    let mut events = sdl_context.event_pump()?;
-
-    // println!("{:?} {:?}", L, T);
+    let mut event_pump = sdl_context.event_pump()?;
 
     let _total = 0;
     let mut frames = 0;
@@ -199,27 +140,25 @@ fn main() -> Result<(), String> {
 
     let game_loop_start_at = time::Instant::now();
     let mut start_time = time::Instant::now();
-    let mut accumulator: f64 = 0.0;
 
     let mut game_rules = game::Rules::new();
     game_rules.lock_delay(50);
     // game_rules.lock_delay_on_hard_drop(true);
-    let mut game_ticks = 0;
 
-    let game = match replay {
-        Some(ref r) => {
-            let replay_pieces = ReplayPieces::new(r);
-            game::Game::new(game_rules.clone(), Some(Box::new(replay_pieces)))?
+    let mut game_shell = match replay {
+        Some(rp) => {
+            let replay_pieces = replays::ReplayPieces::new(&rp);
+            let gm = game::Game::new(game_rules.clone(), Some(Box::new(replay_pieces)))?;
+            game_shell::GameShell::new_with_replay(gm, rp)
         }
         None => {
             if let Some(g) = last_game {
-                g
+                game_shell::GameShell::new(g)
             } else {
-                game::Game::new(game_rules.clone(), None)?
+                game_shell::GameShell::new(game::Game::new(game_rules.clone(), None)?)
             }
         }
     };
-    let mut game_shell = game_shell::GameShell::new(game);
 
     'main: loop {
         frames += 1;
@@ -241,11 +180,11 @@ fn main() -> Result<(), String> {
 
         let ui_actions = {
             if ui_layers.is_showing(UI_LAYER_CONSOLE) {
-                console.process_events(&mut events)
+                console.process_events(&mut event_pump)
             } else if ui_layers.is_showing(UI_LAYER_MENU) {
-                menu.process_events(&mut events)
+                menu.process_events(&mut event_pump)
             } else {
-                game_shell.process_events(&mut events)
+                game_shell.process_events(&mut event_pump)
             }
         };
 
@@ -283,44 +222,7 @@ fn main() -> Result<(), String> {
             }
         }
 
-        if !game_shell.is_paused() && !game_shell.is_gameover() {
-            accumulator += frame_time.as_secs_f64();
-        }
-
-        let mut acc_runs = 0;
-        if !game_shell.is_paused() && !game_shell.is_gameover() {
-            while accumulator >= dt {
-                acc_runs += 1;
-                accumulator -= dt;
-
-                if mode == Mode::Replay {
-                    if let Some(ref r) = replay {
-                        while replay_action_index < r.recording.events.len() - 1
-                            && !matches!(
-                                r.recording.events[replay_action_index].kind,
-                                tetris::recordings::EventKind::Action(_)
-                            )
-                        {
-                            replay_action_index += 1
-                        }
-                        if let tetris::recordings::EventKind::Action(a) =
-                            r.recording.events[replay_action_index].kind
-                        {
-                            if r.recording.events[replay_action_index].at <= game_ticks {
-                                replay_action_index += 1;
-                                let _ = game_shell.queue_action(a);
-                            }
-                        }
-                    }
-                }
-
-                game_ticks = game_shell.tick();
-            }
-        }
-
-        if acc_runs > 1 {
-            println!("Multiple({acc_runs}) simulations during single drawing frame.");
-        }
+        game_shell.frame_tick(frame_time, dt);
 
         game_shell.render(&mut canvas, &prefs, &font);
 
@@ -353,16 +255,16 @@ fn main() -> Result<(), String> {
     }
     println!("FPS = {0}", frames / run_time_secs);
 
-    /*    if mode != Mode::Replay {
+    if let Ok(recording) = game_shell.recording() {
         let mut recording_file =
             fs::File::create("last_game_recording.json").map_err(|e| e.to_string())?;
-        serde_json::to_writer_pretty(&mut recording_file, &game.recording)
-            .map_err(|e| e.to_string())?;
+        serde_json::to_writer_pretty(&mut recording_file, recording).map_err(|e| e.to_string())?;
     }
 
     let mut last_game_state_file =
         fs::File::create("last_game_state.json").map_err(|e| e.to_string())?;
-    serde_json::to_writer_pretty(&mut last_game_state_file, &game).map_err(|e| e.to_string())?;*/
+    serde_json::to_writer_pretty(&mut last_game_state_file, game_shell.game())
+        .map_err(|e| e.to_string())?;
 
     Ok(())
 }
