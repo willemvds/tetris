@@ -261,10 +261,12 @@ fn main() -> Result<(), String> {
         serde_json::to_writer_pretty(&mut recording_file, recording).map_err(|e| e.to_string())?;
     }
 
-    let mut last_game_state_file =
-        fs::File::create("last_game_state.json").map_err(|e| e.to_string())?;
-    serde_json::to_writer_pretty(&mut last_game_state_file, game_shell.game())
-        .map_err(|e| e.to_string())?;
+    if !game_shell.is_showing_replay() {
+        let mut last_game_state_file =
+            fs::File::create("last_game_state.json").map_err(|e| e.to_string())?;
+        serde_json::to_writer_pretty(&mut last_game_state_file, game_shell.game())
+            .map_err(|e| e.to_string())?;
+    }
 
     Ok(())
 }

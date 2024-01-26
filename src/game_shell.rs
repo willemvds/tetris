@@ -83,6 +83,10 @@ impl GameShell {
         self.game.is_gameover()
     }
 
+    pub fn is_showing_replay(&self) -> bool {
+        self.mode == Mode::Replay
+    }
+
     pub fn toggle_pause(&mut self) {
         self.paused = !self.paused
     }
