@@ -115,7 +115,7 @@ pub struct Game {
 }
 
 const fn calculate_speed_from_level(level: u8) -> u8 {
-    151 - (level * 25)
+   150 - (level * 15)
 }
 
 impl Game {
@@ -237,7 +237,7 @@ impl Game {
         self.score_points += points;
         self.play_field.collapse();
 
-        if self.level_lines_cleared >= 5 * self.level as u32 {
+        if self.level_lines_cleared >= 4 * self.level as u32 {
             self.level += 1;
             self.level_lines_cleared = 0;
             self.speed = calculate_speed_from_level(self.level);
