@@ -100,6 +100,7 @@ pub struct Game {
     // 1) A lower value means fewer ticks and thus faster.
     // 2) 1 is the lowest value which means on every tick.
     // 3) A higher value means more ticks and thus slower.
+    pub level: u8,
     pub speed: u8,
     pub play_field: playfield::PlayField,
     pub next_piece: tetrominos::Kind,
@@ -107,9 +108,14 @@ pub struct Game {
     pub piece: Piece,
     pub score_points: u32,
     pub score_lines_cleared: u32,
+    level_lines_cleared: u32,
     next_action: Option<actions::Action>,
 
     pub recording: recordings::Recording,
+}
+
+const fn calculate_speed_from_level(level: u8) -> u8 {
+    151 - (level * 25)
 }
 
 impl Game {
@@ -128,7 +134,8 @@ impl Game {
             rules,
             state: State::Init,
             ticks: 0,
-            speed: 40,
+            level: 1,
+            speed: calculate_speed_from_level(1),
             play_field,
 
             piece_provider: provider,
@@ -137,6 +144,7 @@ impl Game {
 
             score_points: 0,
             score_lines_cleared: 0,
+            level_lines_cleared: 0,
 
             next_action: None,
             recording: recordings::Recording::new(),
@@ -216,9 +224,24 @@ impl Game {
         }
 
         let lines_cleared = self.play_field.clear_full_rows();
+        self.level_lines_cleared += lines_cleared;
         self.score_lines_cleared += lines_cleared;
-        self.score_points += lines_cleared * 10;
+
+        let points = match lines_cleared {
+            0 => 0,
+            1 => 40,
+            2 => 100,
+            3 => 300,
+            _ => 1200,
+        };
+        self.score_points += points;
         self.play_field.collapse();
+
+        if self.level_lines_cleared >= 5 * self.level as u32 {
+            self.level += 1;
+            self.level_lines_cleared = 0;
+            self.speed = calculate_speed_from_level(self.level);
+        }
 
         self.ticks
     }

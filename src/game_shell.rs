@@ -289,12 +289,22 @@ impl GameShell {
         let bright_green = pixels::Color::RGBA(0, 255, 0, 255);
         let bright_red = pixels::Color::RGBA(255, 0, 0, 255);
 
+        let width_third = window_width / 3;
         graphics::render_text(
             canvas,
             font,
             bright_green,
-            20,
-            140,
+            (2 * width_third) as i32 - 100,
+            500,
+            &format!("Level: {0}", self.game.level),
+        );
+
+        graphics::render_text(
+            canvas,
+            font,
+            bright_green,
+            (2 * width_third) as i32 - 100,
+            580,
             &format!("Lines Cleared: {0}", self.game.score_lines_cleared),
         );
 
@@ -302,8 +312,8 @@ impl GameShell {
             canvas,
             font,
             bright_green,
-            20,
-            200,
+            (2 * width_third) as i32 - 100,
+            660,
             &format!("Score: {0}", self.game.score_points),
         );
 

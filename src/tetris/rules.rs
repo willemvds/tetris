@@ -1,10 +1,16 @@
 use serde::{Deserialize, Serialize};
 
 #[derive(Clone, Deserialize, Serialize)]
+pub enum ScoringSystemKind {
+    OriginalBPS,
+}
+
+#[derive(Clone, Deserialize, Serialize)]
 pub struct Rules {
     pub lock_delay: u32,
     pub lock_delay_on_hard_drop: bool,
     pub wall_kicks: bool,
+    pub scoring_system: ScoringSystemKind,
 }
 
 impl Rules {
@@ -13,6 +19,7 @@ impl Rules {
             lock_delay: 0,
             lock_delay_on_hard_drop: false,
             wall_kicks: true,
+            scoring_system: ScoringSystemKind::OriginalBPS,
         }
     }
 
