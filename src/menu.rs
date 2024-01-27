@@ -119,9 +119,9 @@ impl<'ttf, 'rwops> Menu<'ttf, 'rwops> {
         canvas.set_draw_color(pixels::Color::RGBA(200, 100, 13, 100));
         let _ = canvas.fill_rect(rect::Rect::new(
             0,
-            (canvas_height / 3) as i32,
-            canvas_width,
-            (canvas_height / 3) * 2,
+            0,
+            canvas_width / 3,
+            canvas_height,
         ));
 
         let mut y = 500;
