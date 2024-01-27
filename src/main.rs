@@ -141,7 +141,7 @@ fn main() -> Result<(), String> {
     let game_loop_start_at = time::Instant::now();
     let mut start_time = time::Instant::now();
 
-    let mut game_rules = game::Rules::new();
+    let mut game_rules = tetris::rules::Rules::new();
     game_rules.lock_delay(50);
     // game_rules.lock_delay_on_hard_drop(true);
 

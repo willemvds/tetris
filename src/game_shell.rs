@@ -62,7 +62,7 @@ impl GameShell {
         }
     }
 
-    pub fn new_game(&mut self, rules: game::Rules) -> Result<(), String> {
+    pub fn new_game(&mut self, rules: tetris::rules::Rules) -> Result<(), String> {
         self.game = game::Game::new(rules, None)?;
         Ok(())
     }

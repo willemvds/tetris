@@ -1,7 +1,6 @@
-pub mod game;
-//pub use crate::game::game::*;
-
 pub mod actions;
+pub mod game;
 pub mod playfield;
 pub mod recordings;
+pub mod rules;
 pub mod tetrominos;

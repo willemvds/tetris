@@ -1,38 +1,13 @@
 use crate::tetris::actions;
-use crate::tetris::recordings;
-
 use crate::tetris::playfield;
+use crate::tetris::recordings;
+use crate::tetris::rules;
 use crate::tetris::tetrominos;
 
 use rand;
 use rand::Rng;
 use serde::{Deserialize, Serialize};
 use typetag;
-
-#[derive(Clone, Serialize, Deserialize)]
-pub struct Rules {
-    pub lock_delay: u32,
-    pub lock_delay_on_hard_drop: bool,
-    pub wall_kicks: bool,
-}
-
-impl Rules {
-    pub fn new() -> Rules {
-        Rules {
-            lock_delay: 0,
-            lock_delay_on_hard_drop: false,
-            wall_kicks: true,
-        }
-    }
-
-    pub fn lock_delay(&mut self, ld: u32) {
-        self.lock_delay = ld
-    }
-
-    pub fn lock_delay_on_hard_drop(&mut self, v: bool) {
-        self.lock_delay_on_hard_drop = v
-    }
-}
 
 #[derive(Serialize, Deserialize)]
 pub struct Piece {
@@ -118,7 +93,7 @@ enum State {
 
 #[derive(Serialize, Deserialize)]
 pub struct Game {
-    rules: Rules,
+    rules: rules::Rules,
     state: State,
     ticks: usize,
     // speed is measured in number of ticks so that:
@@ -139,7 +114,7 @@ pub struct Game {
 
 impl Game {
     pub fn new(
-        rules: Rules,
+        rules: rules::Rules,
         piece_provider: Option<Box<dyn PieceProvider>>,
     ) -> Result<Game, String> {
         let play_field = playfield::PlayField::new(22, 10)?;
