@@ -40,11 +40,11 @@ pub struct Menu<'ttf, 'rwops> {
     selected_option: Option<usize>,
 }
 
-fn quit_action() -> actions::Action {
+const fn quit_action() -> actions::Action {
     actions::Action::Quit
 }
 
-fn play_action() -> actions::Action {
+const fn play_action() -> actions::Action {
     actions::Action::Play
 }
 
