@@ -38,7 +38,8 @@ pub struct GameShell<'ttf, 'rwops> {
 
     accumulator: f64,
 
-    score_font: ttf::Font<'ttf, 'rwops>,
+    score_label_font: ttf::Font<'ttf, 'rwops>,
+    score_value_font: ttf::Font<'ttf, 'rwops>,
 }
 
 impl<'ttf, 'rwops> GameShell<'ttf, 'rwops> {
@@ -47,12 +48,18 @@ impl<'ttf, 'rwops> GameShell<'ttf, 'rwops> {
         registry: &'rwops assets::Registry,
         ttf_context: &'ttf ttf::Sdl2TtfContext,
     ) -> Result<GameShell<'ttf, 'rwops>, String> {
-        let font_bytes = registry
+        let scp_font_bytes = registry
             .get("fonts/SourceCodePro-Regular.otf")
             .map_err(|e| e.to_string())?;
-        let score_rwops = rwops::RWops::from_bytes(font_bytes)?;
-        let mut score_font = ttf_context.load_font_from_rwops(score_rwops, 28)?;
-        score_font.set_style(sdl2::ttf::FontStyle::BOLD);
+        let ps2_font_bytes = registry
+            .get("fonts/PressStart2P-Regular.ttf")
+            .map_err(|e| e.to_string())?;
+
+        let score_label_rwops = rwops::RWops::from_bytes(scp_font_bytes)?;
+        let score_label_font = ttf_context.load_font_from_rwops(score_label_rwops, 28)?;
+        let score_value_rwops = rwops::RWops::from_bytes(ps2_font_bytes)?;
+        let mut score_value_font = ttf_context.load_font_from_rwops(score_value_rwops, 44)?;
+        score_value_font.set_style(sdl2::ttf::FontStyle::BOLD);
 
         Ok(GameShell {
             game: initial_game,
@@ -64,7 +71,8 @@ impl<'ttf, 'rwops> GameShell<'ttf, 'rwops> {
 
             accumulator: 0.0,
 
-            score_font,
+            score_label_font,
+            score_value_font,
         })
     }
 
@@ -230,7 +238,8 @@ impl<'ttf, 'rwops> GameShell<'ttf, 'rwops> {
         canvas: &mut render::Canvas<video::Window>,
         prefs: &preferences::Preferences,
     ) {
-        let font = &self.score_font;
+        let label_font = &self.score_label_font;
+        let value_font = &self.score_value_font;
 
         canvas.set_draw_color(pixels::Color::RGB(0, 0, 0));
         canvas.clear();
@@ -301,41 +310,69 @@ impl<'ttf, 'rwops> GameShell<'ttf, 'rwops> {
             start_y + (window_width as i32 / 10),
         );
 
-        let bright_green = pixels::Color::RGBA(0, 255, 0, 255);
         let bright_red = pixels::Color::RGBA(255, 0, 0, 255);
+        let label_colour = pixels::Color::RGBA(255, 255, 255, 255);
+        let value_colour = pixels::Color::RGB(0, 255, 0);
 
         let width_third = window_width / 3;
         graphics::render_text(
             canvas,
-            font,
-            bright_green,
-            (2 * width_third) as i32 - 100,
+            label_font,
+            label_colour,
+            (2 * width_third) as i32 - 120,
             500,
-            &format!("Level: {0}", self.game.level),
+            "Level",
         );
 
         graphics::render_text(
             canvas,
-            font,
-            bright_green,
-            (2 * width_third) as i32 - 100,
-            580,
-            &format!("Lines Cleared: {0}", self.game.score_lines_cleared),
+            value_font,
+            bright_red,
+            (2 * width_third) as i32 - 120,
+            550,
+            &format!("{0}", self.game.level),
         );
 
         graphics::render_text(
             canvas,
-            font,
-            bright_green,
-            (2 * width_third) as i32 - 100,
-            660,
-            &format!("Score: {0}", self.game.score_points),
+            label_font,
+            label_colour,
+            (2 * width_third) as i32 - 120,
+            620,
+            "Lines",
+        );
+
+        graphics::render_text(
+            canvas,
+            value_font,
+            value_colour,
+            (2 * width_third) as i32 - 120,
+            670,
+            &format!("{0}", self.game.score_lines_cleared),
+        );
+
+        graphics::render_text(
+            canvas,
+            label_font,
+            label_colour,
+            (2 * width_third) as i32 - 120,
+            740,
+            "Score",
+        );
+
+        graphics::render_text(
+            canvas,
+            value_font,
+            value_colour,
+            (2 * width_third) as i32 - 120,
+            790,
+            &format!("{0}", self.game.score_points),
         );
 
         if self.game.is_gameover() {
             graphics::render_text_centered(
                 canvas,
-                font,
+                value_font,
                 bright_red,
                 (window_width / 2) as i32,
                 50,
@@ -346,7 +383,7 @@ impl<'ttf, 'rwops> GameShell<'ttf, 'rwops> {
 
             graphics::render_text_centered(
                 canvas,
-                font,
+                value_font,
                 pixels::Color::RGBA(255, 0, 0, 255),
                 x,
                 50,

@@ -19,8 +19,9 @@ use sdl2::pixels;
 
 #[rustfmt::skip]
 const ASSET_MANIFEST: [&str; 2] = [
+//    "fonts/NotoSansMono-Regular.ttf",
     "fonts/PressStart2P-Regular.ttf",
-    "fonts/SourceCodePro-Regular.otf"
+    "fonts/SourceCodePro-Regular.otf",
 ];
 
 const UI_LAYER_GAME: u8 = 0b0001;
