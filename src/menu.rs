@@ -139,6 +139,7 @@ impl<'ttf, 'rwops> Menu<'ttf, 'rwops> {
                     keycode: Some(keycode),
                     ..
                 } => match keycode {
+                    keyboard::Keycode::F11 => ui_actions.push(actions::Action::ToggleFullScreen),
                     keyboard::Keycode::Escape => ui_actions.push(actions::Action::MenuHide),
                     keyboard::Keycode::Backquote => ui_actions.push(actions::Action::ConsoleShow),
                     keyboard::Keycode::Q => ui_actions.push(actions::Action::Quit),

@@ -6,6 +6,7 @@ pub enum Action {
     Quit,
     MenuHide,
     MenuShow,
+    ToggleFullScreen,
 
     ConsoleCommand(String),
     ConsoleHide,

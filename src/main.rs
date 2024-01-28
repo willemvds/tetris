@@ -16,6 +16,7 @@ use tetris::game;
 
 extern crate sdl2;
 use sdl2::pixels;
+use sdl2::video;
 
 #[rustfmt::skip]
 const ASSET_MANIFEST: [&str; 2] = [
@@ -119,11 +120,11 @@ fn main() -> Result<(), String> {
     let initial_window_width = 1920;
     let initial_window_height = 1080;
 
-    let window = video_subsys
+    let mut window = video_subsys
         .window("Tetris", initial_window_width, initial_window_height)
         .position_centered()
         .resizable()
-        .opengl()
+        .borderless()
         .build()
         .map_err(|e| e.to_string())?;
 
@@ -212,6 +213,17 @@ fn main() -> Result<(), String> {
                     let _ = game_shell.queue_action(*a);
                 }
                 actions::Action::TogglePause => game_shell.toggle_pause(),
+                actions::Action::ToggleFullScreen => {
+                    if canvas.window().fullscreen_state() == video::FullscreenType::Off {
+                        let _ = canvas
+                            .window_mut()
+                            .set_fullscreen(video::FullscreenType::Desktop);
+                    } else {
+                        let _ = canvas
+                            .window_mut()
+                            .set_fullscreen(video::FullscreenType::Off);
+                    }
+                }
                 actions::Action::MenuShow => {
                     ui_layers.show(UI_LAYER_MENU);
                     game_shell.pause();
