@@ -1,6 +1,7 @@
 use std::time;
 
 use crate::actions;
+use crate::assets;
 use crate::graphics;
 use crate::preferences;
 use crate::replays;
@@ -15,6 +16,7 @@ use sdl2::keyboard;
 use sdl2::pixels;
 use sdl2::rect;
 use sdl2::render;
+use sdl2::rwops;
 use sdl2::ttf;
 use sdl2::video;
 
@@ -24,7 +26,9 @@ enum Mode {
     Replay,
 }
 
-pub struct GameShell {
+// invariants:
+// - There is always a game instance locked and loaded.
+pub struct GameShell<'ttf, 'rwops> {
     game: game::Game,
     game_ticks: usize,
     paused: bool,
@@ -33,11 +37,24 @@ pub struct GameShell {
     replay_action_index: usize,
 
     accumulator: f64,
+
+    score_font: ttf::Font<'ttf, 'rwops>,
 }
 
-impl GameShell {
-    pub fn new(initial_game: game::Game) -> GameShell {
-        GameShell {
+impl<'ttf, 'rwops> GameShell<'ttf, 'rwops> {
+    pub fn new(
+        initial_game: game::Game,
+        registry: &'rwops assets::Registry,
+        ttf_context: &'ttf ttf::Sdl2TtfContext,
+    ) -> Result<GameShell<'ttf, 'rwops>, String> {
+        let font_bytes = registry
+            .get("fonts/SourceCodePro-Regular.otf")
+            .map_err(|e| e.to_string())?;
+        let score_rwops = rwops::RWops::from_bytes(font_bytes)?;
+        let mut score_font = ttf_context.load_font_from_rwops(score_rwops, 28)?;
+        score_font.set_style(sdl2::ttf::FontStyle::BOLD);
+
+        Ok(GameShell {
             game: initial_game,
             game_ticks: 0,
             paused: true,
@@ -46,25 +63,22 @@ impl GameShell {
             replay_action_index: 0,
 
             accumulator: 0.0,
-        }
+
+            score_font,
+        })
     }
 
-    pub fn new_with_replay(gm: game::Game, replay: replays::Replay) -> GameShell {
-        GameShell {
-            game: gm,
-            game_ticks: 0,
-            paused: true,
-            mode: Mode::Replay,
-            replay: Some(replay),
-            replay_action_index: 0,
-
-            accumulator: 0.0,
-        }
+    pub fn load_replay(&mut self, gm: game::Game, replay: replays::Replay) {
+        self.game = gm;
+        self.game_ticks = 0;
+        self.paused = true;
+        self.mode = Mode::Replay;
+        self.replay = Some(replay);
+        self.replay_action_index = 0;
     }
 
-    pub fn new_game(&mut self, rules: tetris::rules::Rules) -> Result<(), String> {
-        self.game = game::Game::new(rules, None)?;
-        Ok(())
+    pub fn load_game(&mut self, game: game::Game) {
+        self.game = game
     }
 
     pub fn pause(&mut self) {
@@ -215,8 +229,9 @@ impl GameShell {
         &mut self,
         canvas: &mut render::Canvas<video::Window>,
         prefs: &preferences::Preferences,
-        font: &ttf::Font,
     ) {
+        let font = &self.score_font;
+
         canvas.set_draw_color(pixels::Color::RGB(0, 0, 0));
         canvas.clear();
 

@@ -145,19 +145,18 @@ fn main() -> Result<(), String> {
     game_rules.lock_delay(50);
     // game_rules.lock_delay_on_hard_drop(true);
 
-    let mut game_shell = match replay {
-        Some(rp) => {
-            let replay_pieces = replays::ReplayPieces::new(&rp);
-            let gm = game::Game::new(game_rules.clone(), Some(Box::new(replay_pieces)))?;
-            game_shell::GameShell::new_with_replay(gm, rp)
-        }
-        None => {
-            if let Some(g) = last_game {
-                game_shell::GameShell::new(g)
-            } else {
-                game_shell::GameShell::new(game::Game::new(game_rules.clone(), None)?)
-            }
-        }
+    let mut game_shell = game_shell::GameShell::new(
+        game::Game::new(game_rules.clone(), None)?,
+        &registry,
+        &ttf_context,
+    )?;
+
+    if let Some(rp) = replay {
+        let replay_pieces = replays::ReplayPieces::new(&rp);
+        let replay_game = game::Game::new(game_rules.clone(), Some(Box::new(replay_pieces)))?;
+        game_shell.load_replay(replay_game, rp)
+    } else if let Some(lg) = last_game {
+        game_shell.load_game(lg)
     };
 
     if game_shell.is_showing_replay() {
@@ -198,13 +197,15 @@ fn main() -> Result<(), String> {
                 actions::Action::Quit => break 'main,
                 actions::Action::Play => {
                     if game_shell.is_gameover() {
-                        let _ = game_shell.new_game(game_rules.clone());
+                        let new_game = game::Game::new(game_rules.clone(), None)?;
+                        game_shell.load_game(new_game);
                     }
                     ui_layers.hide(UI_LAYER_MENU);
                     game_shell.unpause();
                 }
                 actions::Action::NewGame => {
-                    let _ = game_shell.new_game(game_rules.clone());
+                    let new_game = game::Game::new(game_rules.clone(), None)?;
+                    game_shell.load_game(new_game);
                 }
                 actions::Action::QueueGameAction(a) => {
                     let _ = game_shell.queue_action(*a);
@@ -236,7 +237,7 @@ fn main() -> Result<(), String> {
 
         game_shell.frame_tick(frame_time, dt);
 
-        game_shell.render(&mut canvas, &prefs, &font);
+        game_shell.render(&mut canvas, &prefs);
 
         graphics::render_text(
             &mut canvas,

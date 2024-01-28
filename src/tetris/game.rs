@@ -115,7 +115,7 @@ pub struct Game {
 }
 
 const fn calculate_speed_from_level(level: u8) -> u8 {
-   150 - (level * 15)
+    150 - (level * 15)
 }
 
 impl Game {
