@@ -1,6 +1,4 @@
-use crate::tetris;
-
-#[derive(PartialEq)]
+#[derive(Clone, PartialEq)]
 pub enum Action {
     Play,
     Quit,
@@ -13,6 +11,5 @@ pub enum Action {
     ConsoleShow,
 
     NewGame,
-    QueueGameAction(tetris::actions::Action),
     TogglePause,
 }

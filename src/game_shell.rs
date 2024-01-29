@@ -1,3 +1,5 @@
+use std::collections;
+use std::ops;
 use std::time;
 
 use crate::actions;
@@ -40,6 +42,8 @@ pub struct GameShell<'ttf, 'rwops> {
 
     score_label_font: ttf::Font<'ttf, 'rwops>,
     score_value_font: ttf::Font<'ttf, 'rwops>,
+
+    keymap: collections::HashMap<keyboard::Keycode, actions::Action>,
 }
 
 impl<'ttf, 'rwops> GameShell<'ttf, 'rwops> {
@@ -61,6 +65,11 @@ impl<'ttf, 'rwops> GameShell<'ttf, 'rwops> {
         let mut score_value_font = ttf_context.load_font_from_rwops(score_value_rwops, 44)?;
         score_value_font.set_style(sdl2::ttf::FontStyle::BOLD);
 
+        let keymap = collections::HashMap::from([(
+            keyboard::Keycode::F11,
+            actions::Action::ToggleFullScreen,
+        )]);
+
         Ok(GameShell {
             game: initial_game,
             game_ticks: 0,
@@ -73,6 +82,8 @@ impl<'ttf, 'rwops> GameShell<'ttf, 'rwops> {
 
             score_label_font,
             score_value_font,
+
+            keymap,
         })
     }
 
@@ -171,7 +182,7 @@ impl<'ttf, 'rwops> GameShell<'ttf, 'rwops> {
         }
     }
 
-    pub fn process_events(&self, event_pump: &mut sdl2::EventPump) -> Vec<actions::Action> {
+    pub fn process_events(&mut self, event_pump: &mut sdl2::EventPump) -> Vec<actions::Action> {
         let mut ui_actions = vec![];
 
         for event in event_pump.poll_iter() {
@@ -181,7 +192,7 @@ impl<'ttf, 'rwops> GameShell<'ttf, 'rwops> {
                     keycode: Some(keycode),
                     ..
                 } => match keycode {
-                    keyboard::Keycode::F11 => ui_actions.push(actions::Action::ToggleFullScreen),
+                    //                    keyboard::Keycode::F11 => ui_actions.push(actions::Action::ToggleFullScreen),
                     keyboard::Keycode::Escape => ui_actions.push(actions::Action::MenuShow),
                     keyboard::Keycode::Backquote => ui_actions.push(actions::Action::ConsoleShow),
                     keyboard::Keycode::Space => {
@@ -193,30 +204,29 @@ impl<'ttf, 'rwops> GameShell<'ttf, 'rwops> {
                     }
 
                     _ => {
+                        if let Some(action) = self.keymap.get(&keycode) {
+                            ui_actions.push(action.clone());
+                        }
+
                         if !self.paused && !self.game.is_gameover() && self.mode == Mode::Tetris {
                             match keycode {
                                 keyboard::Keycode::Kp7 => {
-                                    ui_actions.push(actions::Action::QueueGameAction(
-                                        tetris::actions::Action::MoveLeft,
-                                    ))
+                                    let _ =
+                                        self.game.queue_action(tetris::actions::Action::MoveLeft);
                                 }
                                 keyboard::Keycode::Kp9 => {
-                                    ui_actions.push(actions::Action::QueueGameAction(
-                                        tetris::actions::Action::MoveRight,
-                                    ))
+                                    let _ =
+                                        self.game.queue_action(tetris::actions::Action::MoveRight);
                                 }
-                                keyboard::Keycode::Kp4 => ui_actions.push(
-                                    actions::Action::QueueGameAction(tetris::actions::Action::Drop),
-                                ),
+                                keyboard::Keycode::Kp4 => {
+                                    let _ = self.game.queue_action(tetris::actions::Action::Drop);
+                                }
                                 keyboard::Keycode::Kp5 => {
-                                    ui_actions.push(actions::Action::QueueGameAction(
-                                        tetris::actions::Action::MoveDown,
-                                    ))
+                                    let _ =
+                                        self.game.queue_action(tetris::actions::Action::MoveDown);
                                 }
                                 keyboard::Keycode::Kp8 => {
-                                    ui_actions.push(actions::Action::QueueGameAction(
-                                        tetris::actions::Action::Rotate,
-                                    ))
+                                    let _ = self.game.queue_action(tetris::actions::Action::Rotate);
                                 }
                                 _ => (),
                             }
@@ -228,10 +238,6 @@ impl<'ttf, 'rwops> GameShell<'ttf, 'rwops> {
             }
         }
         ui_actions
-    }
-
-    pub fn queue_action(&mut self, action: tetris::actions::Action) -> Result<(), String> {
-        self.game.queue_action(action)
     }
 
     pub fn render(

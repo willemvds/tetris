@@ -1,3 +1,4 @@
+use std::collections;
 use std::env;
 use std::fs;
 use std::io;
@@ -15,6 +16,7 @@ mod tetris;
 use tetris::game;
 
 extern crate sdl2;
+use sdl2::keyboard;
 use sdl2::pixels;
 use sdl2::video;
 
@@ -132,6 +134,8 @@ fn main() -> Result<(), String> {
     canvas.set_draw_color(pixels::Color::RGB(0, 0, 0));
     canvas.present();
 
+    let keymap: collections::HashMap<keyboard::Keycode, u8> = collections::HashMap::new();
+
     let mut event_pump = sdl_context.event_pump()?;
 
     let _total = 0;
@@ -208,9 +212,6 @@ fn main() -> Result<(), String> {
                 actions::Action::NewGame => {
                     let new_game = game::Game::new(game_rules.clone(), None)?;
                     game_shell.load_game(new_game);
-                }
-                actions::Action::QueueGameAction(a) => {
-                    let _ = game_shell.queue_action(*a);
                 }
                 actions::Action::TogglePause => game_shell.toggle_pause(),
                 actions::Action::ToggleFullScreen => {
