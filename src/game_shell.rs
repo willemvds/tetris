@@ -13,6 +13,7 @@ use crate::tetris::playfield;
 use crate::tetris::recordings;
 use crate::tetris::tetrominos;
 
+use sdl2::controller;
 use sdl2::event;
 use sdl2::keyboard;
 use sdl2::pixels;
@@ -233,7 +234,48 @@ impl<'ttf, 'rwops> GameShell<'ttf, 'rwops> {
                         }
                     }
                 },
-
+                event::Event::ControllerButtonDown { button, .. } => match button {
+                    controller::Button::Back => ui_actions.push(actions::Action::MenuShow),
+                    controller::Button::Start => {
+                        if self.is_gameover() {
+                            ui_actions.push(actions::Action::NewGame)
+                        } else {
+                            ui_actions.push(actions::Action::TogglePause)
+                        }
+                    }
+                    controller::Button::X => {
+                        let _ = self.game.queue_action(tetris::actions::Action::MoveLeft);
+                    }
+                    controller::Button::B => {
+                        let _ = self.game.queue_action(tetris::actions::Action::MoveRight);
+                    }
+                    controller::Button::A => {
+                        let _ = self.game.queue_action(tetris::actions::Action::MoveDown);
+                    }
+                    controller::Button::Y => {
+                        let _ = self.game.queue_action(tetris::actions::Action::Rotate);
+                    }
+                    _ => println!("Controller Button = {:?}", button),
+                },
+                event::Event::ControllerAxisMotion {
+                    axis: controller::Axis::TriggerRight,
+                    value: val,
+                    ..
+                } => {
+                    println!("Right trigger value = {}", val);
+                    let _ = self.game.queue_action(tetris::actions::Action::Drop);
+                }
+                event::Event::ControllerAxisMotion {
+                    axis: controller::Axis::LeftX,
+                    value: val,
+                    ..
+                } => {
+                    if val < 0 {
+                        let _ = self.game.queue_action(tetris::actions::Action::MoveLeft);
+                    } else if val > 0 {
+                        let _ = self.game.queue_action(tetris::actions::Action::MoveRight);
+                    }
+                }
                 _ => {}
             }
         }

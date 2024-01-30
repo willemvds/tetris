@@ -16,6 +16,7 @@ mod tetris;
 use tetris::game;
 
 extern crate sdl2;
+use sdl2::controller;
 use sdl2::keyboard;
 use sdl2::pixels;
 use sdl2::video;
@@ -101,6 +102,25 @@ fn main() -> Result<(), String> {
     let sdl_context = sdl2::init()?;
     let video_subsys = sdl_context.video()?;
     let ttf_context = sdl2::ttf::init().map_err(|e| e.to_string())?;
+    let game_controller_subsys = sdl_context.game_controller()?;
+
+    let num_joysticks = game_controller_subsys.num_joysticks()?;
+
+    let mut game_controllers: Vec<controller::GameController> = vec![];
+    for id in 0..num_joysticks {
+        if !game_controller_subsys.is_game_controller(id) {
+            continue;
+        }
+
+        if let Ok(controller) = game_controller_subsys.open(id) {
+            println!(
+                "Game Controller ({}) ATTACHED = {}",
+                controller.name(),
+                controller.mapping()
+            );
+            game_controllers.push(controller);
+        }
+    }
 
     let mut console = console::Console::new(&registry, &ttf_context)?;
     let mut menu = menu::Menu::new(&registry, &ttf_context)?;
