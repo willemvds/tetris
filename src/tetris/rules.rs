@@ -11,6 +11,7 @@ pub struct Rules {
     pub lock_delay_on_hard_drop: bool,
     pub wall_kicks: bool,
     pub scoring_system: ScoringSystemKind,
+    pub action_cooldown: u8,
 }
 
 impl Rules {
@@ -20,6 +21,7 @@ impl Rules {
             lock_delay_on_hard_drop: false,
             wall_kicks: true,
             scoring_system: ScoringSystemKind::OriginalBPS,
+            action_cooldown: 15, // 15 ticks = 60ms cooldown
         }
     }
 

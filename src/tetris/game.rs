@@ -1,3 +1,5 @@
+use std::collections;
+
 use crate::tetris::actions;
 use crate::tetris::playfield;
 use crate::tetris::recordings;
@@ -84,6 +86,11 @@ impl PieceProvider for TetrominoBag {
     }
 }
 
+struct QueuedAction {
+    action: actions::Action,
+    queued_at: usize,
+}
+
 #[derive(PartialEq, Serialize, Deserialize)]
 enum State {
     Init,
@@ -110,6 +117,8 @@ pub struct Game {
     pub score_lines_cleared: u32,
     level_lines_cleared: u32,
     next_action: Option<actions::Action>,
+    last_action_at: usize,
+    actions_last_used_at: collections::HashMap<actions::Action, usize>,
 
     pub recording: recordings::Recording,
 }
@@ -147,6 +156,8 @@ impl Game {
             level_lines_cleared: 0,
 
             next_action: None,
+            last_action_at: 0,
+            actions_last_used_at: collections::HashMap::from([]),
             recording: recordings::Recording::new(),
         };
 
@@ -175,18 +186,18 @@ impl Game {
             let action = self.next_action.unwrap();
             self.recording.push_action(self.ticks, action);
 
-            match self.next_action {
-                Some(actions::Action::MoveDown) => self.drop_one(),
-                Some(actions::Action::MoveLeft) => self.move_left(),
-                Some(actions::Action::MoveRight) => self.move_right(),
-                Some(actions::Action::Rotate) => self.rotate(),
-                Some(actions::Action::Drop) => {
+            match action {
+                actions::Action::MoveDown => self.drop_one(),
+                actions::Action::MoveLeft => self.move_left(),
+                actions::Action::MoveRight => self.move_right(),
+                actions::Action::Rotate => self.rotate(),
+                actions::Action::Drop => {
                     dropped = self.drop_fast();
                 }
-                _ => (),
             }
 
             self.next_action = None;
+            self.actions_last_used_at.insert(action, self.ticks);
         }
 
         self.piece.creep += 1;
@@ -253,6 +264,12 @@ impl Game {
     pub fn queue_action(&mut self, a: actions::Action) -> Result<(), String> {
         if self.state != State::Playing {
             return Err("Can't queue action while game is not ready".to_string());
+        }
+
+        let action_last_used_at = self.actions_last_used_at.entry(a).or_insert_with(|| 0);
+        if *action_last_used_at + self.rules.action_cooldown as usize >= self.ticks {
+            println!("COOLDOWN FOR {:?}", a);
+            return Err("Can't queue action while game IS ON COOLDOWN".to_string());
         }
 
         if self.next_action.is_none() {

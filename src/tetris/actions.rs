@@ -1,6 +1,7 @@
 use serde::{Deserialize, Serialize};
 
-#[derive(Copy, Clone, Debug, Serialize, Deserialize, PartialEq)]
+#[derive(Eq, Hash, Copy, Clone, Debug, PartialEq, Deserialize, Serialize)]
+#[repr(u8)]
 pub enum Action {
     Drop,
     MoveDown,
