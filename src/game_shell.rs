@@ -45,6 +45,8 @@ pub struct GameShell<'ttf, 'rwops> {
     score_value_font: ttf::Font<'ttf, 'rwops>,
 
     keymap: collections::HashMap<keyboard::Keycode, actions::Action>,
+    controller_x: i16,
+    controller_trigger: i16,
 }
 
 impl<'ttf, 'rwops> GameShell<'ttf, 'rwops> {
@@ -85,6 +87,8 @@ impl<'ttf, 'rwops> GameShell<'ttf, 'rwops> {
             score_value_font,
 
             keymap,
+            controller_x: 0,
+            controller_trigger: 0,
         })
     }
 
@@ -262,23 +266,29 @@ impl<'ttf, 'rwops> GameShell<'ttf, 'rwops> {
                     value: val,
                     ..
                 } => {
-                    println!("Right trigger value = {}", val);
-                    let _ = self.game.queue_action(tetris::actions::Action::Drop);
+                    self.controller_trigger = val;
                 }
                 event::Event::ControllerAxisMotion {
                     axis: controller::Axis::LeftX,
                     value: val,
                     ..
                 } => {
-                    if val < 0 {
-                        let _ = self.game.queue_action(tetris::actions::Action::MoveLeft);
-                    } else if val > 0 {
-                        let _ = self.game.queue_action(tetris::actions::Action::MoveRight);
-                    }
+                    self.controller_x = val;
                 }
                 _ => {}
             }
         }
+
+        if self.controller_trigger > 30000 {
+            let _ = self.game.queue_action(tetris::actions::Action::Drop);
+        }
+
+        if self.controller_x > 15000 {
+            let _ = self.game.queue_action(tetris::actions::Action::MoveRight);
+        } else if self.controller_x < -15000 {
+            let _ = self.game.queue_action(tetris::actions::Action::MoveLeft);
+        }
+
         ui_actions
     }
 

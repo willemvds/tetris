@@ -268,7 +268,6 @@ impl Game {
 
         let action_last_used_at = self.actions_last_used_at.entry(a).or_insert_with(|| 0);
         if *action_last_used_at + self.rules.action_cooldown as usize >= self.ticks {
-            println!("COOLDOWN FOR {:?}", a);
             return Err("Can't queue action while game IS ON COOLDOWN".to_string());
         }
 

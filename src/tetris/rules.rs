@@ -21,7 +21,7 @@ impl Rules {
             lock_delay_on_hard_drop: false,
             wall_kicks: true,
             scoring_system: ScoringSystemKind::OriginalBPS,
-            action_cooldown: 15, // 15 ticks = 60ms cooldown
+            action_cooldown: 20, // 20 ticks = 80ms cooldown
         }
     }
 
