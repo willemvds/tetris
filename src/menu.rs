@@ -54,7 +54,7 @@ impl<'ttf, 'rwops> Menu<'ttf, 'rwops> {
         ttf_context: &'ttf ttf::Sdl2TtfContext,
     ) -> Result<Menu<'ttf, 'rwops>, String> {
         let font_bytes = registry
-            .get("fonts/PressStart2P-Regular.ttf")
+            .get("fonts/SourceCodePro-Regular.otf")
             .map_err(|e| e.to_string())?;
         {
             let regular_rwops = rwops::RWops::from_bytes(font_bytes)?;
@@ -80,6 +80,11 @@ impl<'ttf, 'rwops> Menu<'ttf, 'rwops> {
                 MenuOptionSize::Regular,
                 play_action,
             ));
+            menu.options.push(MenuOption::new(
+                "Preferences".to_string(),
+                MenuOptionSize::Regular,
+                play_action,
+            ));
 
             menu.options.push(MenuOption::new(
                 "Quit (q)".to_string(),
@@ -100,7 +105,7 @@ impl<'ttf, 'rwops> Menu<'ttf, 'rwops> {
         selected: bool,
     ) {
         if selected {
-            canvas.set_draw_color(pixels::Color::RGBA(252, 252, 252, 255));
+            canvas.set_draw_color(pixels::Color::RGBA(222, 222, 222, 255));
             let _ = canvas.fill_rect(rect::Rect::new(50, y - 20, 500, 80));
         }
         let f = match opt.size {
@@ -108,7 +113,7 @@ impl<'ttf, 'rwops> Menu<'ttf, 'rwops> {
             MenuOptionSize::Large => &self.large_font,
         };
         let c = match selected {
-            true => pixels::Color::RGBA(0, 255, 0, 255),
+            true => pixels::Color::RGBA(50, 180, 50, 255),
             false => pixels::Color::RGBA(255, 255, 255, 255),
         };
         graphics::render_text(canvas, f, c, 100, y, &opt.text);
@@ -116,7 +121,7 @@ impl<'ttf, 'rwops> Menu<'ttf, 'rwops> {
 
     pub fn render(&self, canvas: &mut render::Canvas<video::Window>) {
         let (canvas_width, canvas_height) = canvas.window().size();
-        canvas.set_draw_color(pixels::Color::RGBA(200, 100, 13, 100));
+        canvas.set_draw_color(pixels::Color::RGB(200, 100, 13));
         let _ = canvas.fill_rect(rect::Rect::new(0, 0, canvas_width / 3, canvas_height));
 
         let mut y = 500;

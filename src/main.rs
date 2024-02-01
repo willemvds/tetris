@@ -102,7 +102,10 @@ fn main() -> Result<(), String> {
     let sdl_context = sdl2::init()?;
     let video_subsys = sdl_context.video()?;
     let ttf_context = sdl2::ttf::init().map_err(|e| e.to_string())?;
+
+    /*
     let game_controller_subsys = sdl_context.game_controller()?;
+
 
     let num_joysticks = game_controller_subsys.num_joysticks()?;
 
@@ -121,6 +124,7 @@ fn main() -> Result<(), String> {
             game_controllers.push(controller);
         }
     }
+    */
 
     let mut console = console::Console::new(&registry, &ttf_context)?;
     let mut menu = menu::Menu::new(&registry, &ttf_context)?;
