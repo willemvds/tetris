@@ -393,16 +393,6 @@ impl Game {
         dropped
     }
 
-    pub fn speed_up(&mut self) {
-        self.speed -= 4;
-        println!("NEW SPEED is {}", self.speed);
-    }
-
-    pub fn speed_down(&mut self) {
-        self.speed += 4;
-        println!("NEW SPEED is {}", self.speed);
-    }
-
     pub fn grab_next_piece(&mut self) -> Result<(), String> {
         let next_piece = self.piece_provider.next()?;
 
