@@ -13,7 +13,7 @@ Using [Tetris Guideline (Tetris Wiki)](https://tetris.wiki/Tetris_Guideline) and
 - ✅ Menus.
 - ☐ Game stats.
 - ☐ Sound.
-- ☐ Game controller support.
+- ✅ Game controller support.
 - ✅ User preferences.
 - ✅ Configurable game rules.
 - ✅ Resume game aka keep playing after reboot.
@@ -23,6 +23,7 @@ Using [Tetris Guideline (Tetris Wiki)](https://tetris.wiki/Tetris_Guideline) and
 - ☐ Various scoring systems (currently BPS 1988 only).
 - ☐ High Scores/Online leader boards!
 - ✅ Quake style console.
+- ☐ Get SDL controller functionality running on a background thread.
 - ☐ Binary serialisation formats.
 - ☐ Look at vendoring deps in rust. 
 
