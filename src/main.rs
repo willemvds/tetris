@@ -143,7 +143,7 @@ fn main() -> Result<(), String> {
     let initial_window_width = 1920;
     let initial_window_height = 1080;
 
-    let mut window = video_subsys
+    let window = video_subsys
         .window("Tetris", initial_window_width, initial_window_height)
         .position_centered()
         .resizable()
