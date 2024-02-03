@@ -334,10 +334,18 @@ impl<'ttf, 'rwops> GameShell<'ttf, 'rwops> {
         }
 
         if self.game.drop_distance() > 0 {
+            let drop_row = self.game.piece.y + self.game.drop_distance() as u16 - 1;
+            let form = self.game.piece.form();
+            let mut first_row: usize = 0;
+            if drop_row < 4 {
+                first_row = 4 - drop_row as usize;
+            }
+
             if prefs.drop_indicator == preferences::DropIndicatorStyle::Outline {
-                draw_shape_outline(
+                draw_shape_outline_partial(
                     canvas,
-                    *self.game.piece.form(),
+                    form,
+                    first_row as usize,
                     tetromino_colour(self.game.piece.tetromino),
                     cell_size,
                     start_x + (self.game.piece.x as i32 * cell_size),
@@ -348,7 +356,8 @@ impl<'ttf, 'rwops> GameShell<'ttf, 'rwops> {
             } else if prefs.drop_indicator == preferences::DropIndicatorStyle::Triangles {
                 draw_shape_triangles(
                     canvas,
-                    *self.game.piece.form(),
+                    form,
+                    first_row,
                     tetromino_colour(self.game.piece.tetromino),
                     cell_size,
                     start_x + (self.game.piece.x as i32 * cell_size),
@@ -507,14 +516,15 @@ fn draw_shape(
 
 fn draw_shape_triangles(
     canvas: &mut render::Canvas<video::Window>,
-    s: playfield::Shape,
+    s: &playfield::Shape,
+    s_first_row: usize,
     colour: pixels::Color,
     size: i32,
     x: i32,
     y: i32,
 ) {
     canvas.set_draw_color(colour);
-    for row in 0..4 {
+    for row in s_first_row..4 {
         for col in 0..4 {
             if s[row][col] == 0 {
                 continue;
@@ -537,16 +547,17 @@ fn draw_shape_triangles(
     }
 }
 
-fn draw_shape_outline(
+fn draw_shape_outline_partial(
     canvas: &mut render::Canvas<video::Window>,
-    s: playfield::Shape,
+    s: &tetrominos::Form,
+    s_first_row: usize,
     colour: pixels::Color,
     size: i32,
     x: i32,
     y: i32,
 ) {
     canvas.set_draw_color(colour);
-    for row in 0..4 {
+    for row in s_first_row..4 {
         for col in 0..4 {
             if s[row][col] == 0 {
                 continue;

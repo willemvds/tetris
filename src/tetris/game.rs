@@ -364,7 +364,7 @@ impl Game {
         );
     }
 
-    pub fn drop_distance(&mut self) -> usize {
+    pub fn drop_distance(&self) -> usize {
         let mut distance = 0;
 
         while !self.play_field.has_collission(
