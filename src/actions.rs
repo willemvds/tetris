@@ -1,3 +1,5 @@
+use crate::preferences;
+
 #[derive(Clone, PartialEq)]
 pub enum Action {
     Play,
@@ -5,6 +7,8 @@ pub enum Action {
     MenuHide,
     MenuShow,
     ToggleFullScreen,
+
+    PreferencesUpdate(preferences::Preferences),
 
     ConsoleCommand(String),
     ConsoleHide,

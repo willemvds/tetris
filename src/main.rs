@@ -74,7 +74,7 @@ fn load_last_game_state() -> Result<game::Game, String> {
 
 fn main() -> Result<(), String> {
     let mut ui_layers = UILayers::new();
-    let prefs = preferences::Preferences::new();
+    let mut prefs = preferences::Preferences::new();
 
     let mut registry = assets::Registry::new();
     for asset in ASSET_MANIFEST.iter() {
@@ -222,6 +222,7 @@ fn main() -> Result<(), String> {
         for action in ui_actions.iter() {
             match action {
                 actions::Action::Quit => break 'main,
+                actions::Action::PreferencesUpdate(p) => prefs = p.clone(),
                 actions::Action::Play => {
                     if game_shell.is_gameover() {
                         let new_game = game::Game::new(game_rules.clone(), None)?;
