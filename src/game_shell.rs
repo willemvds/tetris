@@ -345,7 +345,7 @@ impl<'ttf, 'rwops> GameShell<'ttf, 'rwops> {
                 draw_shape_outline_partial(
                     canvas,
                     form,
-                    first_row as usize,
+                    first_row,
                     tetromino_colour(self.game.piece.tetromino),
                     cell_size,
                     start_x + (self.game.piece.x as i32 * cell_size),
