@@ -29,6 +29,28 @@ impl RadioOption {
     fn new(text: String) -> RadioOption {
         RadioOption { text }
     }
+
+    fn render(&self, canvas: &mut render::Canvas<video::Window>, font: &ttf::Font, x: i32, y: i32) {
+        let text_colour = pixels::Color::RGBA(255, 255, 255, 255);
+
+        graphics::render_text(canvas, font, text_colour, x, y, &self.text);
+    }
+
+    fn render_selected(
+        &self,
+        canvas: &mut render::Canvas<video::Window>,
+        font: &ttf::Font,
+        x: i32,
+        y: i32,
+    ) {
+        let text_colour = pixels::Color::RGBA(255, 255, 255, 255);
+        let selected_bg_colour = pixels::Color::RGB(50, 200, 20);
+
+        canvas.set_draw_color(selected_bg_colour);
+        let _ = canvas.fill_rect(rect::Rect::new(x, y, 200, 50));
+
+        graphics::render_text(canvas, font, text_colour, x, y, &self.text);
+    }
 }
 
 struct Radio {
@@ -45,15 +67,12 @@ impl Radio {
     }
 
     fn render(&self, canvas: &mut render::Canvas<video::Window>, font: &ttf::Font, x: i32, y: i32) {
-        let c = pixels::Color::RGBA(255, 255, 255, 255);
-        let selection_bg_colour = pixels::Color::RGB(50, 200, 20);
-        for (i, option) in self.options.iter().enumerate() {
-            if i == self.selected_option {
-                canvas.set_draw_color(selection_bg_colour);
-                let _ = canvas.fill_rect(rect::Rect::new(x + (i * 200) as i32, y, 200, 50));
+        for (idx, option) in self.options.iter().enumerate() {
+            if idx == self.selected_option {
+                option.render_selected(canvas, font, x + (idx * 200) as i32, y);
+            } else {
+                option.render(canvas, font, x + (idx * 200) as i32, y);
             }
-
-            graphics::render_text(canvas, font, c, x + (i * 200) as i32, y, &option.text);
         }
     }
 }
