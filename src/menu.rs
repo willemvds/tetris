@@ -53,14 +53,14 @@ impl RadioOption {
     }
 }
 
-struct Radio {
+struct RadioGroup {
     options: Vec<RadioOption>,
     selected_option: usize,
 }
 
-impl Radio {
-    fn new(options: Vec<RadioOption>) -> Radio {
-        Radio {
+impl RadioGroup {
+    fn new(options: Vec<RadioOption>) -> RadioGroup {
+        RadioGroup {
             options,
             selected_option: 0,
         }
@@ -78,13 +78,13 @@ impl Radio {
 }
 
 struct PreferencesPage {
-    drop_indicator_radio: Radio,
+    drop_indicator_radio: RadioGroup,
 }
 
 impl PreferencesPage {
     fn new() -> PreferencesPage {
         PreferencesPage {
-            drop_indicator_radio: Radio::new(vec![
+            drop_indicator_radio: RadioGroup::new(vec![
                 RadioOption::new("None".to_string()),
                 RadioOption::new("Outline".to_string()),
                 RadioOption::new("Triangles".to_string()),
