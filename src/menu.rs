@@ -14,6 +14,7 @@ use sdl2::video;
 
 enum MenuAction {
     ShowPreferences,
+    ShowReplays,
 }
 
 enum SelectionAction {
@@ -148,6 +149,45 @@ impl PreferencesPage {
     }
 }
 
+struct ReplaysPage {}
+
+impl ReplaysPage {
+    fn new() -> ReplaysPage {
+        ReplaysPage {}
+    }
+
+    fn handle_event(&mut self, event: &event::Event) -> bool {
+        match event {
+            event::Event::KeyDown {
+                keycode: Some(keycode),
+                ..
+            } => match keycode {
+                _ => (),
+            },
+            _ => (),
+        }
+
+        false
+    }
+
+    fn render(&self, canvas: &mut render::Canvas<video::Window>, font: &ttf::Font) {
+        let (canvas_width, canvas_height) = canvas.window().size();
+        let canvas_third = canvas_width / 3;
+        canvas.set_draw_color(pixels::Color::RGB(200, 80, 13));
+        let _ = canvas.fill_rect(rect::Rect::new(
+            canvas_third as i32,
+            0,
+            canvas_third * 2,
+            canvas_height,
+        ));
+
+        let page_x = canvas_third;
+
+        let c = pixels::Color::RGBA(240, 240, 240, 255);
+        graphics::render_text(canvas, font, c, page_x as i32 + 100, 100, "Replays");
+    }
+}
+
 pub enum MenuOptionSize {
     Regular,
     Large,
@@ -175,6 +215,8 @@ pub struct Menu<'ttf, 'rwops> {
 
     prefs_page: PreferencesPage,
     show_prefs_page: bool,
+    replays_page: ReplaysPage,
+    show_replays_page: bool,
 
     options: Vec<MenuOption>,
     selected_option: Option<usize>,
@@ -200,6 +242,8 @@ impl<'ttf, 'rwops> Menu<'ttf, 'rwops> {
                 large_font,
                 prefs_page: PreferencesPage::new(),
                 show_prefs_page: false,
+                replays_page: ReplaysPage::new(),
+                show_replays_page: false,
                 options: vec![],
                 selected_option: None,
             };
@@ -212,7 +256,7 @@ impl<'ttf, 'rwops> Menu<'ttf, 'rwops> {
             menu.options.push(MenuOption::new(
                 "Replays".to_string(),
                 MenuOptionSize::Regular,
-                SelectionAction::Menu(MenuAction::ShowPreferences),
+                SelectionAction::Menu(MenuAction::ShowReplays),
             ));
             menu.options.push(MenuOption::new(
                 "Preferences".to_string(),
@@ -271,6 +315,8 @@ impl<'ttf, 'rwops> Menu<'ttf, 'rwops> {
 
         if self.show_prefs_page {
             self.prefs_page.render(canvas, &self.regular_font)
+        } else if self.show_replays_page {
+            self.replays_page.render(canvas, &self.regular_font)
         }
     }
     pub fn process_events(&mut self, event_pump: &mut sdl2::EventPump) -> Vec<actions::Action> {
@@ -293,6 +339,8 @@ impl<'ttf, 'rwops> Menu<'ttf, 'rwops> {
                             self.show_prefs_page = false;
                             let prefs = self.prefs_page.preferences();
                             ui_actions.push(actions::Action::PreferencesUpdate(prefs));
+                        } else if self.show_replays_page {
+                            self.show_replays_page = false;
                         } else {
                             ui_actions.push(actions::Action::MenuHide);
                         }
@@ -347,6 +395,7 @@ impl<'ttf, 'rwops> Menu<'ttf, 'rwops> {
             SelectionAction::UI(action) => ui_actions.push(action.clone()),
             SelectionAction::Menu(action) => match action {
                 MenuAction::ShowPreferences => self.show_prefs_page = true,
+                MenuAction::ShowReplays => self.show_replays_page = true,
             },
         }
     }
