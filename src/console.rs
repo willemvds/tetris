@@ -24,7 +24,7 @@ impl<'ttf, 'rwops> Console<'ttf, 'rwops> {
         ttf_context: &'ttf ttf::Sdl2TtfContext,
     ) -> Result<Console<'ttf, 'rwops>, String> {
         let font_bytes = registry
-            .get("fonts/PressStart2P-Regular.ttf")
+            .get("fonts/SourceCodePro-Regular.otf")
             .map_err(|e| e.to_string())?;
         let rw = rwops::RWops::from_bytes(font_bytes)?;
         let font = ttf_context.load_font_from_rwops(rw, 18)?;
@@ -80,9 +80,18 @@ impl<'ttf, 'rwops> Console<'ttf, 'rwops> {
     }
 
     pub fn render(&self, canvas: &mut render::Canvas<video::Window>) {
-        let (canvas_width, _) = canvas.window().size();
+        let (canvas_width, canvas_height) = canvas.window().size();
+        let height_third = canvas_height / 3;
         canvas.set_draw_color(pixels::Color::RGBA(80, 80, 80, 200));
-        let _ = canvas.fill_rect(rect::Rect::new(0, 0, canvas_width, 500));
+        let _ = canvas.fill_rect(rect::Rect::new(0, 0, canvas_width, height_third * 2));
+
+        canvas.set_draw_color(pixels::Color::RGB(200, 0, 0));
+        let _ = canvas.fill_rect(rect::Rect::new(
+            0,
+            (height_third * 2) as i32 - 3,
+            canvas_width,
+            3,
+        ));
 
         let mut y = 10;
         for line in self.history.iter() {
@@ -103,7 +112,7 @@ impl<'ttf, 'rwops> Console<'ttf, 'rwops> {
                 &self.font,
                 pixels::Color::RGBA(0, 255, 0, 255),
                 20,
-                450,
+                (height_third * 2) as i32 - 50,
                 &self.buffer,
             );
         }
