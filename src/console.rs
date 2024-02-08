@@ -12,21 +12,14 @@ use sdl2::ttf;
 use sdl2::video;
 
 enum ConsoleBlock {
-    Text(String),
+    Text(pixels::Color, String),
 }
 
 impl ConsoleBlock {
     fn render(&self, canvas: &mut render::Canvas<video::Window>, font: &ttf::Font, y: i32) -> u32 {
         match self {
-            ConsoleBlock::Text(text) => {
-                graphics::render_text(
-                    canvas,
-                    &font,
-                    pixels::Color::RGBA(255, 255, 255, 255),
-                    20,
-                    y,
-                    text,
-                );
+            ConsoleBlock::Text(colour, text) => {
+                graphics::render_text(canvas, &font, colour.clone(), 20, y, text);
                 40
             }
         }
@@ -76,7 +69,10 @@ impl<'ttf, 'rwops> Console<'ttf, 'rwops> {
                             let cmd = self.buffer.clone();
                             ui_actions.push(actions::Action::ConsoleCommand(cmd.clone()));
 
-                            self.println(format!("> {0}", cmd));
+                            self.println_with_colour(
+                                pixels::Color::RGBA(0, 255, 0, 255),
+                                format!("> {0}", cmd),
+                            );
                             self.buffer = "".to_string();
                         }
                     }
@@ -97,8 +93,15 @@ impl<'ttf, 'rwops> Console<'ttf, 'rwops> {
         ui_actions
     }
 
+    pub fn println_with_colour(&mut self, colour: pixels::Color, text: String) {
+        self.history.push(ConsoleBlock::Text(colour, text))
+    }
+
     pub fn println(&mut self, text: String) {
-        self.history.push(ConsoleBlock::Text(text))
+        self.history.push(ConsoleBlock::Text(
+            pixels::Color::RGBA(255, 255, 255, 0),
+            text,
+        ))
     }
 
     pub fn render(&self, canvas: &mut render::Canvas<video::Window>) {
