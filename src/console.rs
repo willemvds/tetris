@@ -16,7 +16,7 @@ enum ConsoleBlock {
 }
 
 impl ConsoleBlock {
-    fn render(&self, canvas: &mut render::Canvas<video::Window>, font: &ttf::Font, y: i32) {
+    fn render(&self, canvas: &mut render::Canvas<video::Window>, font: &ttf::Font, y: i32) -> u32 {
         match self {
             ConsoleBlock::Text(text) => {
                 graphics::render_text(
@@ -27,6 +27,7 @@ impl ConsoleBlock {
                     y,
                     text,
                 );
+                40
             }
         }
     }
@@ -114,10 +115,9 @@ impl<'ttf, 'rwops> Console<'ttf, 'rwops> {
             3,
         ));
 
-        let mut y = (height_third as i32 * 2) - 40;
+        let mut y = (height_third as i32 * 2) - 80;
         for block in self.history.iter().rev() {
-            y -= 40;
-            block.render(canvas, &self.font, y);
+            y -= block.render(canvas, &self.font, y) as i32;
         }
 
         if !self.buffer.is_empty() {
