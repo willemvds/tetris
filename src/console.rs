@@ -115,7 +115,7 @@ impl<'ttf, 'rwops> Console<'ttf, 'rwops> {
         ));
 
         let mut y = (height_third as i32 * 2) - 40;
-        for block in self.history.iter() {
+        for block in self.history.iter().rev() {
             y -= 40;
             block.render(canvas, &self.font, y);
         }
