@@ -13,6 +13,7 @@ Using [Tetris Guideline (Tetris Wiki)](https://tetris.wiki/Tetris_Guideline) and
 - ✅ Menus.
 - ☐ Game stats.
 - ☐ Sound.
+- ☐ Sound packs (dota 2 style).
 - ✅ Game controller support.
 - ✅ User preferences.
 - ✅ Configurable game rules.
