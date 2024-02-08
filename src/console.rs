@@ -11,8 +11,29 @@ use sdl2::rwops;
 use sdl2::ttf;
 use sdl2::video;
 
+enum ConsoleBlock {
+    Text(String),
+}
+
+impl ConsoleBlock {
+    fn render(&self, canvas: &mut render::Canvas<video::Window>, font: &ttf::Font, y: i32) {
+        match self {
+            ConsoleBlock::Text(text) => {
+                graphics::render_text(
+                    canvas,
+                    &font,
+                    pixels::Color::RGBA(255, 255, 255, 255),
+                    20,
+                    y,
+                    text,
+                );
+            }
+        }
+    }
+}
+
 pub struct Console<'ttf, 'rwops> {
-    history: Vec<String>,
+    history: Vec<ConsoleBlock>,
     buffer: String,
 
     font: ttf::Font<'ttf, 'rwops>,
@@ -76,7 +97,7 @@ impl<'ttf, 'rwops> Console<'ttf, 'rwops> {
     }
 
     pub fn println(&mut self, text: String) {
-        self.history.push(text)
+        self.history.push(ConsoleBlock::Text(text))
     }
 
     pub fn render(&self, canvas: &mut render::Canvas<video::Window>) {
@@ -93,17 +114,10 @@ impl<'ttf, 'rwops> Console<'ttf, 'rwops> {
             3,
         ));
 
-        let mut y = 10;
-        for line in self.history.iter() {
-            graphics::render_text(
-                canvas,
-                &self.font,
-                pixels::Color::RGBA(255, 255, 255, 255),
-                20,
-                y,
-                line,
-            );
-            y += 30
+        let mut y = (height_third as i32 * 2) - 40;
+        for block in self.history.iter() {
+            y -= 40;
+            block.render(canvas, &self.font, y);
         }
 
         if !self.buffer.is_empty() {
