@@ -1,6 +1,7 @@
 use crate::actions;
 use crate::assets;
 use crate::graphics;
+use crate::tetris::tetrominos;
 
 use sdl2::event;
 use sdl2::keyboard;
@@ -13,6 +14,7 @@ use sdl2::video;
 
 enum ConsoleBlock {
     Text(pixels::Color, String),
+    Tetromino(tetrominos::Kind),
 }
 
 impl ConsoleBlock {
@@ -21,6 +23,24 @@ impl ConsoleBlock {
             ConsoleBlock::Text(colour, text) => {
                 graphics::render_text(canvas, &font, colour.clone(), 20, y, text);
                 40
+            }
+            ConsoleBlock::Tetromino(kind) => {
+                let tetro = tetrominos::from_kind(*kind);
+
+                let cell_size = 32;
+                for i in 0..4 {
+                    let form = tetro.forms[i];
+                    graphics::render_form(
+                        canvas,
+                        form,
+                        graphics::tetromino_colour(*kind).clone(),
+                        cell_size,
+                        20 + ((cell_size * 4) * i as i32) + (cell_size * i as i32),
+                        y - (cell_size * 3),
+                    );
+                }
+
+                cell_size as u32 * 4
             }
         }
     }
@@ -102,6 +122,10 @@ impl<'ttf, 'rwops> Console<'ttf, 'rwops> {
             pixels::Color::RGBA(255, 255, 255, 0),
             text,
         ))
+    }
+
+    pub fn print_tetromino(&mut self, kind: tetrominos::Kind) {
+        self.history.push(ConsoleBlock::Tetromino(kind))
     }
 
     pub fn render(&self, canvas: &mut render::Canvas<video::Window>) {

@@ -1,3 +1,5 @@
+use crate::tetris::tetrominos;
+
 use sdl2::pixels;
 use sdl2::rect;
 use sdl2::render;
@@ -60,4 +62,40 @@ pub fn render_text_centered(
     let target = rect::Rect::new(target_x, target_y, text_width, char_height);
 
     let _ = canvas.copy(&texture, None, Some(target));
+}
+
+pub fn render_form(
+    canvas: &mut render::Canvas<video::Window>,
+    s: tetrominos::Form,
+    colour: pixels::Color,
+    size: i32,
+    x: i32,
+    y: i32,
+) {
+    canvas.set_draw_color(colour);
+    for row in 0..4 {
+        for col in 0..4 {
+            if s[row][col] == 0 {
+                continue;
+            }
+            let _ = canvas.fill_rect(rect::Rect::new(
+                x + (col as i32 * size),
+                y + (row as i32 * size),
+                size as u32,
+                size as u32,
+            ));
+        }
+    }
+}
+
+pub fn tetromino_colour(kind: tetrominos::Kind) -> pixels::Color {
+    match kind {
+        tetrominos::Kind::Hook => pixels::Color::RGB(92, 101, 168),
+        tetrominos::Kind::Pyramid => pixels::Color::RGB(161, 82, 153),
+        tetrominos::Kind::Seven => pixels::Color::RGB(224, 127, 58),
+        tetrominos::Kind::Snake => pixels::Color::RGB(100, 180, 82),
+        tetrominos::Kind::Square => pixels::Color::RGB(241, 212, 72),
+        tetrominos::Kind::Stick => pixels::Color::RGB(99, 196, 234),
+        tetrominos::Kind::Zig => pixels::Color::RGB(220, 58, 53),
+    }
 }

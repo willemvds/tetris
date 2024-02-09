@@ -14,6 +14,7 @@ mod preferences;
 mod replays;
 mod tetris;
 use tetris::game;
+use tetris::tetrominos;
 
 extern crate sdl2;
 use sdl2::controller;
@@ -258,13 +259,17 @@ fn main() -> Result<(), String> {
                 actions::Action::ConsoleShow => ui_layers.show(UI_LAYER_CONSOLE),
                 actions::Action::ConsoleHide => ui_layers.hide(UI_LAYER_CONSOLE),
                 actions::Action::ConsoleCommand(cmd) => {
-                    if cmd == "quit" {
-                        break 'main;
-                    }
-                    if cmd == "speed" {
-                        //                        console.println(format!("Speed = {0}", game.speed));
-                    } else {
-                        console.println("EH wha?".to_string());
+                    match cmd.as_str() {
+                        "quit" => break 'main,
+                        "speed" => (),
+                        "stick" => console.print_tetromino(tetrominos::Kind::Stick),
+                        "seven" => console.print_tetromino(tetrominos::Kind::Seven),
+                        "hook" => console.print_tetromino(tetrominos::Kind::Hook),
+                        "square" => console.print_tetromino(tetrominos::Kind::Square),
+                        "snake" => console.print_tetromino(tetrominos::Kind::Snake),
+                        "pyramid" => console.print_tetromino(tetrominos::Kind::Pyramid),
+                        "zig" => console.print_tetromino(tetrominos::Kind::Zig),
+                        _ => console.println("EH wha?".to_string()),
                     }
                     println!("CONSOLE CMD = {0}", cmd);
                 }
