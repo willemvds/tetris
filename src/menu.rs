@@ -322,10 +322,8 @@ impl<'ttf, 'rwops> Menu<'ttf, 'rwops> {
     pub fn process_events(&mut self, event_pump: &mut sdl2::EventPump) -> Vec<actions::Action> {
         let mut ui_actions = vec![];
         for event in event_pump.poll_iter() {
-            if self.show_prefs_page {
-                if self.prefs_page.handle_event(&event) {
-                    continue;
-                }
+            if self.show_prefs_page && self.prefs_page.handle_event(&event) {
+                continue;
             }
             match event {
                 event::Event::Quit { .. } => ui_actions.push(actions::Action::Quit),
