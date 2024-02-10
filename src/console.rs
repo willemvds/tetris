@@ -21,7 +21,7 @@ impl ConsoleBlock {
     fn render(&self, canvas: &mut render::Canvas<video::Window>, font: &ttf::Font, y: i32) -> u32 {
         match self {
             ConsoleBlock::Text(colour, text) => {
-                graphics::render_text(canvas, font, colour.clone(), 20, y, text);
+                graphics::render_text(canvas, font, *colour, 20, y, text);
                 40
             }
             ConsoleBlock::Tetromino(kind) => {
@@ -33,7 +33,7 @@ impl ConsoleBlock {
                     graphics::render_form(
                         canvas,
                         form,
-                        graphics::tetromino_colour(*kind).clone(),
+                        graphics::tetromino_colour(*kind),
                         cell_size,
                         20 + ((cell_size * 4) * i as i32) + (cell_size * i as i32),
                         y - (cell_size * 3),
