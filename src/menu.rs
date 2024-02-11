@@ -325,6 +325,9 @@ impl<'ttf, 'rwops> Menu<'ttf, 'rwops> {
             if self.show_prefs_page && self.prefs_page.handle_event(&event) {
                 continue;
             }
+            if self.show_replays_page && self.replays_page.handle_event(&event) {
+                continue;
+            }
             match event {
                 event::Event::Quit { .. } => ui_actions.push(actions::Action::Quit),
                 event::Event::KeyDown {
@@ -392,8 +395,14 @@ impl<'ttf, 'rwops> Menu<'ttf, 'rwops> {
         match &selected_option.selection_action {
             SelectionAction::UI(action) => ui_actions.push(action.clone()),
             SelectionAction::Menu(action) => match action {
-                MenuAction::ShowPreferences => self.show_prefs_page = true,
-                MenuAction::ShowReplays => self.show_replays_page = true,
+                MenuAction::ShowPreferences => {
+                    self.show_replays_page = false;
+                    self.show_prefs_page = true
+                }
+                MenuAction::ShowReplays => {
+                    self.show_prefs_page = false;
+                    self.show_replays_page = true
+                }
             },
         }
     }
