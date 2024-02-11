@@ -60,10 +60,10 @@ struct RadioGroup {
 }
 
 impl RadioGroup {
-    fn new(options: Vec<RadioOption>) -> RadioGroup {
+    fn new(options: Vec<RadioOption>, selected_option: usize) -> RadioGroup {
         RadioGroup {
             options,
-            selected_option: 0,
+            selected_option,
         }
     }
 
@@ -79,29 +79,39 @@ impl RadioGroup {
 }
 
 struct PreferencesPage {
+    preferences: preferences::Preferences,
+
     drop_indicator_radio: RadioGroup,
 }
 
 impl PreferencesPage {
-    fn new() -> PreferencesPage {
+    fn new(preferences: preferences::Preferences) -> PreferencesPage {
+        let selected_option = match preferences.drop_indicator {
+            preferences::DropIndicatorStyle::None => 0,
+            preferences::DropIndicatorStyle::Outline => 1,
+            preferences::DropIndicatorStyle::Triangles => 2,
+        };
         PreferencesPage {
-            drop_indicator_radio: RadioGroup::new(vec![
-                RadioOption::new("None".to_string()),
-                RadioOption::new("Outline".to_string()),
-                RadioOption::new("Triangles".to_string()),
-            ]),
+            preferences,
+            drop_indicator_radio: RadioGroup::new(
+                vec![
+                    RadioOption::new("None".to_string()),
+                    RadioOption::new("Outline".to_string()),
+                    RadioOption::new("Triangles".to_string()),
+                ],
+                selected_option,
+            ),
         }
     }
 
-    fn preferences(&self) -> preferences::Preferences {
-        let mut prefs = preferences::Preferences::new();
-        prefs.drop_indicator = match self.drop_indicator_radio.selected_option {
+    fn preferences(&mut self) -> preferences::Preferences {
+        self.preferences.drop_indicator = match self.drop_indicator_radio.selected_option {
             1 => preferences::DropIndicatorStyle::Outline,
             2 => preferences::DropIndicatorStyle::Triangles,
             _ => preferences::DropIndicatorStyle::None,
         };
 
-        prefs
+        self.preferences.clone()
     }
 
     fn handle_event(&mut self, event: &event::Event) -> bool {
@@ -226,6 +236,7 @@ impl<'ttf, 'rwops> Menu<'ttf, 'rwops> {
     pub fn new(
         registry: &'rwops assets::Registry,
         ttf_context: &'ttf ttf::Sdl2TtfContext,
+        preferences: preferences::Preferences,
     ) -> Result<Menu<'ttf, 'rwops>, String> {
         let font_bytes = registry
             .get("fonts/SourceCodePro-Regular.otf")
@@ -240,7 +251,7 @@ impl<'ttf, 'rwops> Menu<'ttf, 'rwops> {
             let mut menu = Menu {
                 regular_font,
                 large_font,
-                prefs_page: PreferencesPage::new(),
+                prefs_page: PreferencesPage::new(preferences),
                 show_prefs_page: false,
                 replays_page: ReplaysPage::new(),
                 show_replays_page: false,

@@ -59,6 +59,17 @@ impl UILayers {
     }
 }
 
+fn load_preferences_from_file(path: &str) -> Result<preferences::Preferences, String> {
+    if let Ok(preferences_file) = fs::File::open(path) {
+        let preferences_reader = io::BufReader::new(preferences_file);
+        let prefs: preferences::Preferences =
+            serde_json::from_reader(preferences_reader).map_err(|e| e.to_string())?;
+        return Ok(prefs);
+    }
+
+    Err("Preferences not found".to_string())
+}
+
 fn load_last_game_state() -> Result<game::Game, String> {
     if let Ok(last_game_state_file) = fs::File::open("last_game_state.json") {
         let last_game_state_reader = io::BufReader::new(last_game_state_file);
@@ -81,6 +92,13 @@ fn main() -> Result<(), String> {
     for asset in ASSET_MANIFEST.iter() {
         let content = fs::read(format!("assets/{}", asset)).map_err(|e| e.to_string())?;
         registry.insert(asset, content)
+    }
+
+    match load_preferences_from_file("preferences.json") {
+        Ok(preferences) => prefs = preferences,
+        Err(err) => {
+            println!("err = {}", err)
+        }
     }
 
     let args: Vec<String> = env::args().collect();
@@ -125,7 +143,8 @@ fn main() -> Result<(), String> {
     }
 
     let mut console = console::Console::new(&registry, &ttf_context)?;
-    let mut menu = menu::Menu::new(&registry, &ttf_context)?;
+
+    let mut menu = menu::Menu::new(&registry, &ttf_context, prefs.clone())?;
 
     let mut font = ttf_context.load_font_from_rwops(
         registry
@@ -308,6 +327,9 @@ fn main() -> Result<(), String> {
         run_time_secs = 1
     }
     println!("FPS = {0}", frames / run_time_secs);
+
+    let mut preferences_file = fs::File::create("preferences.json").map_err(|e| e.to_string())?;
+    serde_json::to_writer_pretty(&mut preferences_file, &prefs).map_err(|e| e.to_string())?;
 
     if let Ok(recording) = game_shell.recording() {
         let mut recording_file =
