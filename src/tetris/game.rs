@@ -123,8 +123,20 @@ pub struct Game {
     pub recording: recordings::Recording,
 }
 
-const fn calculate_speed_from_level(level: u8) -> u8 {
-    150 - (level * 15)
+pub const fn calculate_speed_from_level(level: u8) -> u8 {
+    match level {
+        1 => 70,
+        2 => 60,
+        3 => 51,
+        4 => 43,
+        5 => 36,
+        6 => 30,
+        7 => 25,
+        8 => 21,
+        9 => 18,
+        10 => 16,
+        _ => 15,
+    }
 }
 
 impl Game {
