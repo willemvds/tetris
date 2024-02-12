@@ -155,7 +155,6 @@ fn main() -> Result<(), String> {
                 if let Some(path_str) = path.to_str() {
                     replay_paths.push(path_str.to_string())
                 }
-                //replay_paths.push(path);
             }
         }
     }
