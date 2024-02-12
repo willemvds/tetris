@@ -159,11 +159,13 @@ impl PreferencesPage {
     }
 }
 
-struct ReplaysPage {}
+struct ReplaysPage {
+    replays: Vec<String>,
+}
 
 impl ReplaysPage {
-    fn new() -> ReplaysPage {
-        ReplaysPage {}
+    fn new(replays: Vec<String>) -> ReplaysPage {
+        ReplaysPage { replays }
     }
 
     fn handle_event(&mut self, event: &event::Event) -> bool {
@@ -195,6 +197,17 @@ impl ReplaysPage {
 
         let c = pixels::Color::RGBA(240, 240, 240, 255);
         graphics::render_text(canvas, font, c, page_x as i32 + 100, 100, "Replays");
+
+        for (idx, path) in self.replays.iter().enumerate() {
+            graphics::render_text(
+                canvas,
+                font,
+                c,
+                page_x as i32 + 100,
+                200 + (idx as i32 * 50),
+                &path,
+            );
+        }
     }
 }
 
@@ -237,6 +250,7 @@ impl<'ttf, 'rwops> Menu<'ttf, 'rwops> {
         registry: &'rwops assets::Registry,
         ttf_context: &'ttf ttf::Sdl2TtfContext,
         preferences: preferences::Preferences,
+        replay_paths: Vec<String>,
     ) -> Result<Menu<'ttf, 'rwops>, String> {
         let font_bytes = registry
             .get("fonts/SourceCodePro-Regular.otf")
@@ -253,7 +267,7 @@ impl<'ttf, 'rwops> Menu<'ttf, 'rwops> {
                 large_font,
                 prefs_page: PreferencesPage::new(preferences),
                 show_prefs_page: false,
-                replays_page: ReplaysPage::new(),
+                replays_page: ReplaysPage::new(replay_paths),
                 show_replays_page: false,
                 options: vec![],
                 selected_option: None,

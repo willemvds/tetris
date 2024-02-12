@@ -144,7 +144,22 @@ fn main() -> Result<(), String> {
 
     let mut console = console::Console::new(&registry, &ttf_context)?;
 
-    let mut menu = menu::Menu::new(&registry, &ttf_context, prefs.clone())?;
+    let mut replay_paths = vec![];
+    if let Ok(dir_iter) = fs::read_dir("replays") {
+        for entry in dir_iter {
+            if let Ok(file) = entry {
+                let path = file.path();
+                if path.is_dir() {
+                    continue;
+                }
+                if let Some(path_str) = path.to_str() {
+                    replay_paths.push(path_str.to_string())
+                }
+                //replay_paths.push(path);
+            }
+        }
+    }
+    let mut menu = menu::Menu::new(&registry, &ttf_context, prefs.clone(), replay_paths)?;
 
     let mut font = ttf_context.load_font_from_rwops(
         registry
