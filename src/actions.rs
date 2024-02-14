@@ -15,5 +15,6 @@ pub enum Action {
     ConsoleShow,
 
     NewGame,
+    ReplayLoad(String),
     TogglePause,
 }

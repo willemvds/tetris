@@ -84,6 +84,14 @@ fn load_last_game_state() -> Result<game::Game, String> {
     Err("Previous game state not available.".to_string())
 }
 
+fn load_replay(path: &str) -> Result<replays::Replay, String> {
+    let recording_file = fs::File::open(path).map_err(|e| e.to_string())?;
+    let recording_file_reader = io::BufReader::new(recording_file);
+    let recording = serde_json::from_reader(recording_file_reader).map_err(|e| e.to_string())?;
+
+    Ok(replays::Replay { recording })
+}
+
 fn main() -> Result<(), String> {
     let mut ui_layers = UILayers::new();
     let mut prefs = preferences::Preferences::new();
@@ -106,11 +114,10 @@ fn main() -> Result<(), String> {
     let mut replay: Option<replays::Replay> = None;
     let mut last_game = None;
     if args.len() > 1 {
-        let recording_file = fs::File::open(args[1].clone()).map_err(|e| e.to_string())?;
-        let recording_file_reader = io::BufReader::new(recording_file);
-        let recording =
-            serde_json::from_reader(recording_file_reader).map_err(|e| e.to_string())?;
-        replay = Some(replays::Replay { recording });
+        replay = match load_replay(&args[1]) {
+            Ok(r) => Some(r),
+            Err(_) => None,
+        }
     } else {
         match load_last_game_state() {
             Ok(lgs) => last_game = Some(lgs),
@@ -269,6 +276,15 @@ fn main() -> Result<(), String> {
                     let new_game = game::Game::new(game_rules.clone(), None)?;
                     game_shell.load_game(new_game);
                 }
+                actions::Action::ReplayLoad(path) => match load_replay(path) {
+                    Ok(r) => {
+                        let replay_pieces = replays::ReplayPieces::new(&r);
+                        let replay_game =
+                            game::Game::new(game_rules.clone(), Some(Box::new(replay_pieces)))?;
+                        game_shell.load_replay(replay_game, r)
+                    }
+                    Err(_) => (),
+                },
                 actions::Action::TogglePause => game_shell.toggle_pause(),
                 actions::Action::ToggleFullScreen => {
                     if canvas.window().fullscreen_state() == video::FullscreenType::Off {

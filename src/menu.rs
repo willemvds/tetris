@@ -48,7 +48,7 @@ impl RadioOption {
         let selected_bg_colour = pixels::Color::RGB(50, 200, 20);
 
         canvas.set_draw_color(selected_bg_colour);
-        let _ = canvas.fill_rect(rect::Rect::new(x, y, 200, 50));
+        let _ = canvas.fill_rect(rect::Rect::new(x, y, 800, 50));
 
         graphics::render_text(canvas, font, text_colour, x, y, &self.text);
     }
@@ -70,9 +70,9 @@ impl RadioGroup {
     fn render(&self, canvas: &mut render::Canvas<video::Window>, font: &ttf::Font, x: i32, y: i32) {
         for (idx, option) in self.options.iter().enumerate() {
             if idx == self.selected_option {
-                option.render_selected(canvas, font, x + (idx * 200) as i32, y);
+                option.render_selected(canvas, font, x, y + (idx * 70) as i32);
             } else {
-                option.render(canvas, font, x + (idx * 200) as i32, y);
+                option.render(canvas, font, x, y + (idx * 70) as i32);
             }
         }
     }
@@ -120,12 +120,12 @@ impl PreferencesPage {
                 keycode: Some(keycode),
                 ..
             } => match keycode {
-                keyboard::Keycode::Left => {
+                keyboard::Keycode::Up => {
                     if self.drop_indicator_radio.selected_option > 0 {
                         self.drop_indicator_radio.selected_option -= 1
                     }
                 }
-                keyboard::Keycode::Right => {
+                keyboard::Keycode::Down => {
                     if self.drop_indicator_radio.selected_option < 2 {
                         self.drop_indicator_radio.selected_option += 1
                     }
@@ -161,11 +161,24 @@ impl PreferencesPage {
 
 struct ReplaysPage {
     replays: Vec<String>,
+
+    replays_radio: RadioGroup,
 }
 
 impl ReplaysPage {
     fn new(replays: Vec<String>) -> ReplaysPage {
-        ReplaysPage { replays }
+        ReplaysPage {
+            replays: replays.clone(),
+
+            replays_radio: RadioGroup::new(
+                replays
+                    .clone()
+                    .into_iter()
+                    .map(|item| RadioOption::new(item.to_string()))
+                    .collect(),
+                0,
+            ),
+        }
     }
 
     fn handle_event(&mut self, event: &event::Event) -> bool {
@@ -174,6 +187,16 @@ impl ReplaysPage {
                 keycode: Some(keycode),
                 ..
             } => match keycode {
+                keyboard::Keycode::Up => {
+                    if self.replays_radio.selected_option > 0 {
+                        self.replays_radio.selected_option -= 1
+                    }
+                }
+                keyboard::Keycode::Down => {
+                    if self.replays_radio.selected_option < self.replays.len() - 1 {
+                        self.replays_radio.selected_option += 1
+                    }
+                }
                 _ => (),
             },
             _ => (),
@@ -198,16 +221,8 @@ impl ReplaysPage {
         let c = pixels::Color::RGBA(240, 240, 240, 255);
         graphics::render_text(canvas, font, c, page_x as i32 + 100, 100, "Replays");
 
-        for (idx, path) in self.replays.iter().enumerate() {
-            graphics::render_text(
-                canvas,
-                font,
-                c,
-                page_x as i32 + 100,
-                200 + (idx as i32 * 50),
-                &path,
-            );
-        }
+        self.replays_radio
+            .render(canvas, font, page_x as i32 + 100, 150);
     }
 }
 
