@@ -101,7 +101,8 @@ impl<'ttf, 'rwops> GameShell<'ttf, 'rwops> {
     }
 
     pub fn load_game(&mut self, game: game::Game) {
-        self.game = game
+        self.game = game;
+        self.mode = Mode::Tetris;
     }
 
     pub fn pause(&mut self) {
