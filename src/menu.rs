@@ -181,7 +181,7 @@ impl ReplaysPage {
         }
     }
 
-    fn handle_event(&mut self, event: &event::Event) -> bool {
+    fn handle_event(&mut self, event: &event::Event) -> Option<actions::Action> {
         match event {
             event::Event::KeyDown {
                 keycode: Some(keycode),
@@ -197,12 +197,16 @@ impl ReplaysPage {
                         self.replays_radio.selected_option += 1
                     }
                 }
+                keyboard::Keycode::Return => {
+                    let path = self.replays[self.replays_radio.selected_option].clone();
+                    return Some(actions::Action::ReplayLoad(path));
+                }
                 _ => (),
             },
             _ => (),
         }
 
-        false
+        None
     }
 
     fn render(&self, canvas: &mut render::Canvas<video::Window>, font: &ttf::Font) {
@@ -365,8 +369,12 @@ impl<'ttf, 'rwops> Menu<'ttf, 'rwops> {
             if self.show_prefs_page && self.prefs_page.handle_event(&event) {
                 continue;
             }
-            if self.show_replays_page && self.replays_page.handle_event(&event) {
-                continue;
+            if self.show_replays_page {
+                if let Some(a) = self.replays_page.handle_event(&event) {
+                    ui_actions.push(a);
+                    self.show_replays_page = false;
+                    continue;
+                }
             }
             match event {
                 event::Event::Quit { .. } => ui_actions.push(actions::Action::Quit),
