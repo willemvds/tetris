@@ -329,11 +329,12 @@ fn main() -> Result<(), String> {
 
         game_shell.render(&mut canvas, &prefs);
 
+        let (ww, _) = canvas.window().size();
         graphics::render_text(
             &mut canvas,
             &font,
             pixels::Color::RGB(0, 0, 255),
-            20,
+            ww as i32 - 400,
             20,
             &format!("{:.2} fps", frame_rate),
         );
