@@ -123,12 +123,14 @@ impl PreferencesPage {
                 keyboard::Keycode::Up => {
                     if self.drop_indicator_radio.selected_option > 0 {
                         self.drop_indicator_radio.selected_option -= 1
-                    }
+                    };
+                    return true
                 }
                 keyboard::Keycode::Down => {
                     if self.drop_indicator_radio.selected_option < 2 {
                         self.drop_indicator_radio.selected_option += 1
-                    }
+                    };
+                    return true
                 }
                 _ => (),
             },
