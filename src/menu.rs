@@ -124,13 +124,13 @@ impl PreferencesPage {
                     if self.drop_indicator_radio.selected_option > 0 {
                         self.drop_indicator_radio.selected_option -= 1
                     };
-                    return true
+                    return true;
                 }
                 keyboard::Keycode::Down => {
                     if self.drop_indicator_radio.selected_option < 2 {
                         self.drop_indicator_radio.selected_option += 1
                     };
-                    return true
+                    return true;
                 }
                 _ => (),
             },
@@ -183,7 +183,7 @@ impl ReplaysPage {
         }
     }
 
-    fn handle_event(&mut self, event: &event::Event) -> Option<actions::Action> {
+    fn handle_event(&mut self, event: &event::Event) -> (bool, Option<actions::Action>) {
         match event {
             event::Event::KeyDown {
                 keycode: Some(keycode),
@@ -193,22 +193,24 @@ impl ReplaysPage {
                     if self.replays_radio.selected_option > 0 {
                         self.replays_radio.selected_option -= 1
                     }
+                    return (true, None);
                 }
                 keyboard::Keycode::Down => {
                     if self.replays_radio.selected_option < self.replays.len() - 1 {
                         self.replays_radio.selected_option += 1
                     }
+                    return (true, None);
                 }
                 keyboard::Keycode::Return => {
                     let path = self.replays[self.replays_radio.selected_option].clone();
-                    return Some(actions::Action::ReplayLoad(path));
+                    return (true, Some(actions::Action::ReplayLoad(path)));
                 }
                 _ => (),
             },
             _ => (),
         }
 
-        None
+        (false, None)
     }
 
     fn render(&self, canvas: &mut render::Canvas<video::Window>, font: &ttf::Font) {
@@ -372,9 +374,12 @@ impl<'ttf, 'rwops> Menu<'ttf, 'rwops> {
                 continue;
             }
             if self.show_replays_page {
-                if let Some(a) = self.replays_page.handle_event(&event) {
+                let (handled, maybe_action) = self.replays_page.handle_event(&event);
+                if let Some(a) = maybe_action {
                     ui_actions.push(a);
                     self.show_replays_page = false;
+                }
+                if handled {
                     continue;
                 }
             }
