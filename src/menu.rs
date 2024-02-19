@@ -297,9 +297,9 @@ impl<'ttf, 'rwops> Menu<'ttf, 'rwops> {
             };
 
             menu.options.push(MenuOption::new(
-                "Play".to_string(),
+                "Resume".to_string(),
                 MenuOptionSize::Large,
-                SelectionAction::UI(actions::Action::Play),
+                SelectionAction::UI(actions::Action::Resume),
             ));
             menu.options.push(MenuOption::new(
                 "Replays".to_string(),

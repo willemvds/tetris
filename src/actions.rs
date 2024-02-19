@@ -2,7 +2,7 @@ use crate::preferences;
 
 #[derive(Clone, PartialEq)]
 pub enum Action {
-    Play,
+    Resume,
     Quit,
     MenuHide,
     MenuShow,

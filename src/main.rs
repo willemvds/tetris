@@ -264,7 +264,7 @@ fn main() -> Result<(), String> {
             match action {
                 actions::Action::Quit => break 'main,
                 actions::Action::PreferencesUpdate(p) => prefs = p.clone(),
-                actions::Action::Play => {
+                actions::Action::Resume => {
                     if game_shell.is_gameover() {
                         let new_game = game::Game::new(game_rules.clone(), None)?;
                         game_shell.load_game(new_game);
