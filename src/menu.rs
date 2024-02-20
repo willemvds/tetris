@@ -342,6 +342,8 @@ impl<'ttf, 'rwops> Menu<'ttf, 'rwops> {
             true => pixels::Color::RGBA(50, 180, 50, 255),
             false => pixels::Color::RGBA(255, 255, 255, 255),
         };
+        let black = pixels::Color::RGB(0, 0, 0);
+        graphics::render_text(canvas, f, black, 102, y + 2, &opt.text);
         graphics::render_text(canvas, f, c, 100, y, &opt.text);
     }
 
