@@ -297,6 +297,12 @@ impl<'ttf, 'rwops> Menu<'ttf, 'rwops> {
             };
 
             menu.options.push(MenuOption::new(
+                "New Game".to_string(),
+                MenuOptionSize::Large,
+                SelectionAction::UI(actions::Action::GameNew),
+            ));
+
+            menu.options.push(MenuOption::new(
                 "Resume".to_string(),
                 MenuOptionSize::Large,
                 SelectionAction::UI(actions::Action::Resume),

@@ -272,7 +272,7 @@ fn main() -> Result<(), String> {
                     ui_layers.hide(UI_LAYER_MENU);
                     game_shell.unpause();
                 }
-                actions::Action::NewGame => {
+                actions::Action::GameNew => {
                     let new_game = game::Game::new(game_rules.clone(), None)?;
                     game_shell.load_game(new_game);
                 }

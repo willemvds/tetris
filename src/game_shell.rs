@@ -202,7 +202,7 @@ impl<'ttf, 'rwops> GameShell<'ttf, 'rwops> {
                     keyboard::Keycode::Backquote => ui_actions.push(actions::Action::ConsoleShow),
                     keyboard::Keycode::Space => {
                         if self.is_gameover() {
-                            ui_actions.push(actions::Action::NewGame)
+                            ui_actions.push(actions::Action::GameNew)
                         } else {
                             ui_actions.push(actions::Action::TogglePause)
                         }
@@ -242,7 +242,7 @@ impl<'ttf, 'rwops> GameShell<'ttf, 'rwops> {
                     controller::Button::Back => ui_actions.push(actions::Action::MenuShow),
                     controller::Button::Start => {
                         if self.is_gameover() {
-                            ui_actions.push(actions::Action::NewGame)
+                            ui_actions.push(actions::Action::GameNew)
                         } else {
                             ui_actions.push(actions::Action::TogglePause)
                         }
