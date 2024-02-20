@@ -245,7 +245,7 @@ fn main() -> Result<(), String> {
             slowest_frame = ftf;
         }
         if ftf > 0.25 {
-            println!("******************************************************* SLOW");
+            println!("Slow frame ({:?}). Capping simulation at 250ms.", frame_time);
             frame_time = time::Duration::from_millis(250);
         }
         start_time = now;
