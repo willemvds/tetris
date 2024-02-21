@@ -14,6 +14,7 @@ mod preferences;
 mod replays;
 mod tetris;
 use tetris::game;
+use tetris::rules;
 use tetris::tetrominos;
 
 extern crate sdl2;
@@ -211,6 +212,7 @@ fn main() -> Result<(), String> {
 
     let mut game_rules = tetris::rules::Rules::new();
     game_rules.lock_delay(50);
+    game_rules.scoring_system(rules::ScoringSystemKind::OriginalSega);
     // game_rules.lock_delay_on_hard_drop(true);
 
     let mut game_shell = game_shell::GameShell::new(
@@ -245,7 +247,10 @@ fn main() -> Result<(), String> {
             slowest_frame = ftf;
         }
         if ftf > 0.25 {
-            println!("Slow frame ({:?}). Capping simulation at 250ms.", frame_time);
+            println!(
+                "Slow frame ({:?}). Capping simulation at 250ms.",
+                frame_time
+            );
             frame_time = time::Duration::from_millis(250);
         }
         start_time = now;

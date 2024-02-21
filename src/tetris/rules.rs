@@ -3,6 +3,8 @@ use serde::{Deserialize, Serialize};
 #[derive(Clone, Deserialize, Serialize)]
 pub enum ScoringSystemKind {
     OriginalBPS,
+    OriginalSega,
+    OriginalNintendo,
 }
 
 #[derive(Clone, Deserialize, Serialize)]
@@ -31,5 +33,9 @@ impl Rules {
 
     pub fn lock_delay_on_hard_drop(&mut self, v: bool) {
         self.lock_delay_on_hard_drop = v
+    }
+
+    pub fn scoring_system(&mut self, kind: ScoringSystemKind) {
+        self.scoring_system = kind
     }
 }

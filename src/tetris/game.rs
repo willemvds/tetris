@@ -4,6 +4,7 @@ use crate::tetris::actions;
 use crate::tetris::playfield;
 use crate::tetris::recordings;
 use crate::tetris::rules;
+use crate::tetris::scoring;
 use crate::tetris::tetrominos;
 
 use rand;
@@ -113,6 +114,7 @@ pub struct Game {
     pub next_piece: tetrominos::Kind,
     piece_provider: Box<dyn PieceProvider>,
     pub piece: Piece,
+    scoring_system: Box<dyn scoring::System>,
     pub score_points: u32,
     pub score_lines_cleared: u32,
     level_lines_cleared: u32,
@@ -156,6 +158,12 @@ impl Game {
             None => Box::new(TetrominoBag::new()),
         };
 
+        let ss: Box<dyn scoring::System> = match rules.scoring_system {
+            rules::ScoringSystemKind::OriginalBPS => Box::new(scoring::OriginalBPS::new()),
+            rules::ScoringSystemKind::OriginalSega => Box::new(scoring::OriginalSega::new()),
+            _ => Box::new(scoring::OriginalBPS::new()),
+        };
+
         let mut g = Game {
             rules,
             state: State::Init,
@@ -168,6 +176,7 @@ impl Game {
             piece: Piece::new(tetrominos::Kind::Stick),
             next_piece: tetrominos::Kind::Stick,
 
+            scoring_system: ss,
             score_points: 0,
             score_lines_cleared: 0,
             level_lines_cleared: 0,
@@ -255,14 +264,9 @@ impl Game {
         self.level_lines_cleared += lines_cleared;
         self.score_lines_cleared += lines_cleared;
 
-        let points = match lines_cleared {
-            0 => 0,
-            1 => 40,
-            2 => 100,
-            3 => 300,
-            _ => 1200,
-        };
-        self.score_points += points;
+        self.score_points += self
+            .scoring_system
+            .lines_cleared(self.level, lines_cleared as u8);
         self.play_field.collapse();
 
         if self.level_lines_cleared >= 4 * self.level as u32 {
