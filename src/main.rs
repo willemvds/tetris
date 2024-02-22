@@ -14,7 +14,7 @@ mod preferences;
 mod replays;
 mod tetris;
 use tetris::game;
-use tetris::rules;
+use tetris::scoring;
 use tetris::tetrominos;
 
 extern crate sdl2;
@@ -212,7 +212,7 @@ fn main() -> Result<(), String> {
 
     let mut game_rules = tetris::rules::Rules::new();
     game_rules.lock_delay(50);
-    game_rules.scoring_system(rules::ScoringSystemKind::OriginalSega);
+    game_rules.scoring_system(scoring::Kind::OriginalSega);
     // game_rules.lock_delay_on_hard_drop(true);
 
     let mut game_shell = game_shell::GameShell::new(

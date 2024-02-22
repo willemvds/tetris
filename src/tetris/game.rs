@@ -159,8 +159,8 @@ impl Game {
         };
 
         let ss: Box<dyn scoring::System> = match rules.scoring_system {
-            rules::ScoringSystemKind::OriginalBPS => Box::new(scoring::OriginalBPS::new()),
-            rules::ScoringSystemKind::OriginalSega => Box::new(scoring::OriginalSega::new()),
+            scoring::Kind::OriginalSega => Box::new(scoring::OriginalSega::new()),
+            scoring::Kind::OriginalNintendo => Box::new(scoring::OriginalNintendo::new()),
             _ => Box::new(scoring::OriginalBPS::new()),
         };
 

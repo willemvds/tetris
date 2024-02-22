@@ -1,6 +1,13 @@
 use serde;
 use typetag;
 
+#[derive(Clone, serde::Deserialize, serde::Serialize)]
+pub enum Kind {
+    OriginalBPS,
+    OriginalSega,
+    OriginalNintendo,
+}
+
 #[typetag::serde(tag = "type")]
 pub trait System {
     fn lines_cleared(&mut self, level: u8, lines: u8) -> u32;
@@ -93,6 +100,37 @@ impl System for OriginalSega {
             },
         };
 
+        self.points += points;
+
+        points
+    }
+}
+
+#[derive(serde::Deserialize, serde::Serialize)]
+pub struct OriginalNintendo {
+    points: u32,
+    lines_cleared: u32,
+}
+
+impl OriginalNintendo {
+    pub fn new() -> OriginalNintendo {
+        OriginalNintendo {
+            points: 0,
+            lines_cleared: 0,
+        }
+    }
+}
+
+#[typetag::serde]
+impl System for OriginalNintendo {
+    fn lines_cleared(&mut self, level: u8, lines: u8) -> u32 {
+        let points = match lines {
+            1 => 40 * level as u32,
+            2 => 100 * level as u32,
+            3 => 300 * level as u32,
+            4 => 1200 * level as u32,
+            _ => 0,
+        };
         self.points += points;
 
         points
