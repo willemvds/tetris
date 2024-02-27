@@ -27,4 +27,6 @@ Using [Tetris Guideline (Tetris Wiki)](https://tetris.wiki/Tetris_Guideline) and
 - ☐ Get SDL controller functionality running on a background thread.
 - ☐ Binary serialisation formats.
 - ☐ Look at vendoring deps in rust. 
+- ☐ Submit scores+replays to Tetris HQ.
+- ☐ Have the game loop available as a lib (could be used with WASM to view recordings outside of game client).
 
