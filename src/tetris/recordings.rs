@@ -3,7 +3,7 @@ use crate::tetris::tetrominos;
 
 use serde::{Deserialize, Serialize};
 
-#[derive(Debug, Serialize, Deserialize, PartialEq)]
+#[derive(Clone, Debug, Serialize, Deserialize, PartialEq)]
 pub enum EventKind {
     Pause,
     Unpause,
@@ -12,13 +12,13 @@ pub enum EventKind {
     Action(actions::Action),
 }
 
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct Event {
     pub kind: EventKind,
     pub at: usize,
 }
 
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct Recording {
     pub events: Vec<Event>,
 }

@@ -11,6 +11,7 @@ mod game_shell;
 mod graphics;
 mod menu;
 mod preferences;
+mod recording_file;
 mod replays;
 mod tetris;
 use tetris::game;
@@ -370,7 +371,9 @@ fn main() -> Result<(), String> {
     if let Ok(recording) = game_shell.recording() {
         let mut recording_file =
             fs::File::create("last_game_recording.json").map_err(|e| e.to_string())?;
-        serde_json::to_writer_pretty(&mut recording_file, recording).map_err(|e| e.to_string())?;
+        let rules = game_shell.game().rules.clone();
+        let rf = recording_file::RecordingFile::new(rules, (*recording).clone());
+        serde_json::to_writer_pretty(&mut recording_file, &rf).map_err(|e| e.to_string())?;
     }
 
     if !game_shell.is_showing_replay() {

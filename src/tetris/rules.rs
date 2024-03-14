@@ -2,7 +2,7 @@ use crate::tetris::scoring;
 
 use serde::{Deserialize, Serialize};
 
-#[derive(Clone, Deserialize, Serialize)]
+#[derive(Debug, Clone, Deserialize, Serialize)]
 pub struct Rules {
     pub lock_delay: u32,
     pub lock_delay_on_hard_drop: bool,

@@ -101,7 +101,7 @@ enum State {
 
 #[derive(Serialize, Deserialize)]
 pub struct Game {
-    rules: rules::Rules,
+    pub rules: rules::Rules,
     state: State,
     ticks: usize,
     // speed is measured in number of ticks so that:

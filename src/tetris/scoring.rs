@@ -1,7 +1,7 @@
 use serde;
 use typetag;
 
-#[derive(Clone, serde::Deserialize, serde::Serialize)]
+#[derive(Debug, Clone, serde::Deserialize, serde::Serialize)]
 pub enum Kind {
     OriginalBPS,
     OriginalSega,
