@@ -86,12 +86,16 @@ fn load_last_game_state() -> Result<game::Game, String> {
     Err("Previous game state not available.".to_string())
 }
 
-fn load_replay(path: &str) -> Result<replays::Replay, String> {
+fn load_replay(path: &str) -> Result<recording_file::RecordingFile, String> {
     let recording_file = fs::File::open(path).map_err(|e| e.to_string())?;
     let recording_file_reader = io::BufReader::new(recording_file);
-    let recording = serde_json::from_reader(recording_file_reader).map_err(|e| e.to_string())?;
+    let recording: recording_file::RecordingFile =
+        serde_json::from_reader(recording_file_reader).map_err(|e| e.to_string())?;
 
-    Ok(replays::Replay { recording })
+    Ok(recording_file::RecordingFile::new(
+        recording.rules,
+        recording.recording,
+    ))
 }
 
 fn main() -> Result<(), String> {
@@ -113,7 +117,7 @@ fn main() -> Result<(), String> {
 
     let args: Vec<String> = env::args().collect();
 
-    let mut replay: Option<replays::Replay> = None;
+    let mut replay: Option<recording_file::RecordingFile> = None;
     let mut last_game = None;
     if args.len() > 1 {
         replay = match load_replay(&args[1]) {
@@ -222,7 +226,10 @@ fn main() -> Result<(), String> {
         &ttf_context,
     )?;
 
-    if let Some(rp) = replay {
+    if let Some(recording_file) = replay {
+        let rp = replays::Replay {
+            recording: recording_file.recording,
+        };
         let replay_pieces = replays::ReplayPieces::new(&rp);
         let replay_game = game::Game::new(game_rules.clone(), Some(Box::new(replay_pieces)))?;
         game_shell.load_replay(replay_game, rp)
@@ -283,11 +290,14 @@ fn main() -> Result<(), String> {
                     game_shell.load_game(new_game);
                 }
                 actions::Action::ReplayLoad(path) => match load_replay(path) {
-                    Ok(r) => {
-                        let replay_pieces = replays::ReplayPieces::new(&r);
+                    Ok(recording_file) => {
+                        let replay = replays::Replay {
+                            recording: recording_file.recording,
+                        };
+                        let replay_pieces = replays::ReplayPieces::new(&replay);
                         let replay_game =
-                            game::Game::new(game_rules.clone(), Some(Box::new(replay_pieces)))?;
-                        game_shell.load_replay(replay_game, r)
+                            game::Game::new(recording_file.rules, Some(Box::new(replay_pieces)))?;
+                        game_shell.load_replay(replay_game, replay)
                     }
                     Err(_) => (),
                 },
