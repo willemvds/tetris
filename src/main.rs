@@ -86,7 +86,7 @@ fn load_last_game_state() -> Result<game::Game, String> {
     Err("Previous game state not available.".to_string())
 }
 
-fn load_replay(path: &str) -> Result<recording_file::RecordingFile, String> {
+fn load_recording(path: &str) -> Result<recording_file::RecordingFile, String> {
     let recording_file = fs::File::open(path).map_err(|e| e.to_string())?;
     let recording_file_reader = io::BufReader::new(recording_file);
     let recording: recording_file::RecordingFile =
@@ -99,6 +99,47 @@ fn load_replay(path: &str) -> Result<recording_file::RecordingFile, String> {
 }
 
 fn main() -> Result<(), String> {
+    let args: Vec<String> = env::args().collect();
+
+    let mut replay: Option<recording_file::RecordingFile> = None;
+    let mut last_game = None;
+    if args.len() > 1 {
+        let cmd = &args[1];
+        if cmd == "replay" {
+            if args.len() > 2 {
+                replay = match load_recording(&args[2]) {
+                    Ok(r) => Some(r),
+                    Err(_) => None,
+                }
+            } else {
+                return Err("Usage: tetris replay <recording path>".to_string());
+            }
+        } else if cmd == "replay-stats" {
+            if args.len() > 2 {
+                match load_recording(&args[2]) {
+                    Ok(recording_file) => {
+                        println!("Recording Stats:");
+                        println!("{:?}", recording_file.rules);
+                        println!("# of events = {}", recording_file.recording.events.len());
+                        return Ok(());
+                    }
+                    Err(e) => return Err(e),
+                }
+            }
+
+            return Err("Usage: tetris replay-stats <recording path>".to_string());
+        }
+        return Err(
+            "Usage: tetris | tetris replay <recording path> | tetris replay-stats <recording-path>"
+                .to_string(),
+        );
+    } else {
+        match load_last_game_state() {
+            Ok(lgs) => last_game = Some(lgs),
+            Err(e) => println!("{}", e),
+        }
+    }
+
     let mut ui_layers = UILayers::new();
     let mut prefs = preferences::Preferences::new();
 
@@ -112,22 +153,6 @@ fn main() -> Result<(), String> {
         Ok(preferences) => prefs = preferences,
         Err(err) => {
             println!("err = {}", err)
-        }
-    }
-
-    let args: Vec<String> = env::args().collect();
-
-    let mut replay: Option<recording_file::RecordingFile> = None;
-    let mut last_game = None;
-    if args.len() > 1 {
-        replay = match load_replay(&args[1]) {
-            Ok(r) => Some(r),
-            Err(_) => None,
-        }
-    } else {
-        match load_last_game_state() {
-            Ok(lgs) => last_game = Some(lgs),
-            Err(e) => println!("{}", e),
         }
     }
 
@@ -289,7 +314,7 @@ fn main() -> Result<(), String> {
                     let new_game = game::Game::new(game_rules.clone(), None)?;
                     game_shell.load_game(new_game);
                 }
-                actions::Action::ReplayLoad(path) => match load_replay(path) {
+                actions::Action::ReplayLoad(path) => match load_recording(path) {
                     Ok(recording_file) => {
                         let replay = replays::Replay {
                             recording: recording_file.recording,
