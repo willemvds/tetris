@@ -283,6 +283,14 @@ impl Game {
         self.state == State::GameOver
     }
 
+    pub fn score_points(&self) -> u32 {
+        self.score_points
+    }
+
+    pub fn score_lines_cleared(&self) -> u32 {
+        self.score_lines_cleared
+    }
+
     pub fn queue_action(&mut self, a: actions::Action) -> Result<(), String> {
         if self.state != State::Playing {
             return Err("Can't queue action while game is not ready".to_string());

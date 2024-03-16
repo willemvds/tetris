@@ -2,11 +2,12 @@ use serde;
 use typetag;
 
 #[derive(Debug, Clone, serde::Deserialize, serde::Serialize)]
+#[repr(u8)]
 pub enum Kind {
-    OriginalBPS,
-    OriginalSega,
-    OriginalNintendo,
-    DS,
+    OriginalBPS = 1,
+    OriginalSega = 2,
+    OriginalNintendo = 3,
+    DS = 4,
 }
 
 #[typetag::serde(tag = "type")]

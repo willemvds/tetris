@@ -95,6 +95,8 @@ fn load_recording(path: &str) -> Result<recording_file::RecordingFile, String> {
     Ok(recording_file::RecordingFile::new(
         recording.rules,
         recording.recording,
+        recording.final_score,
+        recording.final_lines_cleared,
     ))
 }
 
@@ -121,6 +123,8 @@ fn main() -> Result<(), String> {
                         println!("Recording Stats:");
                         println!("{:?}", recording_file.rules);
                         println!("# of events = {}", recording_file.recording.events.len());
+                        println!("Score = {}", recording_file.final_score);
+                        println!("Lines Cleared = {}", recording_file.final_lines_cleared);
                         return Ok(());
                     }
                     Err(e) => return Err(e),
@@ -407,7 +411,14 @@ fn main() -> Result<(), String> {
         let mut recording_file =
             fs::File::create("last_game_recording.json").map_err(|e| e.to_string())?;
         let rules = game_shell.game().rules.clone();
-        let rf = recording_file::RecordingFile::new(rules, (*recording).clone());
+        let final_score = game_shell.game().score_points();
+        let final_lines_cleared = game_shell.game().score_lines_cleared();
+        let rf = recording_file::RecordingFile::new(
+            rules,
+            (*recording).clone(),
+            final_score,
+            final_lines_cleared,
+        );
         serde_json::to_writer_pretty(&mut recording_file, &rf).map_err(|e| e.to_string())?;
     }
 
