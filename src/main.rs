@@ -2,6 +2,7 @@ use std::collections;
 use std::env;
 use std::fs;
 use std::io;
+use std::io::Write;
 use std::time;
 
 mod actions;
@@ -62,6 +63,12 @@ impl UILayers {
 }
 
 fn load_preferences_from_file(path: &str) -> Result<preferences::Preferences, String> {
+    if let Ok(preferences_str) = fs::read_to_string(path) {
+        let prefs: preferences::Preferences =
+            toml::from_str(&preferences_str).map_err(|err| err.to_string())?;
+        return Ok(prefs);
+    }
+
     if let Ok(preferences_file) = fs::File::open(path) {
         let preferences_reader = io::BufReader::new(preferences_file);
         let prefs: preferences::Preferences =
@@ -153,7 +160,7 @@ fn main() -> Result<(), String> {
         registry.insert(asset, content)
     }
 
-    match load_preferences_from_file("preferences.json") {
+    match load_preferences_from_file("preferences.toml") {
         Ok(preferences) => prefs = preferences,
         Err(err) => {
             println!("err = {}", err)
@@ -187,7 +194,7 @@ fn main() -> Result<(), String> {
     let mut console = console::Console::new(&registry, &ttf_context)?;
 
     let mut replay_paths = vec![];
-    if let Ok(dir_iter) = fs::read_dir("replays") {
+    if let Ok(dir_iter) = fs::read_dir("recordings") {
         for entry in dir_iter {
             if let Ok(file) = entry {
                 let path = file.path();
@@ -404,8 +411,12 @@ fn main() -> Result<(), String> {
     }
     println!("FPS = {0}", frames / run_time_secs);
 
-    let mut preferences_file = fs::File::create("preferences.json").map_err(|e| e.to_string())?;
-    serde_json::to_writer_pretty(&mut preferences_file, &prefs).map_err(|e| e.to_string())?;
+    let mut preferences_file = fs::File::create("preferences.toml").map_err(|e| e.to_string())?;
+    let prefs_toml = toml::to_string(&prefs).map_err(|e| e.to_string())?;
+    preferences_file
+        .write(prefs_toml.as_bytes())
+        .map_err(|e| e.to_string())?;
+    println!("Wrote prefs {}", prefs_toml);
 
     if let Ok(recording) = game_shell.recording() {
         let mut recording_file =

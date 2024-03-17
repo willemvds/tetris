@@ -1,10 +1,11 @@
 use serde;
 
 #[derive(Clone, PartialEq, serde::Deserialize, serde::Serialize)]
+#[repr(u8)]
 pub enum DropIndicatorStyle {
-    None,
-    Outline,
-    Triangles,
+    None = 1,
+    Outline = 2,
+    Triangles = 3,
 }
 
 #[derive(Clone, PartialEq, serde::Deserialize, serde::Serialize)]
