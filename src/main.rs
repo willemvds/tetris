@@ -16,6 +16,7 @@ mod recording_file;
 mod replays;
 mod tetris;
 use tetris::game;
+use tetris::rules;
 use tetris::scoring;
 use tetris::tetrominos;
 
@@ -24,6 +25,8 @@ use sdl2::controller;
 use sdl2::keyboard;
 use sdl2::pixels;
 use sdl2::video;
+
+use serde;
 
 #[rustfmt::skip]
 const ASSET_MANIFEST: [&str; 2] = [
@@ -107,6 +110,13 @@ fn load_recording(path: &str) -> Result<recording_file::RecordingFile, String> {
     ))
 }
 
+#[derive(serde::Deserialize, serde::Serialize)]
+struct RecordingStats {
+    rules: rules::Rules,
+    score: u32,
+    lines_cleared: u32,
+}
+
 fn main() -> Result<(), String> {
     let args: Vec<String> = env::args().collect();
 
@@ -123,16 +133,20 @@ fn main() -> Result<(), String> {
             } else {
                 return Err("Usage: tetris replay <recording path>".to_string());
             }
-        } else if cmd == "replay-stats" {
+        } else if cmd == "recording-stats" {
             if args.len() > 2 {
                 match load_recording(&args[2]) {
                     Ok(recording_file) => {
-                        println!("Recording Stats:");
-                        println!("{:?}", recording_file.rules);
-                        println!("# of events = {}", recording_file.recording.events.len());
-                        println!("Score = {}", recording_file.final_score);
-                        println!("Lines Cleared = {}", recording_file.final_lines_cleared);
-                        return Ok(());
+                        let rs = RecordingStats {
+                            rules: recording_file.rules,
+                            score: recording_file.final_score,
+                            lines_cleared: recording_file.final_lines_cleared,
+                        };
+                        if let Ok(rs_string) = serde_json::to_string_pretty(&rs) {
+                            println!("{}", rs_string);
+                            return Ok(());
+                        }
+                        return Err("Failed to create recording stats JSON output".to_string());
                     }
                     Err(e) => return Err(e),
                 }
