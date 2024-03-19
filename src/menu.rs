@@ -227,7 +227,7 @@ impl ReplaysPage {
         let page_x = canvas_third;
 
         let c = pixels::Color::RGBA(240, 240, 240, 255);
-        graphics::render_text(canvas, font, c, page_x as i32 + 100, 100, "Replays");
+        graphics::render_text(canvas, font, c, page_x as i32 + 100, 100, "Recordings");
 
         self.replays_radio
             .render(canvas, font, page_x as i32 + 100, 150);
@@ -308,7 +308,7 @@ impl<'ttf, 'rwops> Menu<'ttf, 'rwops> {
                 SelectionAction::UI(actions::Action::Resume),
             ));
             menu.options.push(MenuOption::new(
-                "Replays".to_string(),
+                "Recordings".to_string(),
                 MenuOptionSize::Regular,
                 SelectionAction::Menu(MenuAction::ShowReplays),
             ));
