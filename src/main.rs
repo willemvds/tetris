@@ -28,6 +28,8 @@ use sdl2::video;
 
 use serde;
 
+const GAME_VERSION: u32 = 1;
+
 #[rustfmt::skip]
 const ASSET_MANIFEST: [&str; 2] = [
 //    "fonts/NotoSansMono-Regular.ttf",
@@ -103,6 +105,7 @@ fn load_recording(path: &str) -> Result<recording_file::RecordingFile, String> {
         serde_json::from_reader(recording_file_reader).map_err(|e| e.to_string())?;
 
     Ok(recording_file::RecordingFile::new(
+        GAME_VERSION,
         recording.rules,
         recording.recording,
         recording.final_score,
@@ -439,6 +442,7 @@ fn main() -> Result<(), String> {
         let final_score = game_shell.game().score_points();
         let final_lines_cleared = game_shell.game().score_lines_cleared();
         let rf = recording_file::RecordingFile::new(
+            GAME_VERSION,
             rules,
             (*recording).clone(),
             final_score,
