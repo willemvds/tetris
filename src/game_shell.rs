@@ -379,7 +379,7 @@ impl<'ttf, 'rwops> GameShell<'ttf, 'rwops> {
         );
 
         let bright_red = pixels::Color::RGBA(255, 0, 0, 255);
-        let blue = pixels::Color::RGBA(30, 100, 240, 255);
+        let _blue = pixels::Color::RGBA(30, 100, 240, 255);
         let teal = pixels::Color::RGBA(34, 216, 236, 255);
         let label_colour = pixels::Color::RGBA(255, 255, 255, 255);
         let value_colour = pixels::Color::RGB(0, 255, 0);

@@ -255,7 +255,7 @@ fn main() -> Result<(), String> {
     canvas.set_draw_color(pixels::Color::RGB(0, 0, 0));
     canvas.present();
 
-    let keymap: collections::HashMap<keyboard::Keycode, u8> = collections::HashMap::new();
+    let _keymap: collections::HashMap<keyboard::Keycode, u8> = collections::HashMap::new();
 
     let mut event_pump = sdl_context.event_pump()?;
 
