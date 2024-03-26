@@ -153,14 +153,11 @@ fn main() -> Result<(), String> {
                     }
                     Err(e) => return Err(e),
                 }
+            } else {
+                return Err("Usage: tetris replay-stats <recording path>".to_string());
             }
-
-            return Err("Usage: tetris replay-stats <recording path>".to_string());
         } else {
-            return Err(
-            "Usage: tetris | tetris replay <recording path> | tetris replay-stats <recording-path>"
-                .to_string(),
-        );
+            return Err("Usage: tetris | tetris replay <recording path> | tetris replay-stats <recording-path>".to_string());
         }
     } else {
         match load_last_game_state() {
