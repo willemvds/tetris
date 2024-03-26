@@ -156,11 +156,12 @@ fn main() -> Result<(), String> {
             }
 
             return Err("Usage: tetris replay-stats <recording path>".to_string());
-        }
-        return Err(
+        } else {
+            return Err(
             "Usage: tetris | tetris replay <recording path> | tetris replay-stats <recording-path>"
                 .to_string(),
         );
+        }
     } else {
         match load_last_game_state() {
             Ok(lgs) => last_game = Some(lgs),
