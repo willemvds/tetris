@@ -269,6 +269,8 @@ fn main() -> Result<(), String> {
     let mut game_rules = tetris::rules::Rules::new();
     game_rules.lock_delay(50);
     game_rules.scoring_system(scoring::Kind::OriginalSega);
+    game_rules.action_cooldown(rules::ActionCooldown::Each(20));
+    // game_rules.action_cooldown(rules::ActionCooldown::Shared(100));
     // game_rules.lock_delay_on_hard_drop(true);
 
     let mut game_shell = game_shell::GameShell::new(

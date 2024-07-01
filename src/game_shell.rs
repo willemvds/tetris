@@ -216,8 +216,11 @@ impl<'ttf, 'rwops> GameShell<'ttf, 'rwops> {
                         if !self.paused && !self.game.is_gameover() && self.mode == Mode::Tetris {
                             match keycode {
                                 keyboard::Keycode::Kp7 => {
-                                    let _ =
+                                    let qr =
                                         self.game.queue_action(tetris::actions::Action::MoveLeft);
+                                    if let Err(e) = qr {
+                                        println!("{}", e)
+                                    }
                                 }
                                 keyboard::Keycode::Kp9 => {
                                     let _ =

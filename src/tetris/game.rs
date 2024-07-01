@@ -224,6 +224,7 @@ impl Game {
             }
 
             self.next_action = None;
+            self.last_action_at = self.ticks;
             self.actions_last_used_at.insert(action, self.ticks);
         }
 
@@ -296,10 +297,19 @@ impl Game {
             return Err("Can't queue action while game is not ready".to_string());
         }
 
-        let action_last_used_at = self.actions_last_used_at.entry(a).or_insert_with(|| 0);
-        if *action_last_used_at + self.rules.action_cooldown as usize >= self.ticks {
-            return Err("Can't queue action while game IS ON COOLDOWN".to_string());
-        }
+        match self.rules.action_cooldown {
+            rules::ActionCooldown::Shared(ticks) => {
+                if self.last_action_at + ticks as usize >= self.ticks {
+                    return Err("Can't queue action while game IS ON COOLDOWN".to_string());
+                }
+            }
+            rules::ActionCooldown::Each(ticks) => {
+                let action_last_used_at = self.actions_last_used_at.entry(a).or_insert_with(|| 0);
+                if *action_last_used_at + ticks as usize >= self.ticks {
+                    return Err("Can't queue action while {} IS ON COOLDOWN".to_string());
+                }
+            }
+        };
 
         if self.next_action.is_none() {
             self.next_action = Some(a);
