@@ -97,11 +97,13 @@ impl<'ttf, 'rwops> Console<'ttf, 'rwops> {
                         }
                     }
                     _ => {
-                        let keynum = keycode as u8;
+                        let keynum = keycode.into_i32();
                         if (97..=122).contains(&keynum) || keynum == 32 {
-                            self.buffer.push(keycode as u8 as char);
+                            if let Some(chr) = char::from_u32(keynum as u32) {
+                                self.buffer.push(chr);
+                            }
                         } else {
-                            println!("{0}", keycode as i32);
+                            println!("{0}", keynum);
                             println!("Console got this keycode: {0}", keycode);
                         }
                     }

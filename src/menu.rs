@@ -119,7 +119,7 @@ impl PreferencesPage {
             event::Event::KeyDown {
                 keycode: Some(keycode),
                 ..
-            } => match keycode {
+            } => match *keycode {
                 keyboard::Keycode::Up => {
                     if self.drop_indicator_radio.selected_option > 0 {
                         self.drop_indicator_radio.selected_option -= 1
@@ -188,7 +188,7 @@ impl ReplaysPage {
             event::Event::KeyDown {
                 keycode: Some(keycode),
                 ..
-            } => match keycode {
+            } => match *keycode {
                 keyboard::Keycode::Up => {
                     if self.replays_radio.selected_option > 0 {
                         self.replays_radio.selected_option -= 1
