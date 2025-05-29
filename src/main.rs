@@ -238,18 +238,29 @@ fn main() -> Result<(), String> {
         video_subsys.display_name(0)
     );
 
-    let initial_window_width = 1920;
-    let initial_window_height = 1080;
+    //let num_displays = video_subsys.num_video_displays()?;
+    //let display_id = 0;
+    //let display_mode = video_subsys.desktop_display_mode(display_id)?;
+    //eprintln!("display mode = {:?}", display_mode);
+
+    let initial_window_width = 1366;
+    let initial_window_height = 768;
 
     let window = video_subsys
         .window("Tetris", initial_window_width, initial_window_height)
         .position_centered()
         .resizable()
         .borderless()
+        .maximized()
+        //.fullscreen_desktop()
         .build()
         .map_err(|e| e.to_string())?;
 
-    let mut canvas = window.into_canvas().build().map_err(|e| e.to_string())?;
+    let mut canvas = window
+        .into_canvas()
+        .present_vsync()
+        .build()
+        .map_err(|e| e.to_string())?;
     canvas.set_draw_color(pixels::Color::RGB(0, 0, 0));
     canvas.present();
 

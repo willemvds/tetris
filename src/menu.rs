@@ -336,9 +336,10 @@ impl<'ttf, 'rwops> Menu<'ttf, 'rwops> {
         y: i32,
         selected: bool,
     ) {
+        let (canvas_width, canvas_height) = canvas.window().size();
         if selected {
             canvas.set_draw_color(pixels::Color::RGBA(222, 222, 222, 255));
-            let _ = canvas.fill_rect(rect::Rect::new(50, y - 20, 500, 80));
+            let _ = canvas.fill_rect(rect::Rect::new(50, y - 20, canvas_width / 4, 80));
         }
         let f = match opt.size {
             MenuOptionSize::Regular => &self.regular_font,
@@ -358,7 +359,7 @@ impl<'ttf, 'rwops> Menu<'ttf, 'rwops> {
         canvas.set_draw_color(pixels::Color::RGB(200, 100, 13));
         let _ = canvas.fill_rect(rect::Rect::new(0, 0, canvas_width / 3, canvas_height));
 
-        let mut y = 500;
+        let mut y = 200;
         for (idx, opt) in self.options.iter().enumerate() {
             self.render_option(
                 canvas,

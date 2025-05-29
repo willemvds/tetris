@@ -215,25 +215,25 @@ impl<'ttf, 'rwops> GameShell<'ttf, 'rwops> {
 
                         if !self.paused && !self.game.is_gameover() && self.mode == Mode::Tetris {
                             match keycode {
-                                keyboard::Keycode::Kp7 => {
+                                keyboard::Keycode::Kp7 | keyboard::Keycode::Left => {
                                     let qr =
                                         self.game.queue_action(tetris::actions::Action::MoveLeft);
                                     if let Err(e) = qr {
                                         println!("{}", e)
                                     }
                                 }
-                                keyboard::Keycode::Kp9 => {
+                                keyboard::Keycode::Kp9 | keyboard::Keycode::Right => {
                                     let _ =
                                         self.game.queue_action(tetris::actions::Action::MoveRight);
                                 }
-                                keyboard::Keycode::Kp4 => {
+                                keyboard::Keycode::Kp4 | keyboard::Keycode::Down => {
                                     let _ = self.game.queue_action(tetris::actions::Action::Drop);
                                 }
                                 keyboard::Keycode::Kp5 => {
                                     let _ =
                                         self.game.queue_action(tetris::actions::Action::MoveDown);
                                 }
-                                keyboard::Keycode::Kp8 => {
+                                keyboard::Keycode::Kp8 | keyboard::Keycode::Up => {
                                     let _ = self.game.queue_action(tetris::actions::Action::Rotate);
                                 }
                                 _ => (),
@@ -388,12 +388,14 @@ impl<'ttf, 'rwops> GameShell<'ttf, 'rwops> {
         let value_colour = pixels::Color::RGB(0, 255, 0);
 
         let width_third = window_width / 3;
+        let height_third = window_height / 3;
+        let vspace = 60;
         graphics::render_text(
             canvas,
             label_font,
             label_colour,
-            (2 * width_third) as i32 - 120,
-            500,
+            (2 * width_third) as i32 - vspace,
+            height_third as i32 + 100,
             "Level",
         );
 
@@ -401,8 +403,8 @@ impl<'ttf, 'rwops> GameShell<'ttf, 'rwops> {
             canvas,
             value_font,
             bright_red,
-            (2 * width_third) as i32 - 120,
-            550,
+            (2 * width_third) as i32 - vspace,
+            height_third as i32 + 140,
             &format!("{0}", self.game.level),
         );
 
@@ -410,8 +412,8 @@ impl<'ttf, 'rwops> GameShell<'ttf, 'rwops> {
             canvas,
             label_font,
             label_colour,
-            (2 * width_third) as i32 - 120,
-            620,
+            (2 * width_third) as i32 - vspace,
+            height_third as i32 + 220,
             "Lines",
         );
 
@@ -419,8 +421,8 @@ impl<'ttf, 'rwops> GameShell<'ttf, 'rwops> {
             canvas,
             value_font,
             value_colour,
-            (2 * width_third) as i32 - 120,
-            670,
+            (2 * width_third) as i32 - vspace,
+            height_third as i32 + 260,
             &format!("{0}", self.game.score_lines_cleared),
         );
 
@@ -428,8 +430,8 @@ impl<'ttf, 'rwops> GameShell<'ttf, 'rwops> {
             canvas,
             label_font,
             label_colour,
-            (2 * width_third) as i32 - 120,
-            740,
+            (2 * width_third) as i32 - vspace,
+            height_third as i32 + 320,
             "Score",
         );
 
@@ -437,8 +439,8 @@ impl<'ttf, 'rwops> GameShell<'ttf, 'rwops> {
             canvas,
             value_font,
             value_colour,
-            (2 * width_third) as i32 - 120,
-            790,
+            (2 * width_third) as i32 - vspace,
+            height_third as i32 + 360,
             &format!("{0}", self.game.score_points),
         );
 
