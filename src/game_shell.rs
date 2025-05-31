@@ -33,6 +33,7 @@ enum Mode {
 pub struct GameShell<'ttf, 'rwops> {
     game: game::Game,
     game_ticks: usize,
+    game_time: u64,
     paused: bool,
     mode: Mode,
     replay: Option<replays::Replay>,
@@ -75,6 +76,7 @@ impl<'ttf, 'rwops> GameShell<'ttf, 'rwops> {
         Ok(GameShell {
             game: initial_game,
             game_ticks: 0,
+            game_time: 0,
             paused: true,
             mode: Mode::Tetris,
             replay: None,
@@ -146,21 +148,25 @@ impl<'ttf, 'rwops> GameShell<'ttf, 'rwops> {
         &self.game
     }
 
-    pub fn frame_tick(&mut self, frame_time: time::Duration, dt: f64) {
+    pub fn frame_tick(&mut self, prev_sim_at: time::Instant, dt: u64) -> usize {
         if self.is_paused() {
-            return;
+            return 0;
         }
 
         if self.game.is_gameover() {
-            return;
+            return 0;
         }
 
-        self.accumulator += frame_time.as_secs_f64();
+        let now = time::Instant::now();
+        let mut remainder = now.duration_since(prev_sim_at).as_micros() as u64;
+
+        // TODO(@willemvds): Figure out how we want to cap the maximum number of sim ticks
+        // if rendering is particularly slow like when system has a hiccup.
 
         let mut acc_runs = 0;
-        while self.accumulator >= dt {
+        while remainder >= dt {
             acc_runs += 1;
-            self.accumulator -= dt;
+            remainder -= dt;
 
             if self.mode == Mode::Replay {
                 if let Some(ref r) = self.replay {
@@ -184,7 +190,9 @@ impl<'ttf, 'rwops> GameShell<'ttf, 'rwops> {
             }
 
             self.game_ticks = self.game.tick();
+            self.game_time += dt;
         }
+        acc_runs
     }
 
     pub fn process_events(&mut self, event_pump: &mut sdl2::EventPump) -> Vec<actions::Action> {
@@ -390,6 +398,11 @@ impl<'ttf, 'rwops> GameShell<'ttf, 'rwops> {
         let width_third = window_width / 3;
         let height_third = window_height / 3;
         let vspace = 60;
+
+        let game_time_duration = time::Duration::from_micros(self.game_time);
+        let game_time_mins = game_time_duration.as_secs() / 60;
+        let game_time_secs = game_time_duration.as_secs() % 60;
+
         graphics::render_text(
             canvas,
             label_font,
@@ -442,6 +455,24 @@ impl<'ttf, 'rwops> GameShell<'ttf, 'rwops> {
             (2 * width_third) as i32 - vspace,
             height_third as i32 + 360,
             &format!("{0}", self.game.score_points),
+        );
+
+        graphics::render_text(
+            canvas,
+            label_font,
+            label_colour,
+            (2 * width_third) as i32 - vspace,
+            height_third as i32 + 460,
+            "Game Time",
+        );
+
+        graphics::render_text(
+            canvas,
+            value_font,
+            bright_red,
+            (2 * width_third) as i32 - vspace,
+            height_third as i32 + 500,
+            &format!("{:02}:{:02}", game_time_mins, game_time_secs),
         );
 
         if self.game.is_gameover() {

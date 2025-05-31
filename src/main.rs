@@ -256,9 +256,11 @@ fn main() -> Result<(), String> {
         .build()
         .map_err(|e| e.to_string())?;
 
+    let display_mode = window.display_mode()?;
+
     let mut canvas = window
         .into_canvas()
-        .present_vsync()
+        //        .present_vsync()
         .build()
         .map_err(|e| e.to_string())?;
     canvas.set_draw_color(pixels::Color::RGB(0, 0, 0));
@@ -269,13 +271,6 @@ fn main() -> Result<(), String> {
     let mut event_pump = sdl_context.event_pump()?;
 
     let _total = 0;
-    let mut frames = 0;
-    let mut slowest_frame = 0.0;
-
-    let dt: f64 = 1.0 / 250.0; // 4ms tick rate.
-
-    let game_loop_start_at = time::Instant::now();
-    let mut start_time = time::Instant::now();
 
     let mut game_rules = tetris::rules::Rules::new();
     game_rules.lock_delay(50);
@@ -306,132 +301,173 @@ fn main() -> Result<(), String> {
         ui_layers.hide(UI_LAYER_MENU);
     }
 
+    let mut mainloop_iterations: u128 = 0;
+    let mut sim_ticks = 0;
+    let mut frames = 0;
+    let mut slowest_frame = time::Duration::from_micros(0);
+    let game_loop_start_at = time::Instant::now();
+    let tick_rate = 4_188; // microseconds - ~240Hz
+    let frame_rate: u64 = (1_000_000 / display_mode.refresh_rate) as u64;
+    //          let frame_rate = 8_333; // microseconds - ~120Hz
+    eprintln!(
+        "Setting target frame rate to display refresh rate @ {}Hz ({} µs per frame)",
+        display_mode.refresh_rate, frame_rate
+    );
+    let tick_rate_duration = time::Duration::from_micros(tick_rate);
+    let frame_rate_duration = time::Duration::from_micros(frame_rate);
+
+    let mut prev_sim_tick_at = time::Instant::now();
+    let mut prev_render_frame_at = prev_sim_tick_at;
+
+    let mut frame_sample_prev_count = 0;
+    let mut frame_sample_count = 0;
+    let mut frame_sample_until = time::Instant::now() + time::Duration::from_secs(1);
     'main: loop {
-        frames += 1;
-        let now = time::Instant::now();
-        let mut frame_time = now - start_time;
-        let frame_rate = 1000000.0 / frame_time.as_micros() as f64;
-        // println!("frames = {:?}, frame time = {:?}, frame rate = {:?}", frames, frame_time, frame_rate);
-        //
-        let ftf = frame_time.as_secs_f64();
-        if ftf > slowest_frame {
-            println!("SLOWEST frame so far frame={0}, duration={1}", frames, ftf);
-            slowest_frame = ftf;
-        }
-        if ftf > 0.25 {
-            println!(
-                "Slow frame ({:?}). Capping simulation at 250ms.",
-                frame_time
-            );
-            frame_time = time::Duration::from_millis(250);
-        }
-        start_time = now;
+        mainloop_iterations += 1;
+        let next_sim_tick_at = prev_sim_tick_at + tick_rate_duration;
+        let next_render_frame_at = prev_render_frame_at + frame_rate_duration;
 
-        let ui_actions = {
-            if ui_layers.is_showing(UI_LAYER_CONSOLE) {
-                console.process_events(&mut event_pump)
-            } else if ui_layers.is_showing(UI_LAYER_MENU) {
-                menu.process_events(&mut event_pump)
-            } else {
-                game_shell.process_events(&mut event_pump)
-            }
-        };
+        if time::Instant::now() > next_sim_tick_at {
+            let sim_started_at = time::Instant::now();
 
-        for action in ui_actions.iter() {
-            match action {
-                actions::Action::Quit => break 'main,
-                actions::Action::PreferencesUpdate(p) => prefs = p.clone(),
-                actions::Action::Resume => {
-                    if game_shell.is_gameover() {
+            // simulation
+            let ui_actions = {
+                if ui_layers.is_showing(UI_LAYER_CONSOLE) {
+                    console.process_events(&mut event_pump)
+                } else if ui_layers.is_showing(UI_LAYER_MENU) {
+                    menu.process_events(&mut event_pump)
+                } else {
+                    game_shell.process_events(&mut event_pump)
+                }
+            };
+
+            for action in ui_actions.iter() {
+                match action {
+                    actions::Action::Quit => break 'main,
+                    actions::Action::PreferencesUpdate(p) => prefs = p.clone(),
+                    actions::Action::Resume => {
+                        if game_shell.is_gameover() {
+                            let new_game = game::Game::new(game_rules.clone(), None)?;
+                            game_shell.load_game(new_game);
+                        }
+                        ui_layers.hide(UI_LAYER_MENU);
+                        game_shell.unpause();
+                    }
+                    actions::Action::GameNew => {
                         let new_game = game::Game::new(game_rules.clone(), None)?;
                         game_shell.load_game(new_game);
                     }
-                    ui_layers.hide(UI_LAYER_MENU);
-                    game_shell.unpause();
-                }
-                actions::Action::GameNew => {
-                    let new_game = game::Game::new(game_rules.clone(), None)?;
-                    game_shell.load_game(new_game);
-                }
-                actions::Action::ReplayLoad(path) => match load_recording(path) {
-                    Ok(recording_file) => {
-                        let replay = replays::Replay {
-                            recording: recording_file.recording,
-                        };
-                        let replay_pieces = replays::ReplayPieces::new(&replay);
-                        let replay_game =
-                            game::Game::new(recording_file.rules, Some(Box::new(replay_pieces)))?;
-                        game_shell.load_replay(replay_game, replay)
+                    actions::Action::ReplayLoad(path) => match load_recording(path) {
+                        Ok(recording_file) => {
+                            let replay = replays::Replay {
+                                recording: recording_file.recording,
+                            };
+                            let replay_pieces = replays::ReplayPieces::new(&replay);
+                            let replay_game = game::Game::new(
+                                recording_file.rules,
+                                Some(Box::new(replay_pieces)),
+                            )?;
+                            game_shell.load_replay(replay_game, replay)
+                        }
+                        Err(_) => (),
+                    },
+                    actions::Action::TogglePause => game_shell.toggle_pause(),
+                    actions::Action::ToggleFullScreen => {
+                        if canvas.window().fullscreen_state() == video::FullscreenType::Off {
+                            let _ = canvas
+                                .window_mut()
+                                .set_fullscreen(video::FullscreenType::Desktop);
+                        } else {
+                            let _ = canvas
+                                .window_mut()
+                                .set_fullscreen(video::FullscreenType::Off);
+                        }
                     }
-                    Err(_) => (),
-                },
-                actions::Action::TogglePause => game_shell.toggle_pause(),
-                actions::Action::ToggleFullScreen => {
-                    if canvas.window().fullscreen_state() == video::FullscreenType::Off {
-                        let _ = canvas
-                            .window_mut()
-                            .set_fullscreen(video::FullscreenType::Desktop);
-                    } else {
-                        let _ = canvas
-                            .window_mut()
-                            .set_fullscreen(video::FullscreenType::Off);
+                    actions::Action::MenuShow => {
+                        ui_layers.show(UI_LAYER_MENU);
+                        game_shell.pause();
                     }
-                }
-                actions::Action::MenuShow => {
-                    ui_layers.show(UI_LAYER_MENU);
-                    game_shell.pause();
-                }
-                actions::Action::MenuHide => {
-                    ui_layers.hide(UI_LAYER_MENU);
-                    game_shell.unpause();
-                }
-                actions::Action::ConsoleShow => ui_layers.show(UI_LAYER_CONSOLE),
-                actions::Action::ConsoleHide => ui_layers.hide(UI_LAYER_CONSOLE),
-                actions::Action::ConsoleCommand(cmd) => {
-                    match cmd.as_str() {
-                        "quit" => break 'main,
-                        "speed" => (),
-                        "stick" => console.print_tetromino(tetrominos::Kind::Stick),
-                        "seven" => console.print_tetromino(tetrominos::Kind::Seven),
-                        "hook" => console.print_tetromino(tetrominos::Kind::Hook),
-                        "square" => console.print_tetromino(tetrominos::Kind::Square),
-                        "snake" => console.print_tetromino(tetrominos::Kind::Snake),
-                        "pyramid" => console.print_tetromino(tetrominos::Kind::Pyramid),
-                        "zig" => console.print_tetromino(tetrominos::Kind::Zig),
-                        _ => console.println("EH wha?".to_string()),
+                    actions::Action::MenuHide => {
+                        ui_layers.hide(UI_LAYER_MENU);
+                        game_shell.unpause();
                     }
-                    println!("CONSOLE CMD = {0}", cmd);
+                    actions::Action::ConsoleShow => ui_layers.show(UI_LAYER_CONSOLE),
+                    actions::Action::ConsoleHide => ui_layers.hide(UI_LAYER_CONSOLE),
+                    actions::Action::ConsoleCommand(cmd) => {
+                        match cmd.as_str() {
+                            "quit" => break 'main,
+                            "speed" => (),
+                            "stick" => console.print_tetromino(tetrominos::Kind::Stick),
+                            "seven" => console.print_tetromino(tetrominos::Kind::Seven),
+                            "hook" => console.print_tetromino(tetrominos::Kind::Hook),
+                            "square" => console.print_tetromino(tetrominos::Kind::Square),
+                            "snake" => console.print_tetromino(tetrominos::Kind::Snake),
+                            "pyramid" => console.print_tetromino(tetrominos::Kind::Pyramid),
+                            "zig" => console.print_tetromino(tetrominos::Kind::Zig),
+                            _ => console.println("EH wha?".to_string()),
+                        }
+                        println!("CONSOLE CMD = {0}", cmd);
+                    }
                 }
             }
+
+            sim_ticks += game_shell.frame_tick(prev_sim_tick_at, tick_rate);
+            prev_sim_tick_at = sim_started_at;
         }
 
-        game_shell.frame_tick(frame_time, dt);
+        // rendering
+        if time::Instant::now() > next_render_frame_at {
+            let render_started_at = time::Instant::now();
 
-        game_shell.render(&mut canvas, &prefs);
+            prev_render_frame_at = time::Instant::now();
+            game_shell.render(&mut canvas, &prefs);
 
-        let (ww, _) = canvas.window().size();
-        graphics::render_text(
-            &mut canvas,
-            &font,
-            pixels::Color::RGB(0, 0, 255),
-            ww as i32 - 400,
-            20,
-            &format!("{:.2} fps", frame_rate),
-        );
+            let (ww, _) = canvas.window().size();
+            graphics::render_text(
+                &mut canvas,
+                &font,
+                pixels::Color::RGB(0, 0, 255),
+                ww as i32 - 400,
+                20,
+                &format!("{:.2} fps", frame_sample_prev_count),
+            );
 
-        if ui_layers.is_showing(UI_LAYER_MENU) {
-            menu.render(&mut canvas);
+            if ui_layers.is_showing(UI_LAYER_MENU) {
+                menu.render(&mut canvas);
+            }
+
+            if ui_layers.is_showing(UI_LAYER_CONSOLE) {
+                console.render(&mut canvas);
+            }
+
+            canvas.present();
+            frames += 1;
+
+            let render_completed_at = time::Instant::now();
+            let render_time = render_completed_at.duration_since(render_started_at);
+            if render_time > slowest_frame {
+                println!(
+                    "SLOWEST frame so far frame={0}, duration={1}µs",
+                    frames,
+                    render_time.as_micros()
+                );
+                slowest_frame = render_time;
+            }
+
+            frame_sample_count += 1;
+            if render_completed_at > frame_sample_until {
+                frame_sample_until = render_completed_at + time::Duration::from_secs(1);
+                frame_sample_prev_count = frame_sample_count;
+                frame_sample_count = 0;
+            }
+            //            frame_rate = 1000000.0 / render_time.as_micros() as f64;
         }
-
-        if ui_layers.is_showing(UI_LAYER_CONSOLE) {
-            console.render(&mut canvas);
-        }
-
-        canvas.present()
     }
 
     let run_time = time::Instant::now().duration_since(game_loop_start_at);
     println!("Total run time = {:?}", run_time.as_secs());
+    println!("Main loop iterations = {}", mainloop_iterations);
+    println!("Total game ticks = {}", sim_ticks);
     println!("Total frames rendered = {0}", frames);
     let mut run_time_secs = run_time.as_secs();
     if run_time_secs < 1 {
