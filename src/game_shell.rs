@@ -33,13 +33,10 @@ enum Mode {
 pub struct GameShell<'ttf, 'rwops> {
     game: game::Game,
     game_ticks: usize,
-    game_time: u64,
     paused: bool,
     mode: Mode,
     replay: Option<replays::Replay>,
     replay_action_index: usize,
-
-    accumulator: f64,
 
     score_label_font: ttf::Font<'ttf, 'rwops>,
     score_value_font: ttf::Font<'ttf, 'rwops>,
@@ -76,13 +73,10 @@ impl<'ttf, 'rwops> GameShell<'ttf, 'rwops> {
         Ok(GameShell {
             game: initial_game,
             game_ticks: 0,
-            game_time: 0,
             paused: true,
             mode: Mode::Tetris,
             replay: None,
             replay_action_index: 0,
-
-            accumulator: 0.0,
 
             score_label_font,
             score_value_font,
@@ -190,7 +184,6 @@ impl<'ttf, 'rwops> GameShell<'ttf, 'rwops> {
             }
 
             self.game_ticks = self.game.tick();
-            self.game_time += dt;
         }
         acc_runs
     }
