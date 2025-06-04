@@ -258,6 +258,14 @@ fn main() -> Result<(), String> {
 
     let display_mode = window.display_mode()?;
 
+    let tick_rate = 4_188; // microseconds - ~240Hz
+    let frame_rate: u64 = (1_000_000 / display_mode.refresh_rate) as u64;
+    //          let frame_rate = 8_333; // microseconds - ~120Hz
+    eprintln!(
+        "Setting target frame rate to display refresh rate @ {}Hz ({} µs per frame)",
+        display_mode.refresh_rate, frame_rate
+    );
+
     let mut canvas = window
         .into_canvas()
         //        .present_vsync()
@@ -280,7 +288,7 @@ fn main() -> Result<(), String> {
     // game_rules.lock_delay_on_hard_drop(true);
 
     let mut game_shell = game_shell::GameShell::new(
-        game::Game::new(game_rules.clone(), None)?,
+        game::Game::new(tick_rate, game_rules.clone(), None)?,
         &registry,
         &ttf_context,
     )?;
@@ -290,7 +298,8 @@ fn main() -> Result<(), String> {
             recording: recording_file.recording,
         };
         let replay_pieces = replays::ReplayPieces::new(&rp);
-        let replay_game = game::Game::new(game_rules.clone(), Some(Box::new(replay_pieces)))?;
+        let replay_game =
+            game::Game::new(tick_rate, game_rules.clone(), Some(Box::new(replay_pieces)))?;
         game_shell.load_replay(replay_game, rp)
     } else if let Some(lg) = last_game {
         game_shell.load_game(lg)
@@ -306,13 +315,6 @@ fn main() -> Result<(), String> {
     let mut frames = 0;
     let mut slowest_frame = time::Duration::from_micros(0);
     let game_loop_start_at = time::Instant::now();
-    let tick_rate = 4_188; // microseconds - ~240Hz
-    let frame_rate: u64 = (1_000_000 / display_mode.refresh_rate) as u64;
-    //          let frame_rate = 8_333; // microseconds - ~120Hz
-    eprintln!(
-        "Setting target frame rate to display refresh rate @ {}Hz ({} µs per frame)",
-        display_mode.refresh_rate, frame_rate
-    );
     let tick_rate_duration = time::Duration::from_micros(tick_rate);
     let frame_rate_duration = time::Duration::from_micros(frame_rate);
 
@@ -347,14 +349,14 @@ fn main() -> Result<(), String> {
                     actions::Action::PreferencesUpdate(p) => prefs = p.clone(),
                     actions::Action::Resume => {
                         if game_shell.is_gameover() {
-                            let new_game = game::Game::new(game_rules.clone(), None)?;
+                            let new_game = game::Game::new(tick_rate, game_rules.clone(), None)?;
                             game_shell.load_game(new_game);
                         }
                         ui_layers.hide(UI_LAYER_MENU);
                         game_shell.unpause();
                     }
                     actions::Action::GameNew => {
-                        let new_game = game::Game::new(game_rules.clone(), None)?;
+                        let new_game = game::Game::new(tick_rate, game_rules.clone(), None)?;
                         game_shell.load_game(new_game);
                     }
                     actions::Action::ReplayLoad(path) => match load_recording(path) {
@@ -364,6 +366,7 @@ fn main() -> Result<(), String> {
                             };
                             let replay_pieces = replays::ReplayPieces::new(&replay);
                             let replay_game = game::Game::new(
+                                tick_rate,
                                 recording_file.rules,
                                 Some(Box::new(replay_pieces)),
                             )?;

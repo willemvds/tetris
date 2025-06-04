@@ -1,4 +1,5 @@
 use std::collections;
+use std::time;
 
 use crate::tetris::actions;
 use crate::tetris::playfield;
@@ -103,6 +104,7 @@ enum State {
 pub struct Game {
     pub rules: rules::Rules,
     state: State,
+    tick_rate_us: u64,
     ticks: usize,
     // speed is measured in number of ticks so that:
     // 1) A lower value means fewer ticks and thus faster.
@@ -148,6 +150,7 @@ pub const fn calculate_speed_from_level(level: u8) -> u8 {
 
 impl Game {
     pub fn new(
+        tick_rate_us: u64,
         rules: rules::Rules,
         piece_provider: Option<Box<dyn PieceProvider>>,
     ) -> Result<Game, String> {
@@ -168,6 +171,7 @@ impl Game {
         let mut g = Game {
             rules,
             state: State::Init,
+            tick_rate_us: tick_rate_us,
             ticks: 0,
             level: 1,
             speed: calculate_speed_from_level(1),
@@ -282,6 +286,10 @@ impl Game {
 
     pub fn is_gameover(&self) -> bool {
         self.state == State::GameOver
+    }
+
+    pub fn time(&self) -> time::Duration {
+        time::Duration::from_micros(self.ticks as u64 * self.tick_rate_us)
     }
 
     pub fn score_points(&self) -> u32 {

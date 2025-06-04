@@ -399,7 +399,7 @@ impl<'ttf, 'rwops> GameShell<'ttf, 'rwops> {
         let height_third = window_height / 3;
         let vspace = 60;
 
-        let game_time_duration = time::Duration::from_micros(self.game_time);
+        let game_time_duration = self.game.time();
         let game_time_mins = game_time_duration.as_secs() / 60;
         let game_time_secs = game_time_duration.as_secs() % 60;
 
